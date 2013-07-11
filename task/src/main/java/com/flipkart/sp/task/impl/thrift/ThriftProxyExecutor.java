@@ -1,10 +1,17 @@
 /*
- * Copyright 2012-2015, Flipkart Internet Pvt Ltd. All rights reserved.
- * 
- * This software is the confidential and proprietary information of Flipkart Internet Pvt Ltd. ("Confidential Information").  
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the license 
- * agreement you entered into with Flipkart.    
- * 
+ * Copyright 2012-2015, the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.flipkart.sp.task.impl.thrift;
 
@@ -111,9 +118,13 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 	@SuppressWarnings("rawtypes")
 	@Override
 	protected TTransport run() {
-		TSocket serviceSocket = this.thriftProxy.getPooledSocket();
-		boolean isConnectionValid = true;
+		// not using Thrift pooled sockets
+		//TSocket serviceSocket = this.thriftProxy.getPooledSocket();
+		//boolean isConnectionValid = true;
+		
+		TSocket serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
         try {
+    		serviceSocket.open();
 	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);	        
 	        
 			//Get Protocol from transport
@@ -131,7 +142,6 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 
 
 			//Send the arguments to the server and relay the response back
-			// TODO : check if the Thrift socket connections can be pooled/cached - i.e. initialized in #init(taskContext)
 			//Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
 			ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
 			//Send the request
@@ -145,13 +155,14 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 
 		} catch (Exception e) {
 			if (e.getClass().isAssignableFrom(TTransportException.class)) {
-				isConnectionValid = false;
+				//isConnectionValid = false;
 				throw new RuntimeException("Thrift transport exception executing the proxy service call : " + THRIFT_ERRORS.get(((TTransportException)e).getType()), e);				
 			} else {
 				throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
 			}
 		} finally {
-            this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
+            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
+			serviceSocket.close();
 		}
 		return this.clientTransport;
 	}

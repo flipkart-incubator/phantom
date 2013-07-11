@@ -1,11 +1,19 @@
 /*
- * Copyright 2012-2015, Flipkart Internet Pvt Ltd. All rights reserved.
- * 
- * This software is the confidential and proprietary information of Flipkart Internet Pvt Ltd. ("Confidential Information").  
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the license 
- * agreement you entered into with Flipkart.    
- * 
+ * Copyright 2012-2015, the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package com.flipkart.sp.task.spi.task;
 
 import java.util.HashMap;
@@ -19,14 +27,18 @@ import org.trpr.platform.core.PlatformException;
 import org.trpr.platform.core.impl.logging.LogFactory;
 import org.trpr.platform.core.spi.logging.Logger;
 
-import com.flipkart.sp.task.impl.task.TaskResult;
-
 /**
- * An individual Task Handler. Based on com.flipkart.w3.agent.TaskHandler
- * Provides methods to additionally set/customize Hytrix Command properties {https://github.com/Netflix/Hystrix}
+ * <code>TaskHandler</code> executes a unit of work i.e task. Provides lifecycle methods to initialize the task processing infrastructure. Life cycle methods
+ * are invoked by the container in a thread-safe manner before this TaskHandler actually starts processing requests.
+ * This implementation works on the Command pattern where-in all data required to execute the task is provided in the method call to execute the task.
+ * Task execution is stateless i.e. there is no shared state between any number of consecutive task executions. The task execution pattern is request-response
+ * driven. 
  *
  * @author devashishshankar
+ * @author regunath.balasubramanian
+ * 
  * @version 1.0, 19 March, 2013
+ * @version 2.0, 11 July, 2013
  */
 public abstract class TaskHandler implements DisposableBean {
 

@@ -1,22 +1,29 @@
 /*
- * Copyright 2012-2015, Flipkart Internet Pvt Ltd. All rights reserved.
- * 
- * This software is the confidential and proprietary information of Flipkart Internet Pvt Ltd. ("Confidential Information").  
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the license 
- * agreement you entered into with Flipkart.    
- * 
+ * Copyright 2012-2015, the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package com.flipkart.sp.task.spi.task;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.flipkart.sp.task.impl.task.TaskResult;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
- * An extension of {@link TaskHandler}. Adds additional methods required by Hystrix. Uses {@link TaskHandler#getName()} as the 
- * HystrixCommand name for display on the dashboard.
+ * An extension of {@link TaskHandler}. Provides methods to additionally set/customize Hytrix Command properties {https://github.com/Netflix/Hystrix}.
+ * Uses {@link TaskHandler#getName()} as the HystrixCommand name for display on the dashboard.
  * 
  * @author devashishshankar
  * @version 1.0, 19 March, 2013
