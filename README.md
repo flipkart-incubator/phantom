@@ -11,7 +11,7 @@ Phantom is the "ghost who walks" - an entity whose presence can be felt (in a go
 The Service Proxies fit this analogy well and therefore earned the moniker "Phantom".
 
 ## Phantom Consoles
-![Monitor](https://github.com/Flipkart/phantom/blob/master/docs/Service%20Proxy.png)
+![Monitor](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy.png)
 
-![Admin Console](https://github.com/Flipkart/phantom/blob/master/docs/Service%20Proxy%20Config.png)
+![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy%20Config.png)
 
