@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+			http://java.sun.com/xml/ns/j2ee
+			http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+
+    	<!--  Two servlets are created, as an event stream can only be accessed by one client at a time.
+		  Two servlets are for the cluster dashboard (one for command, and one for Thread pool graphs)
+	 	-->
+	<servlet>
+		<description></description>
+		<display-name>TurbineStreamServletCommand</display-name>
+		<servlet-name>TurbineStreamServletCommand</servlet-name>
+		<servlet-class>com.netflix.turbine.streaming.servlet.TurbineStreamServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<description></description>
+		<display-name>TurbineStreamServletThreadpool</display-name>
+		<servlet-name>TurbineStreamServletThreadpool</servlet-name>
+		<servlet-class>com.netflix.turbine.streaming.servlet.TurbineStreamServlet</servlet-class>
+	</servlet>
+	<!--  Two URL mappings are also needed -->
+	<servlet-mapping>
+		<servlet-name>TurbineStreamServletCommand</servlet-name>
+		<url-pattern>/turbine.stream.command</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>TurbineStreamServletThreadpool</servlet-name>
+		<url-pattern>/turbine.stream.tp</url-pattern>
+	</servlet-mapping>
+
+
+	<!-- Spring MVC servlet for ServiceProxy Web Console -->
+	<servlet>
+		<servlet-name>ServiceProxyServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>WEB-INF/servlet-config.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+
+	<servlet-mapping>
+		<servlet-name>ServiceProxyServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+</web-app>

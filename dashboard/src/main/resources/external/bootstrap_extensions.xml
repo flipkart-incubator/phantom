@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN 2.0//EN" "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+<beans>
+
+	<!--
+		Bootstrap extensions configuration. Loads the Jetty Server Beans
+	-->	
+	<bean id="dashboardBootstrapExtension" class="org.trpr.platform.runtime.impl.bootstrapext.BootstrapExtensionInfo">
+		<property name="beName" value="dashboardBootstrapExtension" />
+		<property name="beClassName" value="org.trpr.platform.runtime.impl.bootstrapext.spring.ApplicationContextFactory" />
+		<property name="beProperties">
+	    	<map>
+	        	<entry key="jettyBean" value="jetty-config.xml"/>
+	      	</map>
+		</property>		
+	</bean>
+ 
+</beans>
