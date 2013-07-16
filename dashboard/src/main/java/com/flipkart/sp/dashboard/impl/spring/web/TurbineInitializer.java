@@ -31,7 +31,7 @@ import com.netflix.config.sources.URLConfigurationSource;
 import com.netflix.turbine.init.TurbineInit;
 
 /**
- * <code>TurbineInitializer</code> implements {@link InitializingBean} and does the task of initializing turbine by loading
+ * <code>TurbineInitializer</code> implements {@link InitializingBean} and does the thrift of initializing turbine by loading
  * the properties file, registering the properties to Archiaus(https://github.com/Netflix/archaius/) and 
  * calling the {@link TurbineInit#init()}
  * 

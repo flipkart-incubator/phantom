@@ -12,7 +12,7 @@
 	<groupId>com.flipkart.phantom</groupId>
 	<artifactId>task</artifactId>
 	<name>Task</name>
-	<version>${org.flipkart.phantom.version}</version>
+	<version>${com.flipkart.phantom.version}</version>
 	<description>Task Framework</description>
 
 	<licenses>
@@ -47,6 +47,11 @@
       		<name>Devashish Shankar</name>
       		<email>devashish.shankar@gmail.com</email>
     	</developer>
+        <developer>
+            <id>kartikbu</id>
+            <name>Kartik Ukhalkar</name>
+            <email>kartikssj@gmail.com</email>
+        </developer>
   	</developers>
   	
 	<dependencyManagement>
@@ -96,16 +101,6 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-        <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.6</version>
-        </dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>0.9.0</version>
-		</dependency>
     </dependencies>
 
 	<build>
@@ -146,4 +141,5 @@
 			</plugin>
 		</plugins>
 	</build>
+
 </project>

@@ -44,8 +44,9 @@
   	</developers>
 
     <properties>
-        <org.flipkart.phantom.version>1.0.0</org.flipkart.phantom.version>
+        <com.flipkart.phantom.version>1.0.0</com.flipkart.phantom.version>
         <org.trpr.version>1.2.5</org.trpr.version>
+        <com.netflix.hystrix.version>1.2.12</com.netflix.hystrix.version>
         <jdk.version>1.6</jdk.version>
         <maven-antrun-plugin.version>1.3</maven-antrun-plugin.version>
         <maven-compiler-plugin.version>2.0.2</maven-compiler-plugin.version>
@@ -54,6 +55,8 @@
 
     <modules>
         <module>task</module>
+        <module>task-thrift</module>
+        <module>task-http</module>
     </modules>
     
 </project>
