@@ -18,8 +18,8 @@ package com.flipkart.phantom.thrift.impl.proxy;
 
 import com.flipkart.phantom.thrift.spi.ThriftProxy;
 import org.apache.commons.pool.PoolableObjectFactory;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -36,7 +36,7 @@ import java.net.Socket;
 public class SocketObjectFactory implements PoolableObjectFactory<Socket> {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(SocketObjectFactory.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SocketObjectFactory.class);
 
     /** Thrift Proxy instance for initializing the Factory */
     private ThriftProxy thriftProxy;

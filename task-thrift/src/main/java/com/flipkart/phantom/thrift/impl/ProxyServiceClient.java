@@ -22,8 +22,8 @@ import org.apache.thrift.TServiceClient;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>ProxyServiceClient</code> is a sub-type of the Thrift {@link org.apache.thrift.TServiceClient} that retains the sequence ID of the calling message when
@@ -37,7 +37,7 @@ import org.trpr.platform.core.spi.logging.Logger;
 public class ProxyServiceClient extends TServiceClient {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(ProxyServiceClient.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ProxyServiceClient.class);
 
 	/** The client's TProtocol instance to relay the response to*/
 	private TProtocol clientProtocol;

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd	
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+
+	
+	<!-- This event producer bean is declared primarily for publishing Bootstrap lifecycle events -->
+	<bean id="platformEventProducer" class="org.trpr.platform.core.impl.event.PlatformEventProducerImpl"/>
+
+	<!-- The TaskHandler Registry bean -->
+	<bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry" />
+	
+	<bean id="configService" class="com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl">
+	    <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
+	    <property name="thriftProxyRegistry" ref="thriftProxyRegistry" />
+	</bean>
+	
+	<bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
+	    <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
+	    <property name="taskContext" ref="taskContext" />
+	</bean>
+
+	<bean id="thriftProxyRepository" class="com.flipkart.phantom.thrift.impl.ThriftProxyExecutorRepository">
+	    <property name="taskContext" ref="taskContext" />
+	    <property name="thriftProxyRegistry" ref="thriftProxyRegistry" />
+	</bean>
+
+    <bean id="httpProxyRepository" class="com.flipkart.phantom.http.impl.HttpProxyExecutorRepository">
+        <property name="taskContext" ref="taskContext" />
+    </bean>
+
+	<bean id="thriftProxyRegistry" class="com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry">
+	</bean>
+
+	<bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
+		<property name="executorRepository" ref="taskHandlerRepository" />
+	</bean>
+
+	<!-- Netty common beans -->
+	<bean id="defaultChannelGroup" class="org.jboss.netty.channel.group.DefaultChannelGroup">
+		<constructor-arg><value>"NETWORK-SERVER-CHANNELS"</value></constructor-arg>
+	</bean>
+	<bean id="timer" class="org.jboss.netty.util.HashedWheelTimer"/> 
+	<bean id="idleChannelDisconnectHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.IdleChannelDisconnectHandler"/>
+	
+	<bean class="org.trpr.platform.runtime.impl.config.spring.PropertyPlaceholderConfigurer">
+		<property name="defaultPropertiesOnClasspath">
+			<value>packaged/default-proxy-core-config.properties</value>
+		</property>
+	</bean>    
+	
+</beans>

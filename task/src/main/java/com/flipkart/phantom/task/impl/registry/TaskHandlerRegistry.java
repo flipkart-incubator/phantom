@@ -20,11 +20,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
-
 import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>TaskHandlerRegistry</code>  maintains a registry of TaskHandlers. Provides lookup 
@@ -36,7 +35,7 @@ import com.flipkart.phantom.task.spi.TaskHandler;
 public class TaskHandlerRegistry {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerRegistry.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerRegistry.class);
 
 	/** Map storing the mapping of a commandString to TaskHandler */
 	private Map<String,TaskHandler> stringToTaskHandler = new ConcurrentHashMap<String, TaskHandler>();

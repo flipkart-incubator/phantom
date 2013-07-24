@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.flipkart.phantom.task.impl.TaskResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.trpr.platform.core.PlatformException;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
 
 /**
  * <code>TaskHandler</code> executes a unit of work i.e thrift. Provides lifecycle methods to initialize the thrift processing infrastructure. Life cycle methods
@@ -43,7 +44,7 @@ import org.trpr.platform.core.spi.logging.Logger;
 public abstract class TaskHandler implements DisposableBean {
 
     /** Log instance for this class */
-    private static final Logger LOGGER = LogFactory.getLogger(TaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandler.class);
 	
 	/** Identifier for threadPool size in initPoolParams */
 	public static String PARAM_COMMAND_NAME = "commandName";

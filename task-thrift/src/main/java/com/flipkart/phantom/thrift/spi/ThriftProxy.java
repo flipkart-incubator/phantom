@@ -20,8 +20,8 @@ import com.flipkart.phantom.thrift.impl.proxy.SocketObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.transport.TSocket;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.net.Socket;
@@ -53,7 +53,7 @@ public abstract class ThriftProxy {
 	private static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
 	
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(HystrixThriftProxy.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThriftProxy.class);
 	
 	/** The executor timeout millis*/
 	private int executorTimeout = DEFAULT_EXECUTOR_TIMEOUT;

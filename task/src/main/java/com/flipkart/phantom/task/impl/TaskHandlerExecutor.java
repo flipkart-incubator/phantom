@@ -17,13 +17,9 @@ package com.flipkart.phantom.task.impl;
 
 import java.util.Map;
 
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
-
 import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
-import com.flipkart.phantom.task.spi.TaskResult;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
@@ -31,6 +27,8 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a 
@@ -43,7 +41,7 @@ import com.netflix.hystrix.HystrixThreadPoolProperties;
 public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerExecutor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
 	/** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
 	public static final String DEFAULT_HYSTRIX_GROUP = "DEFAULT_GROUP";

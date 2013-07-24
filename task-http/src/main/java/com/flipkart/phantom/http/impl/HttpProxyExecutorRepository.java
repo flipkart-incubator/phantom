@@ -19,6 +19,8 @@ package com.flipkart.phantom.http.impl;
 import com.flipkart.phantom.http.spi.HttpProxy;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a repository of HttpProxyExecutor classes which execute HTTP requests using Hystrix commands
@@ -28,6 +30,9 @@ import org.apache.http.client.methods.HttpRequestBase;
  * @version 1.0
  */
 public class HttpProxyExecutorRepository {
+
+    /** logger */
+    private static Logger logger = LoggerFactory.getLogger(HttpProxyExecutorRepository.class);
 
     /** The TaskContext instance */
     private TaskContext taskContext;
@@ -39,6 +44,7 @@ public class HttpProxyExecutorRepository {
      * @return an HttpProxyExecutor instance
      */
     public HttpProxyExecutor getHttpProxyExecutor (HttpProxy proxy, HttpRequestBase request) {
+        logger.debug("Creating executor for request: " + request.getURI());
         if (proxy.isActive()) { // check if the Proxy is indeed active
             return new HttpProxyExecutor(proxy, this.taskContext, request);
         }

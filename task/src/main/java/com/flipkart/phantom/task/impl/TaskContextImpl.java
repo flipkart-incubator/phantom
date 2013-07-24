@@ -21,12 +21,12 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
+
 
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
-import com.flipkart.phantom.task.spi.TaskResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link TaskContext}
@@ -37,7 +37,7 @@ import com.flipkart.phantom.task.spi.TaskResult;
 public class TaskContextImpl implements TaskContext {
 
 	/** Logger for this class */
-	private static final Logger LOGGER = LogFactory.getLogger(TaskContextImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskContextImpl.class);
 
 	/** The default command to get Config  */
 	private static final String GET_CONFIG_COMMAND = "getConfig";

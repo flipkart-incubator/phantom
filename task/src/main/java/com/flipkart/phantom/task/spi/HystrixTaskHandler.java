@@ -19,6 +19,7 @@ package com.flipkart.phantom.task.spi;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.flipkart.phantom.task.impl.TaskResult;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**

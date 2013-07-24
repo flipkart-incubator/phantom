@@ -19,9 +19,9 @@ import java.io.File;
 import java.net.URL;
 
 import org.springframework.beans.factory.InitializingBean;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
 import org.trpr.platform.runtime.impl.config.FileLocator;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicConfiguration;
@@ -44,7 +44,7 @@ public class TurbineInitializer implements InitializingBean {
 	private static final String FILE_PREFIX = "file:";	
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(TurbineInitializer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TurbineInitializer.class);
 
 	/**
 	 * Interface method implementation. @see InitializingBean#afterPropertiesSet

@@ -33,6 +33,8 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.pool.PoolStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests
@@ -42,6 +44,9 @@ import org.apache.http.pool.PoolStats;
  * @version 1.0
  */
 public class HttpConnectionPool {
+
+    /** logger */
+    private static Logger logger = LoggerFactory.getLogger(HttpConnectionPool.class);
 
     /** The HTTP client */
     private HttpClient client;
@@ -113,6 +118,7 @@ public class HttpConnectionPool {
      * @return response HttpResponse object
      */
     public HttpResponse execute(HttpRequestBase request) throws Exception {
+        logger.debug("Sending request: "+request.getURI());
         if (processQueue.tryAcquire()) {
             HttpResponse response;
             try {

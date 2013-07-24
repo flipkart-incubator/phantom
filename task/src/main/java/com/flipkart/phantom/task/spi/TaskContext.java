@@ -19,6 +19,7 @@ package com.flipkart.phantom.task.spi;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import com.flipkart.phantom.task.impl.TaskResult;
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**

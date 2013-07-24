@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+
+    <!-- the TCP server -->
+    <bean id="networkServer" class= "com.flipkart.phantom.runtime.impl.server.netty.TCPNettyServer">
+        <property name="portNumber" value="8080"/>
+        <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
+        <property name="pipelineFactory" ref="commandChannelPipelineFactory"/>
+        <property name="bootstrapOptions">
+            <map>
+                <entry key="child.tcpNoDelay" value="true"/>
+                <entry key="child.keepAlive" value="true"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <!--  ChannelHandlerPipelineFactory for TCP Server -->
+    <bean id="commandChannelPipelineFactory" class="com.flipkart.phantom.runtime.impl.server.netty.ChannelHandlerPipelineFactory">
+        <property name="channelHandlerBeanNamesMap">
+            <map>
+                <entry key="commandBufferDecoder" value="commandBufferDecoder"/>
+                <entry key="commandHandler" value="commandProcessingChannelHandler"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Prototype scope command ChannelHandler beans. All channel handler beans MUST be of prototype bean scope-->
+    <bean id="commandBufferDecoder" class="com.flipkart.phantom.runtime.impl.server.netty.decoder.CommandBufferDecoder" scope="prototype"/>
+    <bean id="commandProcessingChannelHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandProcessingChannelHandler" scope="prototype">
+        <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
+        <property name="repository" ref="taskHandlerRepository"/>
+    </bean>
+
+</beans>

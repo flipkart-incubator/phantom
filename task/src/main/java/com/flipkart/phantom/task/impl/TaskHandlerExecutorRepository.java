@@ -19,15 +19,13 @@ package com.flipkart.phantom.task.impl;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
-
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
-import com.flipkart.phantom.task.spi.TaskResult;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>TaskHandlerExecutorRepository</code> is a repository that searches for a {@link TaskHandler}
@@ -40,7 +38,7 @@ import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 public class TaskHandlerExecutorRepository {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerExecutorRepository.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);
 
 	/** Regex for finding all non alphanumeric characters */
 	public static final String ONLY_ALPHANUMERIC_REGEX = "[^\\dA-Za-z ]";

@@ -28,8 +28,8 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.trpr.platform.core.impl.logging.LogFactory;
-import org.trpr.platform.core.spi.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 	}
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LogFactory.getLogger(ThriftProxyExecutor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyExecutor.class);
 
 	/** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
 	public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
