@@ -16,11 +16,14 @@
 
 package com.flipkart.phantom.thrift.impl.registry;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.thrift.spi.ThriftProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>ThriftProxyRegistry</code>  maintains a registry of ThriftProxys. Provides lookup 
@@ -29,44 +32,52 @@ import com.flipkart.phantom.thrift.spi.ThriftProxy;
  * @author devashishshankar
  * @version 1.0, 3rd April, 2013
  */
-public class ThriftProxyRegistry {
+public class ThriftProxyRegistry extends AbstractHandlerRegistry {
 
-	/** Map storing the mapping of a commandString to ThriftProxy */
-	private Map<String,ThriftProxy> stringToThriftHandler = new ConcurrentHashMap<String, ThriftProxy>();
-	
-	/**
-	 * Register a new {@link ThriftProxy} to the registry. Note: If the CommandString
-	 * exists, it overwrites
-	 * @param commandString The command String identifying the command
-	 * @param thriftProxy {@link ThriftProxy} instance
-	 */
-	public void registerThriftProxy(String commandString, ThriftProxy thriftProxy) {
-		this.stringToThriftHandler.put(commandString, thriftProxy);
-	}
-	
-	/**
-	 * Register a new ThriftProxy. The commandString is defaulted to the name defined
-	 * in {@link ThriftProxy}
-	 * @param thriftProxy The {@link ThriftProxy} instance to be added
-	 */
-	public void registerThriftProxy(ThriftProxy thriftProxy) {
-		this.stringToThriftHandler.put(thriftProxy.getName(), thriftProxy);
-	}
-	
-	/**
-	 * Returns the {@link ThriftProxy} instance for the given Command String
-	 * @param commandString The command string
-	 * @return ThriftProxy, if found, null otherwise
-	 */
-	public ThriftProxy getThriftProxy(String commandString) {
-		return this.stringToThriftHandler.get(commandString);
-	}
+	/** Logger for this class*/
+	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyRegistry.class);
+
+    /** List of all thrift proxies */
+    private List<ThriftProxy> proxies = new ArrayList<ThriftProxy>();
 	
 	/**
 	 * Returns all the ThriftProxy instances present in the registry
 	 * @return Array of ThriftProxy
 	 */
 	public ThriftProxy[] getAllThriftProxies() {
-		return (new HashSet<ThriftProxy>(this.stringToThriftHandler.values())).toArray(new ThriftProxy[0]);
+        return (ThriftProxy[]) proxies.toArray();
 	}
+
+    @Override
+    public void init(TaskContext taskContext) throws Exception {
+        for (ThriftProxy proxy : proxies) {
+            try {
+                proxy.init();
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize thrift proxy: " + proxy.getName());
+                throw new Exception("Failed to initialize thrift proxy: " + proxy.getName(), e);
+            }
+        }
+    }
+
+    @Override
+    public void shutdown(TaskContext taskContext) throws Exception {
+        for (ThriftProxy proxy: proxies) {
+            try {
+                proxy.shutdown();
+            } catch (Exception e) {
+                LOGGER.warn("Failed to shutdown thrift proxy: " + proxy.getName(), e);
+            }
+            proxy.setStatus(ThriftProxy.INACTIVE);
+        }
+    }
+
+    /** getters / setters */
+    public List<ThriftProxy> getProxies() {
+        return proxies;
+    }
+    public void setProxies(List<ThriftProxy> proxies) {
+        this.proxies = proxies;
+    }
+
 }

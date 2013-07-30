@@ -18,20 +18,20 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
 import com.flipkart.phantom.http.spi.HttpProxy;
-import com.flipkart.phantom.task.spi.TaskHandler;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 
 /**
  * <code>HttpChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that implements a Http proxy.
@@ -64,76 +64,40 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
 	 */
 	public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent event) throws Exception {
 		super.channelOpen(ctx, event);
-		this.defaultChannelGroup.add(event.getChannel());
+		//this.defaultChannelGroup.add(event.getChannel());
     }
 
 	/**
 	 * Interface method implementation. Reads and processes Http commands sent to the service proxy. Expects data in the Http protocol.
-	 * Discards commands that do not have a {@link TaskHandler} mapping. The task handler look up happens using the Http header property {@value #COMMAND_HTTP_HEADER}
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
 	 */
-	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {
-        LOGGER.debug("Handling upstream request");
-		if (MessageEvent.class.isAssignableFrom(event.getClass())) {
-            LOGGER.debug("Inside first");
-			MessageEvent messageEvent = (MessageEvent)event;
-            if (HttpRequest.class.isAssignableFrom(messageEvent.getMessage().getClass())) {
-                LOGGER.debug("Inside second");
-                HttpRequest request = (HttpRequest) messageEvent.getMessage();
-                LOGGER.debug("Request is: " + request.getMethod() + " " + request.getUri());
-                HttpProxyExecutor executor = this.repository.getHttpProxyExecutor(this.httpProxy,convertRequest(request));
-                HttpResponse response = executor.execute();
-                writeCommandExecutionResponse(ctx,event,response);
-            } else {
-                LOGGER.debug("Failed second");
-            }
-		} else {
-            LOGGER.debug("Failed first");
-        }
-	    super.handleUpstream(ctx, event);
-	}
+	public void messageReceived(ChannelHandlerContext ctx, MessageEvent messageEvent) throws Exception {
 
-    private HttpRequestBase convertRequest(HttpRequest request) throws Exception {
+        HttpRequest request = (HttpRequest) messageEvent.getMessage();
+        LOGGER.debug("Request is: " + request.getMethod() + " " + request.getUri());
 
-        // get data if any
+        // get data
         ChannelBuffer inputBuffer = request.getContent();
         byte[] requestData = new byte[inputBuffer.readableBytes()];
         inputBuffer.readBytes(requestData, 0, requestData.length);
 
-        // get
-        if (HttpMethod.GET.equals(request.getMethod())) {
-            HttpGet r = new HttpGet(request.getUri());
-            return r;
+        // executor
+        HttpProxyExecutor executor = this.repository.getHttpProxyExecutor(this.httpProxy,request.getMethod().toString(),request.getUri(),requestData);
 
-        // put
-        } else if (HttpMethod.PUT.equals(request.getMethod())) {
-            HttpPut r = new HttpPut(request.getUri());
-            r.setEntity(new ByteArrayEntity(requestData));
-            return r;
+        // excute
+        HttpResponse response = executor.execute();
 
-        // post
-        } else if (HttpMethod.POST.equals(request.getMethod())) {
-            HttpPost r = new HttpPost(request.getUri());
-            r.setEntity(new ByteArrayEntity(requestData));
-            return r;
-
-        // delete
-        } else if (HttpMethod.DELETE.equals(request.getMethod())) {
-            HttpDelete r = new HttpDelete(request.getUri());
-            return r;
-
-        // invalid
-        } else {
-            return null;
-        }
-    }
+        // send response
+        writeCommandExecutionResponse(ctx,messageEvent,response);
+	}
 
 	/**
 	 * Interface method implementation. Closes the underlying channel after logging a warning message
 	 * @see org.jboss.netty.channel.SimpleChannelHandler#exceptionCaught(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ExceptionEvent)
 	 */
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent event) throws Exception {
-		LOGGER.warn("Exception {} thrown on Channel {}. Disconnect initiated",event,event.getChannel());
+		LOGGER.warn("Exception {} thrown on Channel {}. Disconnect initiated", event, event.getChannel());
+        event.getCause().printStackTrace();
 		event.getChannel().close();
 	}
 	
@@ -141,7 +105,6 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
      * Writes the specified TaskResult data to the channel output. Only the raw output data is written and rest of the TaskResult fields are ignored 
      * @param ctx the ChannelHandlerContext
      * @param event the ChannelEvent
-     * @param result the TaskResult data written to the channel response
      * @throws Exception in case of any errors
      */
     private void writeCommandExecutionResponse(ChannelHandlerContext ctx, ChannelEvent event, HttpResponse response) throws Exception {
@@ -151,30 +114,22 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
             return;
         }
 
-        // create buffer
-        StringBuffer buffer = new StringBuffer();
-
-        // write status
-        buffer.append(response.getStatusLine().toString());
-        buffer.append(LINE_FEED);
+        org.jboss.netty.handler.codec.http.HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()));
 
         // write headers
         for (Header header : response.getAllHeaders()) {
-            if (!header.toString().contains(ENCODING_HEADER)) { // skip the encoding header as some Http services use chunked encoding but we have received all data
-                buffer.append(header.toString());
-                buffer.append(LINE_FEED);
+            if (!header.getName().equals(ENCODING_HEADER)) {
+                httpResponse.setHeader(header.getName(),header.getValue());
             }
         }
-        buffer.append(LINE_FEED);
 
         // write entity
         HttpEntity responseEntity = response.getEntity();
         byte[] responseData = EntityUtils.toByteArray(responseEntity);
-        buffer.append(new String(responseData));
+        httpResponse.setContent(ChannelBuffers.copiedBuffer(responseData));
 
         // write response
-        ChannelFuture future = event.getChannel().write(buffer);
-        future.addListener(ChannelFutureListener.CLOSE);  // explicitly close the Channel as Http client (say browser) would not initiate it by itself
+        event.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
 
     }
     

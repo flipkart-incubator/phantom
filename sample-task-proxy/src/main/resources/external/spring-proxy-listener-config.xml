@@ -32,7 +32,7 @@
     </bean>
 
     <!-- Prototype scope command ChannelHandler beans. All channel handler beans MUST be of prototype bean scope-->
-    <bean id="commandBufferDecoder" class="com.flipkart.phantom.runtime.impl.server.netty.decoder.CommandBufferDecoder" scope="prototype"/>
+    <bean id="commandBufferDecoder" class="com.flipkart.phantom.runtime.impl.server.netty.decoder.command.CommandBufferDecoder" scope="prototype"/>
     <bean id="commandProcessingChannelHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandProcessingChannelHandler" scope="prototype">
         <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
         <property name="repository" ref="taskHandlerRepository"/>

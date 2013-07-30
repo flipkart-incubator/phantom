@@ -40,6 +40,11 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
     /** the HTTP request */
     private HttpRequestBase request;
 
+    /** method */
+    String method;
+    String uri;
+    byte[] data;
+
     /** the proxy client */
     private HttpProxy proxy;
 
@@ -47,7 +52,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
     private TaskContext taskContext;
 
     /** only constructor uses the proxy client, task context and the http request */
-    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, HttpRequestBase request) {
+    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, String method, String uri, byte[] data) {
         super(
             Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
             .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
@@ -55,8 +60,10 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
             .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getTimeout()))
         );
         this.proxy = proxy;
-        this.request = request;
         this.taskContext = taskContext;
+        this.method = method;
+        this.uri = uri;
+        this.data = data;
     }
 
     /**
@@ -66,8 +73,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
      */
     @Override
     protected HttpResponse run() throws Exception {
-        logger.debug("Executing request: " + request.getURI());
-        return proxy.doRequest(request);
+        return proxy.doRequest(method,uri,data);
     }
 
     /**

@@ -43,12 +43,11 @@ public class HttpProxyExecutorRepository {
      * @param request the HTTP request
      * @return an HttpProxyExecutor instance
      */
-    public HttpProxyExecutor getHttpProxyExecutor (HttpProxy proxy, HttpRequestBase request) {
-        logger.debug("Creating executor for request: " + request.getURI());
-        if (proxy.isActive()) { // check if the Proxy is indeed active
-            return new HttpProxyExecutor(proxy, this.taskContext, request);
+    public HttpProxyExecutor getHttpProxyExecutor (HttpProxy proxy, String method, String uri, byte[] requestData) throws Exception {
+        if (!proxy.isActive()) { // check if the Proxy is indeed active
+            proxy.init();
         }
-        throw new RuntimeException("The Thrift Proxy is not active. It cannot be executed");
+        return new HttpProxyExecutor(proxy, this.taskContext, method, uri, requestData);
     }
 
     /** Getter/Setter methods */

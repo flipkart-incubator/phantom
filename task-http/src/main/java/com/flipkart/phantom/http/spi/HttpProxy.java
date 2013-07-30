@@ -20,7 +20,8 @@ import com.flipkart.phantom.http.impl.HttpConnectionPool;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.ByteArrayEntity;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -79,8 +80,38 @@ public abstract class HttpProxy {
     /**
      * The main method which makes the HTTP request
      */
-    public HttpResponse doRequest(HttpRequestBase request) throws Exception {
-        return pool.execute(request);
+    public HttpResponse doRequest(String method, String uri, byte[] data) throws Exception {
+        return pool.execute(createRequest(method,uri,data));
+    }
+
+    private HttpRequestBase createRequest(String method, String uri, byte[] data) throws Exception {
+
+        // get
+        if ("GET".equals(method)) {
+            HttpGet r = new HttpGet(pool.constructUrl(uri));
+            return r;
+
+            // put
+        } else if ("PUT".equals(method)) {
+            HttpPut r = new HttpPut(pool.constructUrl(uri));
+            r.setEntity(new ByteArrayEntity(data));
+            return r;
+
+            // post
+        } else if ("POST".equals(method)) {
+            HttpPost r = new HttpPost(pool.constructUrl(uri));
+            r.setEntity(new ByteArrayEntity(data));
+            return r;
+
+            // delete
+        } else if ("DELETE".equals(method)) {
+            HttpDelete r = new HttpDelete(pool.constructUrl(uri));
+            return r;
+
+            // invalid
+        } else {
+            return null;
+        }
     }
 
     /**

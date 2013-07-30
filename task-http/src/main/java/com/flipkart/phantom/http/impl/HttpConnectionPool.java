@@ -134,6 +134,10 @@ public class HttpConnectionPool {
         }
     }
 
+    public String constructUrl(String uri) {
+        return "http" + (secure ? "s" : "") + "://" + host + ":" + port + uri;
+    }
+
     /** shutdown the client connections */
     public void shutdown() {
         client.getConnectionManager().shutdown();

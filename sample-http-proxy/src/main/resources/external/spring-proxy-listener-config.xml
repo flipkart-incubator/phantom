@@ -25,13 +25,21 @@
     <bean id="httpChannelPipelineFactory" class="com.flipkart.phantom.runtime.impl.server.netty.ChannelHandlerPipelineFactory">
         <property name="channelHandlerBeanNamesMap">
             <map>
-                <entry key="httpChannelHandler" value="httpChannelHandler"/>
+                <entry key="httpDecoder" value="httpDecoder" />
+                <entry key="httpChunkAggregator" value="httpChunkAggregator" />
+                <entry key="httpRequestHandler" value="httpRequestHandler"/>
+                <entry key="httpEncoder" value="httpEncoder" />
             </map>
         </property>
     </bean>
 
     <!-- Prototype scope command ChannelHandler beans. All channel handler beans MUST be of prototype bean scope-->
-    <bean id="httpChannelHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
+    <bean id="httpDecoder" class="org.jboss.netty.handler.codec.http.HttpRequestDecoder" />
+    <bean id="httpEncoder" class="org.jboss.netty.handler.codec.http.HttpResponseEncoder" />
+    <bean id="httpChunkAggregator" class="org.jboss.netty.handler.codec.http.HttpChunkAggregator">
+        <constructor-arg value="1048576" />
+    </bean>
+    <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
         <property name="repository" ref="httpProxyRepository"/>
         <property name="httpProxy" ref="sampleHttpProxy" />
     </bean>

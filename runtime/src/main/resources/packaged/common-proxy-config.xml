@@ -11,17 +11,8 @@
 	<!-- This event producer bean is declared primarily for publishing Bootstrap lifecycle events -->
 	<bean id="platformEventProducer" class="org.trpr.platform.core.impl.event.PlatformEventProducerImpl"/>
 
-	<!-- The TaskHandler Registry bean -->
-	<bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry" />
-	
 	<bean id="configService" class="com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl">
-	    <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
 	    <property name="thriftProxyRegistry" ref="thriftProxyRegistry" />
-	</bean>
-	
-	<bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
-	    <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
-	    <property name="taskContext" ref="taskContext" />
 	</bean>
 
 	<bean id="thriftProxyRepository" class="com.flipkart.phantom.thrift.impl.ThriftProxyExecutorRepository">
@@ -37,7 +28,6 @@
 	</bean>
 
 	<bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
-		<property name="executorRepository" ref="taskHandlerRepository" />
 	</bean>
 
 	<!-- Netty common beans -->

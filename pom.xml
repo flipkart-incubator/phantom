@@ -63,9 +63,11 @@
         <module>netty-uds</module>
         <module>runtime-oio-uds</module>
         <module>runtime-netty-uds</module>
-        <module>sample-tcp-proxy</module>
+        <module>sample-task-proxy</module>
         <module>sample-http-proxy</module>
         <module>dashboard</module>
+        <module>channel-handler-http</module>
+        <module>channel-handler-thrift</module>
     </modules>
     
 </project>

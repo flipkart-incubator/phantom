@@ -16,14 +16,18 @@
 
 package com.flipkart.phantom.task.impl.registry;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.flipkart.phantom.task.spi.HystrixTaskHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.trpr.platform.core.PlatformException;
 
 /**
  * <code>TaskHandlerRegistry</code>  maintains a registry of TaskHandlers. Provides lookup 
@@ -32,13 +36,16 @@ import org.slf4j.LoggerFactory;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
-public class TaskHandlerRegistry {
+public class TaskHandlerRegistry extends AbstractHandlerRegistry {
 
 	/** Logger for this class*/
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerRegistry.class);
 
-	/** Map storing the mapping of a commandString to TaskHandler */
-	private Map<String,TaskHandler> stringToTaskHandler = new ConcurrentHashMap<String, TaskHandler>();
+    /** List of TaskHandlers */
+    private List<TaskHandler> taskHandlers = new ArrayList<TaskHandler>();
+
+    /** Map storing the mapping of a commandString to TaskHandler */
+	private Map<String,TaskHandler> commandToTaskHandler = new ConcurrentHashMap<String, TaskHandler>();
 
 	/** Map storing the mapping of pool Name to its core threadpool size */
 	private Map<String,Integer> poolToThreadPoolSize = new ConcurrentHashMap<String, Integer>();
@@ -50,8 +57,15 @@ public class TaskHandlerRegistry {
 	 */
 	public void registerTaskHandler(TaskHandler taskHandler) {
 		this.initializeThreadPoolMap(taskHandler);
-		for(String commandName: taskHandler.getCommands()) {
-			this.registerTaskHandler(commandName,taskHandler);
+		for (String commandName:taskHandler.getCommands()) {
+            LOGGER.info("Registering task handler " + taskHandler.getName() + " with command " + commandName);
+            if (!this.commandToTaskHandler.containsValue(taskHandler)) { //Check to make sure initialize threadpool map is only called once
+                this.initializeThreadPoolMap(taskHandler);
+            }
+            if (this.commandToTaskHandler.get(commandName) != null) {
+                LOGGER.warn("Overriding TaskHandler for command: " + commandName);
+            }
+            this.commandToTaskHandler.put(commandName, taskHandler);
 		}
 	}
 
@@ -61,23 +75,8 @@ public class TaskHandlerRegistry {
 	 */
 	public void unregisterTaskHandler(TaskHandler taskHandler) {
 		for(String commandName: taskHandler.getCommands()) {
-			this.stringToTaskHandler.remove(commandName);
+			this.commandToTaskHandler.remove(commandName);
 		}
-	}
-	/**
-	 * Register a new {@link TaskHandler} to the registry. Note: If the CommandString
-	 * exists, it overwrites
-	 * @param commandString The command String identifying the command
-	 * @param taskHandler {@link TaskHandler} instance
-	 */
-	private void registerTaskHandler(String commandString, TaskHandler taskHandler) {
-		if(!this.stringToTaskHandler.containsValue(taskHandler)) { //Check to make sure initialize threadpool map is only called once
-			this.initializeThreadPoolMap(taskHandler);
-		}
-		if(this.stringToTaskHandler.get(commandString)!=null) {
-			LOGGER.warn("Overriding TaskHandler for command: "+commandString);
-		}
-		this.stringToTaskHandler.put(commandString, taskHandler);
 	}
 
     /**
@@ -86,7 +85,15 @@ public class TaskHandlerRegistry {
      * @return TaskHandler, if found, null otherwise
      */
     public TaskHandler getTaskHandler(String commandString) {
-        return this.stringToTaskHandler.get(commandString);
+        return this.commandToTaskHandler.get(commandString);
+    }
+
+    /**
+     * Returns all the TaskHandlers present in the registry
+     * @return Array of TaskHandler
+     */
+    public TaskHandler[] getAllTaskHandlers() {
+        return (TaskHandler[]) taskHandlers.toArray();
     }
 
     /**
@@ -104,39 +111,83 @@ public class TaskHandlerRegistry {
     }
 
 	/**
-	 * Returns all the TaskHandlers present in the registry
-	 * @return Array of TaskHandler
-	 */
-	public TaskHandler[] getAllTaskHandlers() {
-		return (new HashSet<TaskHandler>(this.stringToTaskHandler.values())).toArray(new TaskHandler[0]);
-	}
-
-	/**
-	 * Get the Thread pool size for a pool/command name.
-	 * @param poolOrCommandName the pool or command name for which thread pool size is required
-	 * @return thread pool size, null is pool/command not found
-	 */
-	public Integer getPoolSize(String poolOrCommandName) {
-		return this.poolToThreadPoolSize.get(poolOrCommandName);
-	}
-
-	/**
 	 * Helper method to initialize poolToThreadPoolSize from {@link com.flipkart.phantom.task.spi.TaskHandler#getInitializationCommands()} ()}
 	 * and {@link com.flipkart.phantom.task.spi.HystrixTaskHandler#getThreadPoolSizeParams()}
 	 */
 	private void initializeThreadPoolMap(TaskHandler taskHandler) {
-		if(taskHandler instanceof HystrixTaskHandler) {
+		if (taskHandler instanceof HystrixTaskHandler) {
 			HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
-			//thread pool size
+			// Thread pool size
 			Map<String, Integer> threadParams = hystrixTaskHandler.getThreadPoolSizeParams();
-			for(String threadParam : threadParams.keySet()) {
+			for (String threadParam : threadParams.keySet()) {
 				this.poolToThreadPoolSize.put(threadParam, threadParams.get(threadParam));
 			}
-			//Commands thread pool size
+			// Commands thread pool size
 			Map<String, Integer> commandParams = hystrixTaskHandler.getCommandPoolSizeParams();
-			for(String commandParam : commandParams.keySet()) {
+			for (String commandParam : commandParams.keySet()) {
 				this.poolToThreadPoolSize.put(commandParam, commandParams.get(commandParam));
 			}
 		}
 	}
+
+    /**
+     * Get the Thread pool size for a pool/command name.
+     * @param poolOrCommandName the pool or command name for which thread pool size is required
+     * @return thread pool size, null is pool/command not found
+     */
+    public Integer getPoolSize(String poolOrCommandName) {
+        return this.poolToThreadPoolSize.get(poolOrCommandName);
+    }
+
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(com.flipkart.phantom.task.spi.TaskContext)
+     * Should call init lifecycle methods of task handlers
+     * @param taskContext the TaskContext object
+     * @throws Exception
+     */
+    @Override
+    public void init(TaskContext taskContext) throws Exception {
+        for (TaskHandler taskHandler:taskHandlers) {
+            LOGGER.info("Initializing task handler: " + taskHandler.getName());
+            try {
+                taskHandler.init(taskContext);
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize task handler: " + taskHandler.getName(), e);
+                throw new Exception("Failed to initialize task handler: " + taskHandler.getName(), e);
+            }
+            this.registerTaskHandler(taskHandler);
+        }
+    }
+
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#shutdown(com.flipkart.phantom.task.spi.TaskContext)
+     * Should call shutdown lifecycle methods of task handlers
+     * @param taskContext the TaskContext object
+     * @throws Exception
+     */
+    @Override
+    public void shutdown(TaskContext taskContext) throws Exception {
+        for (TaskHandler taskHandler:taskHandlers) {
+            LOGGER.info("Shutting down task handler: " + taskHandler.getName());
+            try {
+                taskHandler.shutdown(taskContext);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to shutdown task handler: " + taskHandler.getName(), e);
+            }
+            taskHandler.setStatus(TaskHandler.INACTIVE);
+        }
+    }
+
+    /** getters / setters **/
+    public List<TaskHandler> getTaskHandlers() {
+        return taskHandlers;
+    }
+    public void setTaskHandlers(List<TaskHandler> taskHandlers) {
+        this.taskHandlers = taskHandlers;
+    }
+
+
+
 }

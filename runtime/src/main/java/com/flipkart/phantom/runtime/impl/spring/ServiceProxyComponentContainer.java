@@ -23,6 +23,7 @@ import com.flipkart.phantom.runtime.impl.server.netty.handler.thrift.ThriftChann
 import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
@@ -50,10 +51,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The <code>ServiceProxyComponentContainer</code> class is a ComponentContainer implementation as defined by Trooper {@link "https://github.com/regunathb/Trooper"}
@@ -99,10 +97,13 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 	private BootstrapExtension[] loadedBootstrapExtensions;
 
 	/** The Thread's context class loader that is used in on the fly loading of proxy handler definitions */
-	private ClassLoader tccl; 
+	private ClassLoader tccl;
+
+    /** The list of registered registries */
+    private List<AbstractHandlerRegistry> registries = new ArrayList<AbstractHandlerRegistry>();
 
 	/** The taskHandlerRegistry instance */
-	private TaskHandlerRegistry taskHandlerRegistry; 
+	private TaskHandlerRegistry taskHandlerRegistry;
 
 	/** The thriftProxyRegistry instance */
 	private ThriftProxyRegistry thriftProxyRegistry;
@@ -178,11 +179,6 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 					ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
 		}
 
-		//Get the TaskHandlerRegistry Bean
-		this.taskHandlerRegistry = (TaskHandlerRegistry)ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.TASK_REGISTRY_BEAN);
-		//Get the TaskHandlerRegistry Bean
-		this.thriftProxyRegistry = (ThriftProxyRegistry)ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.THRIFT_PROXY_REGISTRY_BEAN);
-
         // locate and load the individual proxy handler bean XML files using the common proxy handler beans context as parent
         File[] proxyHandlerBeansFiles = FileLocator.findFiles(ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG);
         for (File proxyHandlerBeansFile : proxyHandlerBeansFiles) {
@@ -201,57 +197,6 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 			this.proxyHandlerContextsList.add(new ProxyHandlerConfigInfo(proxyListenerBeanFile, null, listenerContext));
 		}		
 
-
-		// Add all TaskHandler instances to the TaskHandlerRegistry
-		for(ProxyHandlerConfigInfo proxyHandlerConfigInfo: this.proxyHandlerContextsList) {
-			//Thrift Handlers loading
-			//Load Pipeline factory bean(s)
-			String[] pipelineFactoryBeanIDs = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(ChannelHandlerPipelineFactory.class);
-			for(String pipelineFactoryBeanID : pipelineFactoryBeanIDs) {
-				ChannelHandlerPipelineFactory pipelineFactory = (ChannelHandlerPipelineFactory) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(pipelineFactoryBeanID);
-				//Check if the pipelineFactory has a ThriftHandler
-				boolean containsThriftHandler = false;
-				ThriftChannelHandler thriftChannelHandler = null;
-				for(String channelHandlerName : pipelineFactory.getChannelHandlersMap().keySet()) {
-					if(pipelineFactory.getChannelHandlersMap().get(channelHandlerName) instanceof ThriftChannelHandler) {
-						if(!containsThriftHandler) {
-							containsThriftHandler = true;
-							thriftChannelHandler = (ThriftChannelHandler) pipelineFactory.getChannelHandlersMap().get(channelHandlerName);
-						} else {
-							throw new PlatformException("Multiple Thrift Handlers not allowed in the same pipelineFactory");
-						}
-					}
-				}
-				if(containsThriftHandler) { //Add the ThriftHandler to registry
-					try {
-						thriftChannelHandler.getThriftProxy().init();
-						thriftChannelHandler.getThriftProxy().setStatus(ThriftProxy.ACTIVE);	
-					} catch (Exception e) {
-						// TODO see if there are ThriftProxyS that can fail init but still permit others to load and the proxy can become active
-						LOGGER.error("Error initing ThriftProxy {} . Error is : " + e.getMessage(),thriftChannelHandler.getThriftProxy().getName(), e);
-						throw new PlatformException("Error initing ThriftProxy : " + thriftChannelHandler.getThriftProxy().getName(), e);
-					}
-					this.thriftProxyRegistry.registerThriftProxy(thriftChannelHandler.getThriftProxy());
-				}
-			}
-		}
-
-		//Inject into configService NetworkServers
-		for(ProxyHandlerConfigInfo proxyHandlerConfigInfo: this.proxyHandlerContextsList) {
-			Map<String, AbstractNetworkServer> networkServerBeansMap = proxyHandlerConfigInfo.getProxyHandlerContext().getBeansOfType(AbstractNetworkServer.class);
-			for(AbstractNetworkServer server : networkServerBeansMap.values()) {
-                this.configService.getDeployedNetworkServers().add(server);
-			}
-		}
-		
-		LOGGER.debug("Registered task handlers are:");
-		for(TaskHandler taskHandler: this.taskHandlerRegistry.getAllTaskHandlers()) {
-			LOGGER.debug(taskHandler.getName()+" "+Arrays.asList(taskHandler.getCommands()));
-		}	
-		LOGGER.debug("Registered thrift proxies are:");
-		for(ThriftProxy thriftProxy: this.thriftProxyRegistry.getAllThriftProxies()) {
-			LOGGER.debug(thriftProxy.getName()+" "+Arrays.asList(thriftProxy.getProcessMap().keySet()));
-		}	
 	}
 
 	/**
@@ -262,33 +207,19 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 		// reset the Hystrix instance
 		Hystrix.reset();
 		// now shutdown all task handlers
+        for (AbstractHandlerRegistry registry:registries) {
+            try {
+                registry.shutdown(taskContext);
+            } catch (Exception e) {
+                LOGGER.warn("Error shutting down registry: " + registry.getClass().getName());
+            }
+        }
+        // finally close the context
 		for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : this.proxyHandlerContextsList) {
 			String[] taskHandlerBeanIds = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(TaskHandler.class);
-			for(String taskHandlerBeanId : taskHandlerBeanIds) {
-				TaskHandler taskHandler = (TaskHandler) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
-				// shutdown the TaskHandler
-				try {
-					taskHandler.shutdown(this.taskContext);
-					taskHandler.setStatus(TaskHandler.INACTIVE);
-				} catch (Exception e) {
-					// just log a warning and continue with shutting down other task handlers
-					LOGGER.warn("Error shutting down TaskHandler {} . Error is : " + e.getMessage(),taskHandler.getName(), e);					
-				}
-			}
-			// finally close the context
 			proxyHandlerConfigInfo.getProxyHandlerContext().close();
 		}
-		this.proxyHandlerContextsList = null;		
-		// now shutdown the thrift proxy instances
-		for (ThriftProxy thriftProxy : this.thriftProxyRegistry.getAllThriftProxies()) {
-			try {
-				thriftProxy.shutdown();
-				thriftProxy.setStatus(ThriftProxy.INACTIVE);
-			} catch (Exception e) {
-				// just log a warning and continue with shutting down other thrift proxies
-				LOGGER.warn("Error shutting down ThriftProxy {} . Error is : " + e.getMessage(),thriftProxy.getName(), e);					
-			}
-		}
+		this.proxyHandlerContextsList = null;
 	}
 
 	/**
@@ -358,25 +289,17 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 		proxyHandlerConfigInfo.loadProxyHandlerContext(proxyHandlerCL);
 		this.proxyHandlerContextsList.add(proxyHandlerConfigInfo);
 		
-		//Init the TaskHandler
-		String[] taskHandlerBeanIds = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(TaskHandler.class);
-		for(String taskHandlerBeanId : taskHandlerBeanIds) {
-			TaskHandler taskHandler = (TaskHandler) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
-			// init the TaskHandler
+		String[] registryBeans = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
+		for(String registryBean:registryBeans) {
+			AbstractHandlerRegistry registry = (AbstractHandlerRegistry) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
+			// init the Registry
 			try {
-				this.taskContext = (TaskContext)ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
-				LOGGER.info("Initing TaskHandler: "+taskHandler.getName());
-				taskHandler.init(this.taskContext);
-				taskHandler.setStatus(TaskHandler.ACTIVE);
+				this.taskContext = (TaskContext) ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
+                registry.init(this.taskContext);
 			} catch (Exception e) {
-				// TODO see if there are TaskHandlerS that can fail init but still permit others to load and the proxy can become active
-				LOGGER.error("Error initing TaskHandler {} . Error is : " + e.getMessage(),taskHandler.getName(), e);
-				throw new PlatformException("Error initing TaskHandler : " + taskHandler.getName(), e);
+                LOGGER.error("Error initializing registry: " + registry.getClass().getName());
+				throw new PlatformException("Error initializing registry: " + registry.getClass().getName(), e);
 			}
-			//Register the taskHandler for all the commands it handles
-			this.taskHandlerRegistry.registerTaskHandler(taskHandler);
-			//Add the file path to SPConfigService (for configuration console)
-			this.configService.addTaskHandlerConfigPath(proxyHandlerConfigInfo.getProxyHandlerConfigXML(), taskHandler);
 		}
 	}
 }
