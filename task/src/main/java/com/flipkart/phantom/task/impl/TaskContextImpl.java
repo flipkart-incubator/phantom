@@ -24,7 +24,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.TaskHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

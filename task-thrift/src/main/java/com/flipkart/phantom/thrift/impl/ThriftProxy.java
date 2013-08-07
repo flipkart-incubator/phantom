@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.thrift.spi;
+package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.thrift.impl.proxy.SocketObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.utils.StringUtils;
 import org.apache.thrift.ProcessFunction;
-import org.apache.thrift.transport.TSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <code>ThriftProxy</code> holds the details of a ThriftProxy and loads the necessary Thrift Classes.
@@ -35,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public abstract class ThriftProxy {
+public abstract class ThriftProxy extends AbstractHandler {
 
 	/** The default Thrift interface class name for Thrift services */
 	private static final String DEFAULT_SERVICE_INTERFACE_NAME="Iface";
@@ -43,12 +41,6 @@ public abstract class ThriftProxy {
 	/** The default Thrift TProcessor class name */
 	private static final String DEFAULT_PROCESSOR_CLASS_NAME="Processor";
 	
-	/** The status showing the ThriftProxy is inited and ready to use */
-	public static int ACTIVE = 1;
-
-	/** The status showing the ThriftProxy is not inted/has been shutdown and should not be used */
-	public static int INACTIVE = 0;
-
 	/** The default executor timeout in millis*/
 	private static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
 	
@@ -70,77 +62,21 @@ public abstract class ThriftProxy {
 	@SuppressWarnings("rawtypes")
 	private Map<String, ProcessFunction> processMap = new HashMap<String, ProcessFunction>();
 	
-	/** The status of this ThriftProxy (active/inactive) */
-	private AtomicInteger status = new AtomicInteger(INACTIVE);
-	
-    /** Properties for initializing Generic Object Pool */
-    private int poolSize =10;
-    private long maxWait = 100;
-    private int maxIdle = poolSize;
-    private int minIdle = poolSize/2;
-    private long timeBetweenEvictionRunsMillis = 20000;
-
-    /** The GenericObjectPool object */
-    private GenericObjectPool<Socket> socketPool;
 
 	/**
 	 * Initialize this ThriftProxy
 	 */
-	public void init() throws Exception {
-		if(this.thriftServiceClass == null) {
+	public void init(TaskContext context) throws Exception {
+		if (this.thriftServiceClass == null) {
 			throw new AssertionError("The 'thriftServiceClass' may not be null");
 		}
-		if(this.processMap==null || this.processMap.isEmpty()) {
+		if (this.processMap == null || this.processMap.isEmpty()) {
 			throw new AssertionError("ProcessFunctions not populated. Maybe The 'thriftServiceClass' is not a valid class?");
 		}
-		if (this.thriftTimeoutMillis == -1) { // implying none set
+		if (this.thriftTimeoutMillis == -1) {
 			throw new Exception("'thriftTimeoutMillis' must be set to a non-negative value!");
 		}
-
-        //Create pool
-        this.socketPool = new GenericObjectPool<Socket>(
-                new SocketObjectFactory(this),
-                this.poolSize,
-                GenericObjectPool.WHEN_EXHAUSTED_GROW,
-                this.maxWait ,
-                this.maxIdle ,
-                this.minIdle , false, false,
-                this.timeBetweenEvictionRunsMillis,
-                GenericObjectPool.DEFAULT_NUM_TESTS_PER_EVICTION_RUN,
-                GenericObjectPool.DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
-                true);
 	}
-
-	/**
-	 * Gets a pooled TSocket instance
-	 * @return a TSocket instance
-	 */
-    public TSocket getPooledSocket() {
-        try {
-            return new TSocket(this.socketPool.borrowObject());
-        } catch (Exception e) {
-            LOGGER.error("Error while borrowing TSocket : " + e.getMessage(),e);
-            throw new RuntimeException("Error while borrowing TSocket : " + e.getMessage(),e);
-        }
-    }
-    
-    /**
-     * Returns the specified TSocket back to the pool
-     * @param socket the pooled TSocket instance
-     * @param isConnectionValid flag to indicate if the socket was found to be invalid during use
-     */
-    public void returnPooledSocket(TSocket socket, boolean isConnectionValid) {
-        try {
-        	if (isConnectionValid) {
-        		this.socketPool.returnObject(socket.getSocket());
-        	} else {
-        		this.socketPool.invalidateObject(socket.getSocket());
-        	}
-        } catch (Exception e) {
-            LOGGER.error("Error while returning TSocket : " + e.getMessage(),e);
-            throw new RuntimeException("Error while borrowing TSocket : " + e.getMessage(),e);
-        }
-    }
 
 	/**
 	 * Get the name of this ThriftProxy.
@@ -148,14 +84,35 @@ public abstract class ThriftProxy {
 	 */
 	public String getName() {
 		return this.thriftServiceClass;
-	} 
+	}
+
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getDetails()
+     */
+    public String getDetails() {
+        String details = "Service Class: " + this.getThriftServiceClass() + "\n";
+        details += "Endpoint: " + this.getThriftServer() + ":" + this.getThriftPort() + "\n";
+        details += "Timeout: " + this.getThriftTimeoutMillis() + "ms\n";
+        details += "Executor Timeout: " + this.getExecutorTimeout() + "\n";
+        details += "Methods: " + StringUtils.join((String[])processMap.keySet().toArray(),",") + "\n";
+        return details;
+    }
+
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getType()
+     */
+    public String getType() {
+        return "ThriftProxy";
+    }
 
 	/**
 	 * Shutdown hooks provided by the ThriftProxy
 	 */
-	public void shutdown() throws Exception {
-		this.status.set(INACTIVE);
-	}	
+	public void shutdown(TaskContext context) throws Exception {
+
+	}
 	
 	/** Getter/Setter methods */
 	public String getThriftServer() {
@@ -200,56 +157,12 @@ public abstract class ThriftProxy {
 	public Map<String, ProcessFunction> getProcessMap() {
 		return processMap;
 	}
-	public boolean isActive() {
-		if(this.status.intValue()==ThriftProxy.ACTIVE) {
-			return true;
-		}
-		return false;
-	}	
-	/** Get the status of this ThriftProxy */
-	public int getStatus() {
-		return status.get();
-	}
-	/** Set the status of this ThriftProxy */
-	public void setStatus(int status) {
-		this.status.set(status);
-	}
 	public int getExecutorTimeout() {
 		return this.executorTimeout;
 	}
 	public void setExecutorTimeout(int executorTimeout) {
 		this.executorTimeout = executorTimeout;
 	}	
-    public int getPoolSize() {
-        return poolSize;
-    }
-    public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
-    }
-    public long getMaxWait() {
-        return maxWait;
-    }
-    public void setMaxWait(long maxWait) {
-        this.maxWait = maxWait;
-    }
-    public int getMaxIdle() {
-        return maxIdle;
-    }
-    public void setMaxIdle(int maxIdle) {
-        this.maxIdle = maxIdle;
-    }
-    public int getMinIdle() {
-        return minIdle;
-    }
-    public void setMinIdle(int minIdle) {
-        this.minIdle = minIdle;
-    }
-    public long getTimeBetweenEvictionRunsMillis() {
-        return timeBetweenEvictionRunsMillis;
-    }
-    public void setTimeBetweenEvictionRunsMillis(long timeBetweenEvictionRunsMillis) {
-        this.timeBetweenEvictionRunsMillis = timeBetweenEvictionRunsMillis;
-    }
 	/** End Getter/Setter methods */
 
 }

@@ -47,7 +47,7 @@ public class HandlerConfigController {
     /** Logger instance for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(HandlerConfigController.class);
 
-	/** Config service for fetching/modifying configuration files of Handlers */
+    /** Config service for fetching/modifying configuration files of Handlers */
 	private SPConfigService configService;
 	
 	/**
@@ -70,16 +70,14 @@ public class HandlerConfigController {
     public String configuration(ModelMap model, HttpServletRequest request) {
         model.addAttribute("handlers", this.configService.getAllHandlers());
         model.addAttribute("networkServers", this.configService.getDeployedNetworkServers());
-        model.addAttribute("servletPath", request.getContextPath());
         return "configuration";
     }
 
     @RequestMapping(value = {"/viewConfig/**"}, method = RequestMethod.GET)
     public String viewConfig(ModelMap model, HttpServletRequest request, @ModelAttribute("handlerName") String handlerName) {
         model.addAttribute("handlers", this.configService.getAllHandlers());
-        model.addAttribute("servletPath", request.getContextPath());
         Resource handlerFile = this.configService.getHandlerConfig(handlerName);
-        if(handlerFile==null) {
+        if (handlerFile == null) {
             model.addAttribute("XMLFileContents","Sorry, this file cannot be viewed. Maybe this TaskHandler wasn't defined in spring-proxy-handler-config.xml");
         } else {
             model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(handlerFile));
@@ -91,22 +89,22 @@ public class HandlerConfigController {
     public String reInitHandler(ModelMap model, HttpServletRequest request, @ModelAttribute("handlerName") String handlerName) {
         String message;
         try {
-            this.configService.reinitTaskHandler(handlerName);
-            message = "Successfully reinited "+handlerName;
+            this.configService.reinitHandler(handlerName);
+            message = "Successfully reinitialized handler " + handlerName;
         } catch (Exception e) {
-            LOGGER.error("Error reiniting",e);
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            message = "Error while re deploying handler: <br />";
-            message += sw.toString(); // stack trace as a string
-            if(e.getCause()!=null) {
+            message = "Error while reinitializing handler: \n";
+            message += sw.toString() + "\n";
+            if (e.getCause() != null) {
                 sw = new StringWriter();
                 pw = new PrintWriter(sw);
                 e.getCause().printStackTrace(pw);
-                message+="<br /> Caused by: ";
-                message += sw.toString(); // stack trace as a string
+                message += "Caused by: ";
+                message += sw.toString() + "\n";
             }
+            LOGGER.error("Error reinitializing handler " + handlerName,e);
         }
         model.addAttribute("message",message);
         return "message";
@@ -161,14 +159,15 @@ public class HandlerConfigController {
 ///		}
 ///		return "modifyConfig";
 ///	}
-	
 
-	/** Getter/Setter methods */
-	public SPConfigService getConfigService() {
-		return configService;
-	}
-	public void setConfigService(SPConfigService configService) {
-		this.configService = configService;
-	}
-	/** End Getter/Setter methods */
+    /** getter / setter */
+    public SPConfigService getConfigService() {
+        return configService;
+    }
+    public void setConfigService(SPConfigService configService) {
+        this.configService = configService;
+    }
+    /** end getter / setter */
+
+
 }

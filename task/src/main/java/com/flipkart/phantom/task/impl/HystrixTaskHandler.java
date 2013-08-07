@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.task.spi;
+package com.flipkart.phantom.task.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
@@ -29,7 +29,7 @@ import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
  * @author devashishshankar
  * @version 1.0, 19 March, 2013
  */
-public abstract class HystrixTaskHandler extends TaskHandler {	
+public abstract class HystrixTaskHandler extends TaskHandler {
 
 	/** The default executor timeout in millis*/
 	public static final int DEFAULT_EXECUTOR_TIMEOUT = 10000;

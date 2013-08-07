@@ -19,7 +19,8 @@ import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
 import com.flipkart.phantom.task.impl.TaskContextFactory;
-import com.flipkart.phantom.task.spi.TaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -52,7 +53,7 @@ public class SPConfigServiceImpl  implements SPConfigService {
 	private ServiceProxyComponentContainer componentContainer;
 	
 	/** The map holding the mapping of a config file to it's handler name */
-	private Map<URI, List<TaskHandler> > configURItoHandlerName= new HashMap<URI,List<TaskHandler>>();
+	private Map<URI, List<AbstractHandler> > configURItoHandlerName = new HashMap<URI,List<AbstractHandler>>();
 	
 	/** The list of deployed TCP Servers */
 	private List<AbstractNetworkServer> deployedNetworkServers = new LinkedList<AbstractNetworkServer>();
@@ -60,109 +61,116 @@ public class SPConfigServiceImpl  implements SPConfigService {
     /** List of repositories */
     private List<AbstractHandlerRegistry> registries = new ArrayList<AbstractHandlerRegistry>();
 
-    public void addHandlerRegistry(AbstractHandlerRegistry registry) {
-        registries.add(registry);
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getDeployedNetworkServers()
+     */
+    public List<AbstractNetworkServer> getDeployedNetworkServers() {
+        return deployedNetworkServers;
     }
 
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addDeployedNetworkServer(com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer)
+     */
     public void addDeployedNetworkServer(AbstractNetworkServer server) {
         deployedNetworkServers.add(server);
     }
 
     /**
-     * @param taskHandler The name of the TaskHandler to be re-inited
-     * @throws Exception in case of errors
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addHandlerRegistry(com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry)
      */
-    public void reinitTaskHandler(String taskHandler) throws Exception {
-        for (AbstractHandlerRegistry registry : registries) {
-            if (registry.getHandlers().containsKey(taskHandler)) {
-                registry.reinitHandler(taskHandler,TaskContextFactory.getTaskContext());
-            }
-        }
+    public void addHandlerRegistry(AbstractHandlerRegistry registry) {
+        registries.add(registry);
     }
-	/**
-	 * Interface method implementation.
-	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getHandlerConfig(java.lang.String)
-	 */
-	public Resource getHandlerConfig(String handlerName) {
-		for(URI configFile  : this.configURItoHandlerName.keySet()) {
-			for(TaskHandler taskHandler : this.configURItoHandlerName.get(configFile)) {
-				if(taskHandler.getName().equals(handlerName)) {
-					return new FileSystemResource(new File(configFile));
-				}
-			}
-		}
-		return null;
-	}
-	
-	///**
-	// * Interface method implementation.
-	// * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#modifyHandlerConfig(java.lang.String, org.springframework.core.io.ByteArrayResource)
-	// */
-	//public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) {
-	//	//Check if Handler file can be read
-	//	File oldHandlerFile = null;
-	//	try {
-	//		oldHandlerFile = this.getHandlerConfig(handlerName).getFile();
-	//	} catch (IOException e1) {
-	//		LOGGER.error("Handler Config File for handler: "+handlerName+" not found. Returning");
-	//		throw new PlatformException("File not found for handler: "+handlerName,e1);
-	//	}
-	//	if(!oldHandlerFile.exists()) {
-	//		LOGGER.error("Handler Config File: "+oldHandlerFile.getAbsolutePath()+" doesn't exist. Returning");
-	//		throw new PlatformException("File not found: "+oldHandlerFile.getAbsolutePath());
-	//	}
-	//	if(!oldHandlerFile.canRead()) {
-	//		LOGGER.error("No read permission for: "+oldHandlerFile.getAbsolutePath()+". Returning");
-	//		throw new PlatformException("Read permissions not found for file: "+oldHandlerFile.getAbsolutePath());
-	//	}
-	//	//Check if write permission is there
-	//	if(!oldHandlerFile.canWrite()) {
-	//		LOGGER.error("No write permission for: "+oldHandlerFile.getAbsolutePath()+". Write permissions are required to modify handler confib");
-	//		throw new PlatformException("Required permissions not found for modifying file: "+oldHandlerFile.getAbsolutePath());
-	//	}
-	//	LOGGER.debug("Reloading configuration for handler: "+handlerName);
-	//	this.createPrevConfigFile(handlerName);
-	//	LOGGER.debug("Created previous configuration file");
-	//	try {
-	//		this.upload(modifiedHandlerConfigFile.getByteArray(), oldHandlerFile.getAbsolutePath());
-	//	} catch (IOException e) {
-	//		LOGGER.error("IOException while uploading file to path: "+oldHandlerFile.getAbsolutePath());
-	//		this.restorePrevConfigFile(handlerName);
-	//		throw new PlatformException(e);
-	//	}
-	//	//Unregister the TaskHandlers in the file
-	//	for(TaskHandler taskHandler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
-	//		this.taskHandlerRegistry.unregisterTaskHandler(taskHandler);
-	//		LOGGER.debug("Unregistered TaskHandler: "+taskHandler.getName());
-	//	}
-	//	try {
-	//		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
-	//	} catch(Exception e) {
-	//		this.restorePrevConfigFile(handlerName);
-	//		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
-	//		throw new PlatformException(e);
-	//	}
-	//	this.removePrevConfigFile(handlerName);
-	//}
 
     /**
-     * Interface method implementation
-     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllHandlers()
+     * Interface method implementation.
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getHandlerConfig(java.lang.String)
      */
-	public Map<String,String> getAllHandlers() {
-        Map<String,String> allHandlers = new HashMap<String, String>();
-        for (AbstractHandlerRegistry registry : registries) {
-            allHandlers.putAll(registry.getHandlers());
+    public Resource getHandlerConfig(String handlerName) {
+        for (URI configFile: this.configURItoHandlerName.keySet()) {
+            for (AbstractHandler handler : this.configURItoHandlerName.get(configFile)) {
+                if (handler.getName().equals(handlerName)) {
+                    return new FileSystemResource(new File(configFile));
+                }
+            }
         }
-        return allHandlers;
-	}
-	
+        return null;
+    }
+
+    /**
+     * Interface method implementation.
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#modifyHandlerConfig(java.lang.String, org.springframework.core.io.ByteArrayResource)
+     */
+    public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) {
+
+    	// Check if exists
+    	File oldHandlerFile = null;
+    	try {
+    		oldHandlerFile = this.getHandlerConfig(handlerName).getFile();
+    	} catch (IOException e1) {
+    		LOGGER.error("Handler Config File for handler: "+handlerName+" not found. Returning");
+    		throw new PlatformException("File not found for handler: "+handlerName,e1);
+    	}
+    	if (!oldHandlerFile.exists()) {
+    		LOGGER.error("Handler Config File: "+oldHandlerFile.getAbsolutePath()+" doesn't exist. Returning");
+    		throw new PlatformException("File not found: "+oldHandlerFile.getAbsolutePath());
+    	}
+
+        // Check for read permissions
+    	if (!oldHandlerFile.canRead()) {
+    		LOGGER.error("No read permission for: "+oldHandlerFile.getAbsolutePath()+". Returning");
+    		throw new PlatformException("Read permissions not found for file: "+oldHandlerFile.getAbsolutePath());
+    	}
+
+    	// Check for write permissions
+    	if (!oldHandlerFile.canWrite()) {
+    		LOGGER.error("No write permission for: "+oldHandlerFile.getAbsolutePath()+". Write permissions are required to modify handler confib");
+    		throw new PlatformException("Required permissions not found for modifying file: "+oldHandlerFile.getAbsolutePath());
+    	}
+
+        // create backup
+    	this.createPrevConfigFile(handlerName);
+
+        // file_put_contents Java :-/
+    	try {
+    		this.upload(modifiedHandlerConfigFile.getByteArray(), oldHandlerFile.getAbsolutePath());
+    	} catch (IOException e) {
+    		LOGGER.error("IOException while uploading file to path: "+oldHandlerFile.getAbsolutePath());
+    		this.restorePrevConfigFile(handlerName);
+    		throw new PlatformException(e);
+    	}
+
+    	// Unregister the TaskHandlers in the file
+    	for (AbstractHandler handler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
+            // TODO unregister the handler
+    	}
+
+        // load component
+        // TODO this has bugs
+        // loading component destroys all beans in the config file given by the handler config info
+        // this mean this only works if only one handler per handler xml file
+    	try {
+    		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
+    	} catch(Exception e) {
+    		this.restorePrevConfigFile(handlerName);
+    		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
+    		throw new PlatformException(e);
+    	}
+    	this.removePrevConfigFile(handlerName);
+    }
+
+
 	/**
 	 * Creates a temporary file, which is a duplicate of the current config file,
 	 * with the name {@link SPConfigServiceImpl#PREV_HANDLER_FILE}
 	 * @param handlerName Name of the Handler
 	 */
 	private void createPrevConfigFile(String handlerName) {
+
+        // get current file
 		File configFile = null;
 		try {
 			configFile = this.getHandlerConfig(handlerName).getFile();
@@ -170,15 +178,13 @@ public class SPConfigServiceImpl  implements SPConfigService {
 			LOGGER.error("Exception while getting handlerConfigFile",e1);
 			throw new PlatformException("Exception while getting handlerConfigFile",e1);
 		}
+
+        // create the backup file
 		File prevFile = new File(configFile.getParent()+"/"+SPConfigServiceImpl.PREV_HANDLER_FILE);
-		try {
-			prevFile.createNewFile();
-		} catch (IOException e1) {
-			LOGGER.error("Unable to create file: "+prevFile.getAbsolutePath()+". Please check permissions",e1);
-			throw new PlatformException("Unable to create file: "+prevFile.getAbsolutePath()+". Please check permissions",e1);
-		}
-		if(configFile.exists()) {
-			if(prevFile.exists()) {
+
+        // move current -> backup, create new current file
+		if (configFile.exists()) {
+			if (prevFile.exists()) {
 				prevFile.delete();
 			}
 			configFile.renameTo(prevFile);
@@ -187,9 +193,10 @@ public class SPConfigServiceImpl  implements SPConfigService {
 			} catch (IOException e) {
 				LOGGER.error("IOException while clearing config File",e);
 				throw new PlatformException("IOException while clearing config File",e);
-				}
+            }
 			prevFile.deleteOnExit();
 		}
+
 	}
 
 
@@ -206,7 +213,7 @@ public class SPConfigServiceImpl  implements SPConfigService {
 		}
 		String prevFilePath = configFile.getParent()+SPConfigServiceImpl.PREV_HANDLER_FILE;
 		File prevFile = new File(prevFilePath);
-		if(prevFile.exists()){
+		if (prevFile.exists()) {
 			prevFile.delete();  // DELETE previous XML File
 		}
 	}
@@ -229,7 +236,6 @@ public class SPConfigServiceImpl  implements SPConfigService {
 		if(prevFile.exists()) {
 			prevFile.renameTo(configFile);
 		} 
-		//TODO: In case of new handler, add: else { this.jobXMLFile.remove(handlerName); }
 	}
 
 	/**
@@ -237,34 +243,62 @@ public class SPConfigServiceImpl  implements SPConfigService {
 	 * or parent directory doesn't exist
 	 */
 	private void upload(byte[] fileContents, String destPath) throws IOException {
+
 		File destFile = new File(destPath);
-		LOGGER.debug("Uploading fileContents to path: "+destPath);
-		//If exists, overwrite
-		if(destFile.exists()) {
+
+		// If exists, overwrite
+		if (destFile.exists()) {
 			destFile.delete();
 			destFile.createNewFile();
 		}
-		//Creating directory structure
+		// Creating directory structure
 		try {
 			destFile.getParentFile().mkdirs();
 		} catch(Exception e) {
 			LOGGER.error("Unable to create directory structure for uploading file");
 			throw new PlatformException("Unable to create directory structure for uploading file");
 		}
+
 		FileOutputStream fos = new FileOutputStream(destFile);
 		fos.write(fileContents);						
 	}
-	
+
 	/**
 	 * Interface method implementation.
-	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addTaskHandlerConfigPath(java.io.File, com.flipkart.phantom.task.spi.TaskHandler)
+	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addHandlerConfigPath(java.io.File, com.flipkart.phantom.task.spi.AbstractHandler)
 	 */
-	public void addTaskHandlerConfigPath(File taskHandlerFile, TaskHandler taskHandler) {
-		if(this.configURItoHandlerName.get(taskHandlerFile.toURI())==null) {
-			this.configURItoHandlerName.put(taskHandlerFile.toURI(), new LinkedList<TaskHandler>());
+	public void addHandlerConfigPath(File taskHandlerFile, AbstractHandler handler) {
+		if (this.configURItoHandlerName.get(taskHandlerFile.toURI()) == null) {
+			this.configURItoHandlerName.put(taskHandlerFile.toURI(), new LinkedList<AbstractHandler>());
 		}
-		this.configURItoHandlerName.get(taskHandlerFile.toURI()).add(taskHandler);
+		this.configURItoHandlerName.get(taskHandlerFile.toURI()).add(handler);
 	}
+
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#reinitHandler(String)
+     * @param handlerName The name of the TaskHandler to be re-inited
+     * @throws Exception in case of errors
+     */
+    public void reinitHandler(String handlerName) throws Exception {
+        for (AbstractHandlerRegistry registry : registries) {
+            if (registry.getHandler(handlerName) != null) {
+                registry.reinitHandler(handlerName,TaskContextFactory.getTaskContext());
+            }
+        }
+    }
+
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllHandlers()
+     */
+    public List<AbstractHandler> getAllHandlers() {
+        List<AbstractHandler> list = new ArrayList<AbstractHandler>();
+        for (AbstractHandlerRegistry registry : registries) {
+            list.addAll(registry.getHandlers());
+        }
+        return list;
+    }
 
     /** Getter/Setter methods */
 	public ServiceProxyComponentContainer getComponentContainer() {
@@ -272,9 +306,6 @@ public class SPConfigServiceImpl  implements SPConfigService {
 	}
 	public void setComponentContainer(ServiceProxyComponentContainer componentContainer) {
 		this.componentContainer = componentContainer;
-	}
-	public List<AbstractNetworkServer> getDeployedNetworkServers() {
-		return deployedNetworkServers;
 	}
 	/** End Getter/Setter methods */
 }

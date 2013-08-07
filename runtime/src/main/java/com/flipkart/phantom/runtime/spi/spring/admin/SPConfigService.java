@@ -17,7 +17,8 @@
 package com.flipkart.phantom.runtime.spi.spring.admin;
 
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.task.spi.TaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -37,11 +38,20 @@ public interface SPConfigService {
 
     /**
      * Get all the Deployed {@link com.flipkart.phantom.runtime.impl.server.netty.TCPNettyServer} instances
+     * @return List list of network servers
      */
     public List<AbstractNetworkServer> getDeployedNetworkServers();
 
+    /**
+     * Add an {@link AbstractNetworkServer} to the list of currently deployed network servers
+     * @param server The {@link AbstractNetworkServer} instance
+     */
     public void addDeployedNetworkServer(AbstractNetworkServer server);
 
+    /**
+     * Add an {@link AbstractHandlerRegistry} to the list of handler registries
+     * @param registry The {@link AbstractHandlerRegistry} instance
+     */
     public void addHandlerRegistry(AbstractHandlerRegistry registry);
 
 	/**
@@ -56,22 +66,22 @@ public interface SPConfigService {
 	 * @param modifiedHandlerConfigFile This will be set as the handler configuration file for all Handlers present in the File
 	 * @throws PlatformException In case of inconsistencies
 	 */
-	//public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) throws PlatformException;
+	public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) throws PlatformException;
 
 	/**
 	 * Method to inject TaskHandler file name 
 	 */
-	void addTaskHandlerConfigPath(File taskHandlerFile, TaskHandler taskHandler);
+	void addHandlerConfigPath(File taskHandlerFile, AbstractHandler handler);
 
     /**
      * Re-initializes a TaskHandler, if found. Calls the destroy() and init() methods.
      * @param taskHandler The name of the TaskHandler to be re-inited
      */
-    public void reinitTaskHandler(String taskHandler) throws Exception;
+    public void reinitHandler(String taskHandler) throws Exception;
 
     /**
      * Get all handlers info
      */
-    public Map<String,String> getAllHandlers();
+    public List<AbstractHandler> getAllHandlers();
 
 }

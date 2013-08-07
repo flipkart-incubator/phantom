@@ -17,9 +17,7 @@ package com.flipkart.phantom.task.impl;
 
 import java.util.Map;
 
-import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.TaskHandler;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;

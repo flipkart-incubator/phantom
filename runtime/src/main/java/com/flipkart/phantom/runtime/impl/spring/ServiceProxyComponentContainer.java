@@ -22,7 +22,7 @@ import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.ProxyHandlerConfigInfo;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
 import com.netflix.hystrix.Hystrix;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import org.slf4j.Logger;
@@ -81,8 +81,8 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 	/** The common proxy handler beans context*/
 	private static AbstractApplicationContext commonProxyHandlerBeansContext;    
 
-	/** The list of ProxyHandlerConfigInfo holding all proxy handler instances loaded by this container */
-	private List<ProxyHandlerConfigInfo> proxyHandlerContextsList = new LinkedList<ProxyHandlerConfigInfo>();
+	/** The list of HandlerConfigInfo holding all proxy handler instances loaded by this container */
+	private List<HandlerConfigInfo> handlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
 
 	/** Local reference for all BootstrapExtensionS loaded by the Container and set on this ComponentContainer*/
 	private BootstrapExtension[] loadedBootstrapExtensions;
@@ -148,7 +148,7 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 
 		ServiceProxyComponentContainer.commonProxyHandlerBeansContext = new ClassPathXmlApplicationContext(new String[]{ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG},defaultCtxFactory.getCommonBeansContext());
 		// add the common proxy beans independently to the list of proxy handler contexts as common handlers are declared there
-		this.proxyHandlerContextsList.add(new ProxyHandlerConfigInfo(new File(ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG), null, ServiceProxyComponentContainer.commonProxyHandlerBeansContext));		
+		this.handlerConfigInfoList.add(new HandlerConfigInfo(new File(ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG), null, ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
 
 		// Get the Config Service Bean
 		this.configService = (SPConfigServiceImpl)ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.CONFIG_SERVICE_BEAN);
@@ -156,19 +156,26 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 
 		// Load additional if runtime nature is "server". This context is the new common beans context
 		if (RuntimeVariables.getRuntimeNature().equalsIgnoreCase(RuntimeConstants.SERVER)) {
-			ServiceProxyComponentContainer.commonProxyHandlerBeansContext = new ClassPathXmlApplicationContext(new String[]{ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG},
-					ServiceProxyComponentContainer.commonProxyHandlerBeansContext);
+			ServiceProxyComponentContainer.commonProxyHandlerBeansContext = new ClassPathXmlApplicationContext(
+                new String[]{ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG},
+                ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
+            );
 			// now add the common server nature proxy hander beans to the contexts list
-			this.proxyHandlerContextsList.add(new ProxyHandlerConfigInfo(new File(ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG), null, 
-					ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
+			this.handlerConfigInfoList.add(
+                new HandlerConfigInfo(
+                    new File(ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG),
+                    null,
+                    ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
+                )
+            );
 		}
 
        // // locate and load the individual proxy handler bean XML files using the common proxy handler beans context as parent
         File[] proxyHandlerBeansFiles = FileLocator.findFiles(ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG);
         for (File proxyHandlerBeansFile : proxyHandlerBeansFiles) {
-            ProxyHandlerConfigInfo proxyHandlerConfigInfo = new ProxyHandlerConfigInfo(proxyHandlerBeansFile);
+            HandlerConfigInfo handlerConfigInfo = new HandlerConfigInfo(proxyHandlerBeansFile);
             // load the proxy handler's appcontext
-            this.loadProxyHandlerContext(proxyHandlerConfigInfo);
+            this.loadProxyHandlerContext(handlerConfigInfo);
         }
 
 		// add the proxy listener beans to the contexts list (these have the thrift handlers)
@@ -177,21 +184,22 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 			// locate and load the service proxy listener defined in the file identified by {@link ServiceProxyFrameworkConstants#SPRING_PROXY_LISTENER_CONFIG}
 			AbstractApplicationContext listenerContext = new FileSystemXmlApplicationContext(
 					new String[] {FILE_PREFIX + proxyListenerBeanFile.getAbsolutePath()},
-					ServiceProxyComponentContainer.commonProxyHandlerBeansContext);
-			this.proxyHandlerContextsList.add(new ProxyHandlerConfigInfo(proxyListenerBeanFile, null, listenerContext));
+					ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
+            );
+			this.handlerConfigInfoList.add(new HandlerConfigInfo(proxyListenerBeanFile, null, listenerContext));
 		}
 
         // load all registries
-        for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : proxyHandlerContextsList) {
+        for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
 
             // handler registries
-            String[] registryBeans = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
+            String[] registryBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
             for (String registryBean:registryBeans) {
-                AbstractHandlerRegistry registry = (AbstractHandlerRegistry) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
+                AbstractHandlerRegistry registry = (AbstractHandlerRegistry) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
                 // init the Registry
                 try {
-                    this.taskContext = (TaskContext) ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
-                    registry.init(this.proxyHandlerContextsList,this.taskContext);
+                    this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
+                    registry.init(this.handlerConfigInfoList,this.taskContext);
                 } catch (Exception e) {
                     LOGGER.error("Error initializing registry: " + registry.getClass().getName());
                     throw new PlatformException("Error initializing registry: " + registry.getClass().getName(), e);
@@ -201,10 +209,9 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
             }
 
             // add all network servers to config
-            String[] networkServerBeans = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractNetworkServer.class);
+            String[] networkServerBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractNetworkServer.class);
             for (String networkServerBean : networkServerBeans) {
-                AbstractNetworkServer networkServer = (AbstractNetworkServer) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(networkServerBean);
-                configService.addDeployedNetworkServer(networkServer);
+                configService.addDeployedNetworkServer((AbstractNetworkServer) handlerConfigInfo.getProxyHandlerContext().getBean(networkServerBean));
             }
 
         }
@@ -228,10 +235,10 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
             }
         }
         // finally close the context
-		for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : this.proxyHandlerContextsList) {
-			proxyHandlerConfigInfo.getProxyHandlerContext().close();
+		for (HandlerConfigInfo handlerConfigInfo : this.handlerConfigInfoList) {
+			handlerConfigInfo.getProxyHandlerContext().close();
 		}
-		this.proxyHandlerContextsList = null;
+		this.handlerConfigInfoList = null;
 	}
 
 	/**
@@ -262,44 +269,44 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 			throw new UnsupportedOperationException("Proxy handers can be loaded only from files by name : " + 
 					ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG + ". Specified resource is : " + resource.toString());
 		}
-		loadProxyHandlerContext(new ProxyHandlerConfigInfo(((FileSystemResource)resource).getFile()));
+		loadProxyHandlerContext(new HandlerConfigInfo(((FileSystemResource)resource).getFile()));
 	}
 
 	/**
-	 * Loads the proxy handler context from path specified in the ProxyHandlerConfigInfo. Looks for file by name ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG. 
-	 * @param proxyHandlerConfigInfo containing absolute path to the proxy handler's configuration location i.e. folder
+	 * Loads the proxy handler context from path specified in the HandlerConfigInfo. Looks for file by name ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG.
+	 * @param handlerConfigInfo containing absolute path to the proxy handler's configuration location i.e. folder
 	 */
-	private void loadProxyHandlerContext(ProxyHandlerConfigInfo proxyHandlerConfigInfo) {
+	private void loadProxyHandlerContext(HandlerConfigInfo handlerConfigInfo) {
 		// check if a context exists already for this config path 
-		for (ProxyHandlerConfigInfo loadedProxyHandlerConfigInfo : this.proxyHandlerContextsList) {
-			if (loadedProxyHandlerConfigInfo.equals(proxyHandlerConfigInfo)) {
-				proxyHandlerConfigInfo = loadedProxyHandlerConfigInfo;
+		for (HandlerConfigInfo loadedHandlerConfigInfo : this.handlerConfigInfoList) {
+			if (loadedHandlerConfigInfo.equals(handlerConfigInfo)) {
+				handlerConfigInfo = loadedHandlerConfigInfo;
 				break;
 			}
 		}
-		if (proxyHandlerConfigInfo.getProxyHandlerContext() != null) {
+		if (handlerConfigInfo.getProxyHandlerContext() != null) {
 			// close the context and remove from list
-			proxyHandlerConfigInfo.getProxyHandlerContext().close();
-			this.proxyHandlerContextsList.remove(proxyHandlerConfigInfo);
+			handlerConfigInfo.getProxyHandlerContext().close();
+			this.handlerConfigInfoList.remove(handlerConfigInfo);
 		}
 		ClassLoader proxyHandlerCL = this.tccl;
 		// check to see if the proxy has handler and dependent binaries deployed outside of the runtime class path. If yes, include them using a custom URL classloader.
-		File customLibPath = new File (proxyHandlerConfigInfo.getProxyHandlerConfigXML().getParentFile(), ProxyHandlerConfigInfo.BINARIES_PATH);
+		File customLibPath = new File (handlerConfigInfo.getXmlConfigFile().getParentFile(), HandlerConfigInfo.BINARIES_PATH);
 		if (customLibPath.exists() && customLibPath.isDirectory()) {
 			try {
 				File[] libFiles = customLibPath.listFiles();
 				URL[] libURLs = new URL[libFiles.length];
 				for (int i=0; i < libFiles.length; i++) {
-					libURLs[i] = new URL(ProxyHandlerConfigInfo.FILE_PREFIX + libFiles[i].getAbsolutePath());
+					libURLs[i] = new URL(HandlerConfigInfo.FILE_PREFIX + libFiles[i].getAbsolutePath());
 				}
 				proxyHandlerCL = new URLClassLoader(libURLs, this.tccl);
 			} catch (MalformedURLException e) {
 				throw new PlatformException(e);
 			}
 		} 
-		// now load the proxy handler context and add it into the proxyHandlerContextsList list
-		proxyHandlerConfigInfo.loadProxyHandlerContext(proxyHandlerCL,ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext());
-		this.proxyHandlerContextsList.add(proxyHandlerConfigInfo);
+		// now load the proxy handler context and add it into the handlerConfigInfoList list
+		handlerConfigInfo.loadProxyHandlerContext(proxyHandlerCL,ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext());
+		this.handlerConfigInfoList.add(handlerConfigInfo);
 	}
 
 }

@@ -31,14 +31,21 @@
 		<h2>Handlers</h2>
 		<table id = "sp-conf-table" class="bordered-table">
 			<tr>
-				<th> Handler Name </th>
-				<th> Description </th>
+				<th>Handler Name</th>
+				<th>Handler Type</th>
+				<th>Details</th>
+				<th>View Config</th>
+				<th>Reinitialize</th>
 			</tr>
-			<#list handlers?keys as handlerName>
+			<#list handlers as handler>
 				<tr>
-					<#assign job_url><@spring.url relativeUrl="/viewConfig/handler/${handlerName}"/></#assign>
-					<td><a href="${job_url}">${handlerName}</a></td>
-					<td>${handlers[handlerName]}</td>
+					<#assign config_url><@spring.url relativeUrl="/viewConfig/handler/${handler.getName()}"/></#assign>
+					<#assign reinit_url><@spring.url relativeUrl="/reInit/handler/${handler.getName()}"/></#assign>
+					<td>${handler.getName()}</td>
+					<td>${handler.getType()}</td>
+					<td style="white-space: pre-wrap">${handler.getDetails()}</td>
+					<td><a href="${config_url}">View Config</a></td>
+					<td><a href="${reinit_url}" onClick="return confirm('Are you sure you want to reinitialize this handler? This means the handler will not be able to serve requests when it is initializing.');">Reinitialize</a></td>
 				</tr>
 			</#list>
 		</table>

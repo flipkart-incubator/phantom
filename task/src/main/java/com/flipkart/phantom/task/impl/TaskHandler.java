@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.task.spi;
+package com.flipkart.phantom.task.impl;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -41,7 +42,7 @@ import org.trpr.platform.core.PlatformException;
  * @version 1.0, 19 March, 2013
  * @version 2.0, 11 July, 2013
  */
-public abstract class TaskHandler implements DisposableBean {
+public abstract class TaskHandler extends AbstractHandler implements DisposableBean {
 
     /** Log instance for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandler.class);
@@ -56,37 +57,49 @@ public abstract class TaskHandler implements DisposableBean {
      * These commands will be executed as the part of init()
      */
     protected List<Map<String,String>> initializationCommands = new LinkedList<Map<String,String>>();
- 
-	/** The status showing the TaskHandler is inited and ready to use */
-	public static int ACTIVE = 1;
 
-	/** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
-	public static int INACTIVE = 0;
+    /**
+     * Abstract method implementation
+     * @see AbstractHandler#getType()
+     */
+    @Override
+    public String getType() {
+        return "TaskHandler";
+    }
 
-	/** The status of this ThriftProxy (active/inactive) */
-	private AtomicInteger status = new AtomicInteger(INACTIVE);
-	
+    /**
+     * Abstract method implementation
+     * @see AbstractHandler#getDetails()
+     */
+    @Override
+    public String getDetails() {
+        String[] commands = getCommands();
+        if (commands != null && commands.length > 0) {
+            return "Commands: " + StringUtils.join(commands,", ");
+        }
+        return "No commands registered";
+    }
+
 	/**
 	 * Initialize this handler. The default implementation executes "initializationCommands" to initialize the TaskHandler (if found)
 	 * @param taskContext the TaskContext that manages this TaskHandler
 	 */
 	public void init(TaskContext taskContext) throws Exception {
-        if(this.initializationCommands==null || this.initializationCommands.size()==0) {
-			LOGGER.warn("No initialization commands specified for the TaskHandler: "+this.getName());
-			return;
-		}
-		for(Map<String,String> initParam : this.initializationCommands) {
-			String commandName = initParam.get("commandName");
-			if(commandName==null) {
-				LOGGER.error("Fatal error. commandName not specified in initializationCommands for TaskHandler: "+this.getName());
-				throw new UnsupportedOperationException("Fatal error. commandName not specified in initializationCommands of TaskHandler: "+this.getName());
-			}
-            //Pass a copy of initParam
-			TaskResult result = this.execute(taskContext,commandName, new HashMap<String, String>(initParam), null);
-			if(result!=null && result.isSuccess()==false) {
-				throw new PlatformException("Initialization command: "+commandName+" failed for TaskHandler: "+this.getName()+" The params were: "+initParam);
-			}
-		}
+        if (this.initializationCommands == null || this.initializationCommands.size() == 0) {
+			LOGGER.warn("No initialization commands specified for the TaskHandler: " + this.getName());
+		} else {
+            for (Map<String,String> initParam : this.initializationCommands) {
+                String commandName = initParam.get(PARAM_COMMAND_NAME);
+                if (commandName == null) {
+                    LOGGER.error("Fatal error. commandName not specified in initializationCommands for TaskHandler: " + this.getName());
+                    throw new UnsupportedOperationException("Fatal error. commandName not specified in initializationCommands of TaskHandler: "+this.getName());
+                }
+                TaskResult result = this.execute(taskContext, commandName, new HashMap<String, String>(initParam), null);
+                if (result != null && result.isSuccess() == false) {
+                    throw new PlatformException("Initialization command: "+commandName+" failed for TaskHandler: "+this.getName()+" The params were: "+initParam);
+                }
+            }
+        }
 	}
 
 	/**
@@ -98,18 +111,6 @@ public abstract class TaskHandler implements DisposableBean {
 	 */
 	public abstract TaskResult execute(TaskContext taskContext, String command, Map<String,String> params, byte[] data) throws RuntimeException;
 
-	/**
-	 * Get the name of this handler.
-	 * @return the name of this handler
-	 */
-	public abstract String getName(); 
-
-	/**
-	 * Shutdown hooks provided by the TaskContext
-	 * @param taskContext the TaskContext that manages this TaskHandler
-	 */
-	public abstract void shutdown(TaskContext taskContext) throws Exception;
-	
 	/**
 	 * Returns the command names which this handler will handle.
 	 * @return commands
@@ -125,14 +126,6 @@ public abstract class TaskHandler implements DisposableBean {
 	}
 	
 	/** Getter/Setter methods */
-	/** Get the status of this Task Handler */
-	public int getStatus() {
-		return status.get();
-	}
-	/** Set the status of this Task Handler */
-	public void setStatus(int status) {
-		this.status.set(status);
-	}
 	public List<Map<String, String>> getInitializationCommands() {
 		return initializationCommands;
 	}

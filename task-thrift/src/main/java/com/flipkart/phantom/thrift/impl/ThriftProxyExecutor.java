@@ -16,8 +16,6 @@
 package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.thrift.spi.HystrixThriftProxy;
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
 import com.netflix.hystrix.*;
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;

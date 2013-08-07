@@ -16,14 +16,16 @@
 
 package com.flipkart.phantom.thrift.impl.registry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.registry.ProxyHandlerConfigInfo;
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
+import com.flipkart.phantom.thrift.impl.ThriftProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.PlatformException;
@@ -48,18 +50,18 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(java.util.List, com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
-    public void init(List<ProxyHandlerConfigInfo> proxyHandlerConfigInfoList, TaskContext taskContext) throws Exception {
-        for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : proxyHandlerConfigInfoList) {
-            String[] proxyBeanIds = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(ThriftProxy.class);
+    public void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+        for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
+            String[] proxyBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(ThriftProxy.class);
             for (String proxyBeanId : proxyBeanIds) {
-                ThriftProxy proxy = (ThriftProxy) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(proxyBeanId);
+                ThriftProxy proxy = (ThriftProxy) handlerConfigInfo.getProxyHandlerContext().getBean(proxyBeanId);
                 try {
-                    proxy.init();
-                    proxy.setStatus(ThriftProxy.ACTIVE);
+                    LOGGER.info("Initializing ThriftProxy: " + proxy.getName());
+                    proxy.init(taskContext);
+                    proxy.activate();
                 } catch (Exception e) {
-                    // TODO see if there are ThriftProxyS that can fail init but still permit others to load and the proxy can become active
-                    LOGGER.error("Error initing ThriftProxy {} . Error is : " + e.getMessage(),proxy.getName(), e);
-                    throw new PlatformException("Error initing ThriftProxy : " + proxy.getName(), e);
+                    LOGGER.error("Error initializing ThriftProxy {}. Error is: " + e.getMessage(), proxy.getName(), e);
+                    throw new PlatformException("Error initializing ThriftProxy: " + proxy.getName(), e);
                 }
                 this.proxies.put(proxy.getName(),proxy);
             }
@@ -71,15 +73,18 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#reinitHandler(String, com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
-    public void reinitHandler(String handlerName, TaskContext taskContext) throws Exception {
-        ThriftProxy proxy = this.proxies.get(handlerName);
-        try {
-            proxy.setStatus(ThriftProxy.INACTIVE);
-            this.proxies.get(handlerName).init();
-            proxy.setStatus(ThriftProxy.ACTIVE);
-        } catch (Exception e) {
-            LOGGER.error("Error initing HttpProxy {} . Error is : " + e.getMessage(),proxy.getName(), e);
-            throw new PlatformException("Error reinitialising HttpProxy: " + proxy.getName(), e);
+    public void reinitHandler(String name, TaskContext taskContext) throws Exception {
+        ThriftProxy proxy = this.proxies.get(name);
+        if (proxy != null) {
+            try {
+                proxy.deactivate();
+                proxy.shutdown(taskContext);
+                proxy.init(taskContext);
+                proxy.activate();
+            } catch (Exception e) {
+                LOGGER.error("Error initializing ThriftProxy {}. Error is: " + e.getMessage(), name, e);
+                throw new PlatformException("Error reinitializing ThriftProxy: " + name, e);
+            }
         }
     }
 
@@ -91,11 +96,12 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
     public void shutdown(TaskContext taskContext) throws Exception {
         for (String name: proxies.keySet()) {
             try {
-                proxies.get(name).shutdown();
+                LOGGER.info("Shutting down ThriftProxy: " + name);
+                proxies.get(name).shutdown(taskContext);
+                proxies.get(name).deactivate();
             } catch (Exception e) {
-                LOGGER.warn("Failed to shutdown thrift proxy: " + name, e);
+                LOGGER.warn("Failed to shutdown ThriftProxy: " + name, e);
             }
-            proxies.get(name).setStatus(ThriftProxy.INACTIVE);
         }
     }
 
@@ -104,24 +110,16 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandlers()
      */
     @Override
-    public Map<String, String> getHandlers() {
-        Map<String,String> handlers = new HashMap<String, String>();
-        for (String name: proxies.keySet()) {
-            String desc = "";
-            desc += "Host: " + proxies.get(name).getThriftServer();
-            desc += " Port: " + proxies.get(name).getThriftPort();
-            desc += " Timeout: " + proxies.get(name).getThriftTimeoutMillis() + "ms";
-            handlers.put(proxies.get(name).getName(),desc);
-        }
-        return handlers;
+    public List<AbstractHandler> getHandlers() {
+        return new ArrayList<AbstractHandler>(proxies.values());
     }
 
     /**
-     * Gets registered instance of ThriftProxy given name
-     * @param name String name of the proxy
-     * @return ThriftProxy instance registered
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandler(String)
      */
-    public ThriftProxy getProxy(String name) {
+    @Override
+    public AbstractHandler getHandler(String name) {
         return proxies.get(name);
     }
 

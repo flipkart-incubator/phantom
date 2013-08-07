@@ -18,7 +18,6 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.thrift;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
 import com.flipkart.phantom.thrift.impl.ThriftProxyExecutor;
 import com.flipkart.phantom.thrift.impl.ThriftProxyExecutorRepository;
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TProtocol;

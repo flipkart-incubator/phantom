@@ -51,9 +51,6 @@ public class HttpConnectionPool {
     /** The HTTP client */
     private HttpClient client;
 
-    /** Pool name */
-    private String name = "default";
-
     /** Host to connect to */
     private String host = "localhost";
 
@@ -82,10 +79,6 @@ public class HttpConnectionPool {
      * Initialize the connection pool
      */
     public void initConnectionPool() {
-
-        if (name.equals("default")) {
-            throw new RuntimeException("The HttpConnectionPool.name cannot be default");
-        }
 
         // max concurrent requests = max connections + request queue size
         this.processQueue = new Semaphore(requestQueueSize + maxConnections);
@@ -148,13 +141,6 @@ public class HttpConnectionPool {
     }
 
     /** Getters / Setters */
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getHost() {
         return host;

@@ -16,7 +16,7 @@
 
 package com.flipkart.phantom.thrift.impl.proxy;
 
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
+import com.flipkart.phantom.thrift.impl.ThriftProxy;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

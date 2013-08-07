@@ -20,9 +20,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
-import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.TaskHandler;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +76,9 @@ public class TaskHandlerExecutorRepository {
 			threadPoolName=commandName;
 			LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
 		}
-		TaskHandler taskHandler = this.taskHandlerRegistry.getTaskHandler(commandName);
+		TaskHandler taskHandler = this.taskHandlerRegistry.getTaskHandlerByCommand(commandName);
 		if(taskHandler!=null) {
-			if(taskHandler.getStatus()==TaskHandler.INACTIVE) {
+            if (!taskHandler.isActive()) {
 				LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
 				return null;
 			}

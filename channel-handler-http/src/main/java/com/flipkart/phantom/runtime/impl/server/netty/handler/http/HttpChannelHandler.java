@@ -18,7 +18,6 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
 import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
-import com.flipkart.phantom.http.spi.HttpProxy;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

@@ -16,10 +16,8 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.http.spi.HttpProxy;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.slf4j.Logger;
@@ -34,15 +32,13 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
 
-    /** logger */
-    private static Logger logger = LoggerFactory.getLogger(HttpProxyExecutor.class);
-
-    /** the HTTP request */
-    private HttpRequestBase request;
-
     /** method */
     String method;
+
+    /** uri */
     String uri;
+
+    /** data */
     byte[] data;
 
     /** the proxy client */
@@ -57,7 +53,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
             Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
             .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
             .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
-            .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getTimeout()))
+            .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getPool().getOperationTimeout()))
         );
         this.proxy = proxy;
         this.taskContext = taskContext;
@@ -83,7 +79,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
      */
     @Override
     protected HttpResponse getFallback() {
-        return proxy.fallbackRequest(this.request,taskContext);
+        return proxy.fallbackRequest(method,uri,data);
     }
 
 }

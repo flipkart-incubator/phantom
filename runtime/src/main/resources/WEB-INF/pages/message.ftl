@@ -1,3 +1,7 @@
+<#include "./../header.ftl">
+
 <#if (message??)>
-${message}
+	${message}
 </#if>
+
+<#include "./../footer.ftl">

@@ -22,12 +22,12 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
 import java.io.File;
 
 /**
- * The <code>ProxyHandlerConfigInfo</code> class is a structure that holds proxy handler configuration information and the ApplicationContext for the proxy handler
+ * The <code>HandlerConfigInfo</code> class is a structure that holds proxy handler configuration information and the ApplicationContext for the proxy handler
  * 
  * @author Regunath B
  * @version 1.0, 14 Mar 2013
  */
-public class ProxyHandlerConfigInfo {
+public class HandlerConfigInfo {
 
 	/** The sub-folder containing proxy handler and dependent binaries. This is used in addition to the proxy runtime classpath.
 	 *  This path is relative to the location where ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG file is found 
@@ -38,26 +38,26 @@ public class ProxyHandlerConfigInfo {
 	public static final String FILE_PREFIX = "file:";
 	
 	/** The the ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG file containing proxy handler bean */
-	private File proxyHandlerConfigXML;
+	private File xmlConfigFile;
 	
 	/** The path to proxy handler and dependent binaries*/
-	private String binariesPath = ProxyHandlerConfigInfo.BINARIES_PATH;
+	private String binariesPath = HandlerConfigInfo.BINARIES_PATH;
 	
-	/** The Spring ApplicationContext initialized using information contained in this ProxyHandlerConfigInfo*/
+	/** The Spring ApplicationContext initialized using information contained in this HandlerConfigInfo*/
 	private AbstractApplicationContext proxyHandlerContext;
 	
 	/**
 	 * Constructors
 	 */
-	public ProxyHandlerConfigInfo(File proxyHandlerConfigXML) {
-		this.proxyHandlerConfigXML = proxyHandlerConfigXML;
+	public HandlerConfigInfo(File xmlConfigFile) {
+		this.xmlConfigFile = xmlConfigFile;
 	}
-	public ProxyHandlerConfigInfo(File proxyHandlerConfigXML, String binariesPath) {
-		this(proxyHandlerConfigXML);
+	public HandlerConfigInfo(File xmlConfigFile, String binariesPath) {
+		this(xmlConfigFile);
 		this.binariesPath = binariesPath;
 	}
-	public ProxyHandlerConfigInfo(File proxyHandlerConfigXML, String binariesPath,AbstractApplicationContext proxyHandlerContext) {
-		this(proxyHandlerConfigXML,binariesPath);
+	public HandlerConfigInfo(File xmlConfigFile, String binariesPath, AbstractApplicationContext proxyHandlerContext) {
+		this(xmlConfigFile,binariesPath);
 		this.proxyHandlerContext = proxyHandlerContext;
 	}
 
@@ -72,7 +72,7 @@ public class ProxyHandlerConfigInfo {
 		// add the "file:" prefix to file names to get around strange behavior of FileSystemXmlApplicationContext that converts absolute path 
 		// to relative path
 		this.proxyHandlerContext = new FileSystemXmlApplicationContext(
-                new String[]{FILE_PREFIX + this.proxyHandlerConfigXML.getAbsolutePath()},
+                new String[]{FILE_PREFIX + this.xmlConfigFile.getAbsolutePath()},
 				applicationContext
         );
 		// now reset the thread's TCCL to the one that existed prior to loading the proxy handler
@@ -85,16 +85,16 @@ public class ProxyHandlerConfigInfo {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object object) {
-		ProxyHandlerConfigInfo otherConfigInfo = (ProxyHandlerConfigInfo)object;
-		return this.getProxyHandlerConfigXML().getAbsolutePath().equalsIgnoreCase(otherConfigInfo.getProxyHandlerConfigXML().getAbsolutePath());
+		HandlerConfigInfo otherConfigInfo = (HandlerConfigInfo)object;
+		return this.getXmlConfigFile().getAbsolutePath().equalsIgnoreCase(otherConfigInfo.getXmlConfigFile().getAbsolutePath());
 	}
 	
 	/**
-	 * Overriden superclass method. Prints the proxyHandlerConfigXML details
+	 * Overriden superclass method. Prints the xmlConfigFile details
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return  "ProxyHandlerConfigInfo [proxyHandlerConfigXML=" + proxyHandlerConfigXML + ", binariesPath=" + binariesPath + "]";
+		return  "HandlerConfigInfo [xmlConfigFile=" + xmlConfigFile + ", binariesPath=" + binariesPath + "]";
 	}
 	
 	/** Getter methods*/
@@ -105,8 +105,8 @@ public class ProxyHandlerConfigInfo {
 	public AbstractApplicationContext getProxyHandlerContext() {
 		return this.proxyHandlerContext;
 	}
-	public File getProxyHandlerConfigXML() {
-		return this.proxyHandlerConfigXML;
+	public File getXmlConfigFile() {
+		return this.xmlConfigFile;
 	}
 	public String getBinariesPath() {
 		return this.binariesPath;

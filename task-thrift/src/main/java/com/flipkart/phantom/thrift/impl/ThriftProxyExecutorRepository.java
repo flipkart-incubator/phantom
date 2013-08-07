@@ -17,7 +17,6 @@ package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
 
 
 /**
@@ -41,11 +40,11 @@ public class ThriftProxyExecutorRepository {
 	 * @return a ThriftProxyExecutor instance
 	 */
 	public ThriftProxyExecutor getThriftProxyExecutor (String proxyName, String commandName) {
-        ThriftProxy thriftProxy = registry.getProxy(proxyName);
-		if (thriftProxy.isActive()) { // check if the ThriftProxy is indeed active
-			return new ThriftProxyExecutor(thriftProxy, this.taskContext, commandName, thriftProxy.getExecutorTimeout());
+        ThriftProxy proxy = (ThriftProxy) registry.getHandler(proxyName);
+		if (proxy.isActive()) { // check if the ThriftProxy is indeed active
+			return new ThriftProxyExecutor(proxy, this.taskContext, commandName, proxy.getExecutorTimeout());
 		}
-		throw new RuntimeException("The Thrift Proxy is not active. It cannot be executed");
+		throw new RuntimeException("The ThriftProxy is not active.");
 	}
 
 	/** Getter/Setter methods */

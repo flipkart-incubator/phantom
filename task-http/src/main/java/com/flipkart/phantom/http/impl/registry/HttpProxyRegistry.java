@@ -16,10 +16,11 @@
 
 package com.flipkart.phantom.http.impl.registry;
 
-import com.flipkart.phantom.http.spi.HttpProxy;
+import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.registry.ProxyHandlerConfigInfo;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.PlatformException;
@@ -49,17 +50,18 @@ public class HttpProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(java.util.List, com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
-    public void init(List<ProxyHandlerConfigInfo> proxyHandlerConfigInfoList, TaskContext taskContext) throws Exception {
-        for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : proxyHandlerConfigInfoList) {
-            String[] proxyBeanIds = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(HttpProxy.class);
+    public void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+        for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
+            String[] proxyBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(HttpProxy.class);
             for (String proxyBeanId : proxyBeanIds) {
-                HttpProxy proxy = (HttpProxy) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(proxyBeanId);
+                HttpProxy proxy = (HttpProxy) handlerConfigInfo.getProxyHandlerContext().getBean(proxyBeanId);
                 try {
-                    proxy.init();
-                    proxy.setStatus(HttpProxy.ACTIVE);
+                    LOGGER.info("Initializing HttpProxy: " + proxy.getName());
+                    proxy.init(taskContext);
+                    proxy.activate();
                 } catch (Exception e) {
-                    LOGGER.error("Error initing HttpProxy{} . Error is : " + e.getMessage(),proxy.getName(), e);
-                    throw new PlatformException("Error initing HttpProxy: " + proxy.getName(), e);
+                    LOGGER.error("Error initializing HttpProxy {}. Error is: " + e.getMessage(), proxy.getName(), e);
+                    throw new PlatformException("Error initializing HttpProxy: " + proxy.getName(), e);
                 }
                 this.proxies.put(proxy.getName(),proxy);
             }
@@ -71,15 +73,18 @@ public class HttpProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#reinitHandler(String, com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
-    public void reinitHandler(String handlerName, TaskContext taskContext) throws Exception {
-        HttpProxy proxy = this.proxies.get(handlerName);
-        try {
-            proxy.setStatus(HttpProxy.INACTIVE);
-            this.proxies.get(handlerName).init();
-            proxy.setStatus(HttpProxy.ACTIVE);
-        } catch (Exception e) {
-            LOGGER.error("Error initing HttpProxy {} . Error is : " + e.getMessage(),proxy.getName(), e);
-            throw new PlatformException("Error reinitialising HttpProxy: " + proxy.getName(), e);
+    public void reinitHandler(String name, TaskContext taskContext) throws Exception {
+        HttpProxy proxy = this.proxies.get(name);
+        if (proxy != null) {
+            try {
+                proxy.deactivate();
+                proxy.shutdown(taskContext);
+                proxy.init(taskContext);
+                proxy.activate();
+            } catch (Exception e) {
+                LOGGER.error("Error initializing HttpProxy {}. Error is: " + e.getMessage(), name, e);
+                throw new PlatformException("Error reinitialising HttpProxy: " + name, e);
+            }
         }
     }
 
@@ -91,9 +96,11 @@ public class HttpProxyRegistry extends AbstractHandlerRegistry {
     public void shutdown(TaskContext taskContext) throws Exception {
         for (String name : proxies.keySet()) {
             try {
-                proxies.get(name).shutdown();
+                LOGGER.info("Shutting down HttpProxy: " + name);
+                proxies.get(name).shutdown(taskContext);
+                proxies.get(name).deactivate();
             } catch (Exception e) {
-                LOGGER.warn("Failed to shutdown thrift proxy: " + name, e);
+                LOGGER.warn("Failed to shutdown HttpProxy: " + name, e);
             }
         }
     }
@@ -103,24 +110,16 @@ public class HttpProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandlers()
      */
     @Override
-    public Map<String, String> getHandlers() {
-        Map<String,String> handlers = new HashMap<String, String>();
-        for (String name : proxies.keySet()) {
-            String desc = "";
-            desc += "Host: " + proxies.get(name).getPool().getHost();
-            desc += " Port: " + proxies.get(name).getPool().getPort();
-            desc += " Operation Timeout: " + proxies.get(name).getPool().getOperationTimeout() + "ms";
-            handlers.put(name,desc);
-        }
-        return handlers;
+    public List<AbstractHandler> getHandlers() {
+        return new ArrayList<AbstractHandler>(proxies.values());
     }
 
     /**
-     * Gives a HttpProxy given name. Used by ExecutorRepository to instantiate HttpProxyExecutor
-     * @param name String Name of the proxy
-     * @return HttpProxy instance of proxy handler class
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandler(String)
      */
-    public HttpProxy getProxy(String name) {
+    @Override
+    public AbstractHandler getHandler(String name) {
         return proxies.get(name);
     }
 

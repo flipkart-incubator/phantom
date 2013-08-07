@@ -17,11 +17,7 @@
 package com.flipkart.phantom.http.impl;
 
 import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
-import com.flipkart.phantom.http.spi.HttpProxy;
 import com.flipkart.phantom.task.spi.TaskContext;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides a repository of HttpProxyExecutor classes which execute HTTP requests using Hystrix commands
@@ -39,16 +35,19 @@ public class HttpProxyExecutorRepository {
     private TaskContext taskContext;
 
     /**
-     * Returns a {@link HttpProxyExecutor} for the specified request
-     * @param proxy the HttpProxy impl
+     * Returns {@link HttpProxyExecutor} for the specified request
+     * @param name the HttpProxy name
      * @param method the HTTP request method
      * @param uri the HTTP request URI
      * @param requestData the HTTP request payload
      * @return an HttpProxyExecutor instance
      */
     public HttpProxyExecutor getHttpProxyExecutor (String name, String method, String uri, byte[] requestData) throws Exception {
-        HttpProxy proxy = registry.getProxy(name);
-        return new HttpProxyExecutor(proxy, this.taskContext, method, uri, requestData);
+        HttpProxy proxy = (HttpProxy) registry.getHandler(name);
+        if (proxy.isActive()) {
+            return new HttpProxyExecutor(proxy, this.taskContext, method, uri, requestData);
+        }
+        throw new RuntimeException("The HttpProxy is not active.");
     }
 
     /** Getter/Setter methods */

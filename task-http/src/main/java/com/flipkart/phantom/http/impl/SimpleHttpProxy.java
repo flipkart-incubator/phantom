@@ -16,7 +16,6 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.http.spi.HttpProxy;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -32,12 +31,10 @@ public class SimpleHttpProxy extends HttpProxy {
 
     /**
      * Abstract method implementation
-     * @param request request which failed
-     * @param taskContext current task context
-     * @return null
+     * @see com.flipkart.phantom.http.impl.HttpProxy#fallbackRequest(String, String, byte[])
      */
     @Override
-    public HttpResponse fallbackRequest(HttpRequest request, TaskContext taskContext) {
+    public HttpResponse fallbackRequest(String method, String uri, byte[] data) {
         return null;
     }
 

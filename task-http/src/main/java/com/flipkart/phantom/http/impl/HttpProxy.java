@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.http.spi;
+package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.http.impl.HttpConnectionPool;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.ByteArrayEntity;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract class for handling HTTP proxy requests
@@ -32,16 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public abstract class HttpProxy {
+public abstract class HttpProxy extends AbstractHandler {
 
-    /** The status showing the HttpProxy is initiated and ready to use */
-    public static int ACTIVE = 1;
-
-    /** The status showing the HttpProxy is not initiated/has been shutdown and should not be used */
-    public static int INACTIVE = 0;
-
-    /** The status of this HttpProxy (active/inactive) */
-    private AtomicInteger status = new AtomicInteger(INACTIVE);
+    /** Name of the proxy */
+    private String name;
 
     /** The connection pool implementation instance */
     private HttpConnectionPool pool;
@@ -49,7 +41,7 @@ public abstract class HttpProxy {
     /**
      *  Init hook provided by the HttpProxy
      */
-    public void init() throws Exception {
+    public void init(TaskContext context) throws Exception {
         if (pool == null) {
             throw new AssertionError("HttpConnectionPool object 'pool' must be given");
         } else {
@@ -60,19 +52,8 @@ public abstract class HttpProxy {
     /**
      * Shutdown hooks provided by the HttpProxy
      */
-    public void shutdown() throws Exception {
+    public void shutdown(TaskContext context) throws Exception {
         pool.shutdown();
-    }
-
-    /**
-     * Gives the status of the HttpProxy (active/inactive)
-     * @return boolean true if active
-     */
-    public boolean isActive() {
-        if (this.status.intValue() == ACTIVE) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -121,28 +102,13 @@ public abstract class HttpProxy {
     }
 
     /**
-     * Name of the proxy
-     * @return String name
-     */
-    public String getName() {
-        return pool.getName();
-    }
-
-    /**
-     * Socket timeout of the proxy
-     * @return int socket timeout
-     */
-    public int getTimeout() {
-        return pool.getOperationTimeout();
-    }
-
-    /**
      * Abstract fallback request method
-     * @param request request which failed
-     * @param taskContext current task context
+     * @param method String HTTP request method
+     * @param uri String HTTP request URI
+     * @param data byte[] HTTP request payload
      * @return HttpResponse response after executing the fallback
      */
-    public abstract HttpResponse fallbackRequest(HttpRequest request, TaskContext taskContext);
+    public abstract HttpResponse fallbackRequest(String method, String uri, byte[] data);
 
     /**
      * Abstract method which gives group key
@@ -162,9 +128,39 @@ public abstract class HttpProxy {
      */
     public abstract String getThreadPoolKey();
 
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getDetails()
+     */
+    public String getDetails() {
+        if (pool != null) {
+            String details = "Endpoint: ";
+            details += (pool.getSecure() ? "https://" : "http://") + pool.getHost() + ":" + pool.getPort() + "\n";
+            details += "Connection Timeout: " + pool.getConnectionTimeout() + "ms\n";
+            details += "Operation Timeout: " + pool.getOperationTimeout() + "ms\n";
+            details += "Max Connections: " + pool.getMaxConnections() + "\n";
+            details += "Request Queue Size: " + pool.getRequestQueueSize() + "\n";
+            return details;
+        }
+        return "No endpoint configured";
+    }
+
+    /**
+     * Abstract method implementation
+     * @see AbstractHandler#getType()
+     */
+    @Override
+    public String getType() {
+        return "HttpProxy";
+    }
+
+
     /** getters / setters */
-    public void setStatus(int status) {
-        this.status.set(status);
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getName() {
+        return this.name;
     }
     public HttpConnectionPool getPool() {
         return pool;

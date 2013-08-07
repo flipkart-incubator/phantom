@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.task.spi.registry;
 
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 
 import java.util.List;
@@ -32,19 +33,19 @@ abstract public class AbstractHandlerRegistry {
 
     /**
      * Lifecycle init method. This should initialize all individual handlers understood.
-     * @param proxyHandlerConfigInfoList List of HandlerConfigInfo which is to be analysed and initialize
+     * @param handlerConfigInfoList List of HandlerConfigInfo which is to be analysed and initialize
      * @param taskContext The task context object
      * @throws Exception
      */
-    public abstract void init(List<ProxyHandlerConfigInfo> proxyHandlerConfigInfoList, TaskContext taskContext) throws Exception;
+    public abstract void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception;
 
     /**
      * Method to reinitialize a handler.
-     * @param handlerName Name of the handler.
+     * @param name Name of the handler.
      * @param taskContext task context object
      * @throws Exception
      */
-    public abstract void reinitHandler(String handlerName, TaskContext taskContext) throws Exception;
+    public abstract void reinitHandler(String name, TaskContext taskContext) throws Exception;
 
     /**
      * Lifecycle shutdown method. This should shutdown all individual handlers understood.
@@ -54,9 +55,16 @@ abstract public class AbstractHandlerRegistry {
     public abstract void shutdown(TaskContext taskContext) throws Exception;
 
     /**
-     * Enumeration method for all handlers. This should returns a map of name to description of each handler. Used in dashboard
-     * @return Map map of handler name to description
+     * Enumeration method for all handlers. This should returns a List of AbstractHandler instances
+     * @return List
      */
-    public abstract Map<String,String> getHandlers();
+    public abstract List<AbstractHandler> getHandlers();
+
+    /**
+     * Get a handler given name
+     * @param name String name of the handler
+     * @return AbstractHandler
+     */
+    public abstract AbstractHandler getHandler(String name);
 
 }

@@ -16,7 +16,7 @@
 package com.flipkart.phantom.sample.handler;
 
 import com.flipkart.phantom.task.impl.TaskResult;
-import com.flipkart.phantom.task.spi.HystrixTaskHandler;
+import com.flipkart.phantom.task.impl.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 
 import java.util.Map;
@@ -37,7 +37,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.spi.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
+     * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
      */
     @Override
     public TaskResult execute(TaskContext taskContext, String command, Map<String, String> params, byte[] data) throws RuntimeException {
@@ -61,7 +61,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.spi.TaskHandler#getName()
+     * @see com.flipkart.phantom.task.impl.TaskHandler#getName()
      */
     @Override
     public String getName() {
@@ -70,7 +70,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.spi.TaskHandler#shutdown(com.flipkart.phantom.task.spi.TaskContext)
+     * @see com.flipkart.phantom.task.impl.TaskHandler#shutdown(com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
     public void shutdown(TaskContext taskContext) throws Exception {
@@ -79,7 +79,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.spi.TaskHandler#getCommands()
+     * @see com.flipkart.phantom.task.impl.TaskHandler#getCommands()
      */
     @Override
     public String[] getCommands() {
@@ -88,7 +88,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.spi.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
+     * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
      */
     @Override
     public TaskResult getFallBack(TaskContext taskContext, String command, Map<String, String> params, byte[] data) {

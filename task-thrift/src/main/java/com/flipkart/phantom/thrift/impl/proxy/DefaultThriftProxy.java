@@ -17,7 +17,7 @@
 package com.flipkart.phantom.thrift.impl.proxy;
 
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.thrift.spi.HystrixThriftProxy;
+import com.flipkart.phantom.thrift.impl.HystrixThriftProxy;
 import org.apache.thrift.transport.TTransport;
 
 /**

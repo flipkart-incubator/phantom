@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.phantom.thrift.spi;
+package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.HystrixCommandProperties;
 import org.apache.thrift.transport.TTransport;
 
 /**
- * An extension of {@link ThriftProxy}. Adds additional methods required by Hystrix. Uses the Thrift call name as the 
+ * An extension of {@link ThriftProxy}. Adds additional methods required by Hystrix. Uses the Thrift call name as the
  * HystrixCommand name for display on the dashboard.
  * 
  * @author Regunath B
