@@ -94,8 +94,8 @@ public abstract class ThriftProxy extends AbstractHandler {
         String details = "Service Class: " + this.getThriftServiceClass() + "\n";
         details += "Endpoint: " + this.getThriftServer() + ":" + this.getThriftPort() + "\n";
         details += "Timeout: " + this.getThriftTimeoutMillis() + "ms\n";
-        details += "Executor Timeout: " + this.getExecutorTimeout() + "\n";
-        details += "Methods: " + StringUtils.join((String[])processMap.keySet().toArray(),",") + "\n";
+        details += "Executor Timeout: " + this.getExecutorTimeout() + "ms\n";
+        details += "Methods: " + StringUtils.join(processMap.keySet().toArray(new String[]{}),", ") + "\n";
         return details;
     }
 
