@@ -33,15 +33,16 @@ public class ThriftProxyExecutorRepository {
 	private TaskContext taskContext;
 
 	/** Thrift Proxy Registry containing the list of Thrift Proxies */
-	private ThriftProxyRegistry thriftProxyRegistry;
+	private ThriftProxyRegistry registry;
 
 	/**
 	 * Returns a {@link ThriftProxyExecutor} for the specified ThriftProxy and command name
 	 * @param commandName the name of the HystrixCommand
 	 * @return a ThriftProxyExecutor instance
 	 */
-	public ThriftProxyExecutor getThriftProxyExecutor (ThriftProxy thriftProxy, String commandName) {
-		if(thriftProxy.isActive()) { // check if the ThriftProxy is indeed active
+	public ThriftProxyExecutor getThriftProxyExecutor (String proxyName, String commandName) {
+        ThriftProxy thriftProxy = registry.getProxy(proxyName);
+		if (thriftProxy.isActive()) { // check if the ThriftProxy is indeed active
 			return new ThriftProxyExecutor(thriftProxy, this.taskContext, commandName, thriftProxy.getExecutorTimeout());
 		}
 		throw new RuntimeException("The Thrift Proxy is not active. It cannot be executed");
@@ -54,11 +55,11 @@ public class ThriftProxyExecutorRepository {
 	public void setTaskContext(TaskContext taskContext) {
 		this.taskContext = taskContext;
 	}
-	public ThriftProxyRegistry getThriftProxyRegistry() {
-		return this.thriftProxyRegistry;
+	public ThriftProxyRegistry getRegistry() {
+		return this.registry;
 	}
-	public void setThriftProxyRegistry(ThriftProxyRegistry thriftProxyRegistry) {
-		this.thriftProxyRegistry = thriftProxyRegistry;
+	public void setRegistry(ThriftProxyRegistry registry) {
+		this.registry = registry;
 	}
 	/** End Getter/Setter methods */
 }

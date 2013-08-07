@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
 import com.flipkart.phantom.http.impl.HttpProxyExecutor;
@@ -56,7 +57,7 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
 	private HttpProxyExecutorRepository repository;
 
     /** The HTTP proxy handler */
-    private HttpProxy httpProxy;
+    private String httpProxy;
 
 	/**
 	 * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
@@ -64,7 +65,6 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
 	 */
 	public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent event) throws Exception {
 		super.channelOpen(ctx, event);
-		//this.defaultChannelGroup.add(event.getChannel());
     }
 
 	/**
@@ -82,7 +82,7 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
         inputBuffer.readBytes(requestData, 0, requestData.length);
 
         // executor
-        HttpProxyExecutor executor = this.repository.getHttpProxyExecutor(this.httpProxy,request.getMethod().toString(),request.getUri(),requestData);
+        HttpProxyExecutor executor = this.repository.getHttpProxyExecutor(httpProxy,request.getMethod().toString(),request.getUri(),requestData);
 
         // excute
         HttpResponse response = executor.execute();
@@ -146,10 +146,10 @@ public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
 	public void setRepository(HttpProxyExecutorRepository repository) {
 		this.repository = repository;
 	}
-    public HttpProxy getHttpProxy() {
+    public String getHttpProxy() {
         return httpProxy;
     }
-    public void setHttpProxy(HttpProxy httpProxy) {
+    public void setHttpProxy(String httpProxy) {
         this.httpProxy = httpProxy;
     }
 	/** End Getter/Setter methods */

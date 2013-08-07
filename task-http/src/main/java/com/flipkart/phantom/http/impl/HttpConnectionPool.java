@@ -83,6 +83,10 @@ public class HttpConnectionPool {
      */
     public void initConnectionPool() {
 
+        if (name.equals("default")) {
+            throw new RuntimeException("The HttpConnectionPool.name cannot be default");
+        }
+
         // max concurrent requests = max connections + request queue size
         this.processQueue = new Semaphore(requestQueueSize + maxConnections);
 

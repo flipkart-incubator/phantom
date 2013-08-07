@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.http.impl;
 
+import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
 import com.flipkart.phantom.http.spi.HttpProxy;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -31,8 +32,8 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpProxyExecutorRepository {
 
-    /** logger */
-    private static Logger logger = LoggerFactory.getLogger(HttpProxyExecutorRepository.class);
+    /** repository */
+    private HttpProxyRegistry registry;
 
     /** The TaskContext instance */
     private TaskContext taskContext;
@@ -40,17 +41,23 @@ public class HttpProxyExecutorRepository {
     /**
      * Returns a {@link HttpProxyExecutor} for the specified request
      * @param proxy the HttpProxy impl
-     * @param request the HTTP request
+     * @param method the HTTP request method
+     * @param uri the HTTP request URI
+     * @param requestData the HTTP request payload
      * @return an HttpProxyExecutor instance
      */
-    public HttpProxyExecutor getHttpProxyExecutor (HttpProxy proxy, String method, String uri, byte[] requestData) throws Exception {
-        if (!proxy.isActive()) { // check if the Proxy is indeed active
-            proxy.init();
-        }
+    public HttpProxyExecutor getHttpProxyExecutor (String name, String method, String uri, byte[] requestData) throws Exception {
+        HttpProxy proxy = registry.getProxy(name);
         return new HttpProxyExecutor(proxy, this.taskContext, method, uri, requestData);
     }
 
     /** Getter/Setter methods */
+    public HttpProxyRegistry getRegistry() {
+        return registry;
+    }
+    public void setRegistry(HttpProxyRegistry registry) {
+        this.registry = registry;
+    }
     public TaskContext getTaskContext() {
         return this.taskContext;
     }

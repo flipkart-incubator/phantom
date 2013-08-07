@@ -21,6 +21,11 @@
             <artifactId>runtime</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.flipkart.phantom</groupId>
+            <artifactId>channel-handler-http</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

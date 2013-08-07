@@ -34,27 +34,23 @@
     </bean>
 
     <!-- Prototype scope command ChannelHandler beans. All channel handler beans MUST be of prototype bean scope-->
-    <bean id="httpDecoder" class="org.jboss.netty.handler.codec.http.HttpRequestDecoder" />
-    <bean id="httpEncoder" class="org.jboss.netty.handler.codec.http.HttpResponseEncoder" />
-    <bean id="httpChunkAggregator" class="org.jboss.netty.handler.codec.http.HttpChunkAggregator">
+    <bean id="httpDecoder" class="org.jboss.netty.handler.codec.http.HttpRequestDecoder" scope="prototype" />
+    <bean id="httpEncoder" class="org.jboss.netty.handler.codec.http.HttpResponseEncoder" scope="prototype" />
+    <bean id="httpChunkAggregator" class="org.jboss.netty.handler.codec.http.HttpChunkAggregator" scope="prototype">
         <constructor-arg value="1048576" />
     </bean>
     <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
         <property name="repository" ref="httpProxyRepository"/>
-        <property name="httpProxy" ref="sampleHttpProxy" />
+        <property name="httpProxy" value="flipkart" />
     </bean>
 
-    <!-- http proxy -->
-    <bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
-        <property name="pool" ref="sampleConnectionPool" />
+    <!-- The executor repository for handling requests to HttpProxy -->
+    <bean id="httpProxyRepository" class="com.flipkart.phantom.http.impl.HttpProxyExecutorRepository">
+        <property name="taskContext" ref="taskContext" />
+        <property name="registry" ref="httpProxyRegistry" />
     </bean>
 
-    <!-- http connection pool -->
-    <bean id="sampleConnectionPool" class="com.flipkart.phantom.http.impl.HttpConnectionPool">
-        <property name="host" value="www.flipkart.com" />
-        <property name="port" value="80" />
-        <property name="connectionTimeout" value="10000" />
-        <property name="operationTimeout" value="10000" />
-    </bean>
+    <!-- the registry of HttpProxies -->
+    <bean id="httpProxyRegistry" class="com.flipkart.phantom.http.impl.registry.HttpProxyRegistry" />
 
 </beans>

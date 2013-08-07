@@ -38,4 +38,12 @@
         <property name="repository" ref="taskHandlerRepository"/>
     </bean>
 
+    <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
+        <property name="taskContext" ref="taskContext" />
+        <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
+    </bean>
+
+    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry">
+    </bean>
+
 </beans>

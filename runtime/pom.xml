@@ -71,26 +71,6 @@
             <artifactId>task</artifactId>
             <version>${com.flipkart.phantom.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.flipkart.phantom</groupId>
-            <artifactId>task-http</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.flipkart.phantom</groupId>
-            <artifactId>task-thrift</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.flipkart.phantom</groupId>
-            <artifactId>channel-handler-thrift</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.flipkart.phantom</groupId>
-            <artifactId>channel-handler-http</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
-        </dependency>
 		<!-- Trooper dependencies -->
 		<dependency>
 			<groupId>org.trpr</groupId>
@@ -142,16 +122,6 @@
 			<groupId>com.netflix.hystrix</groupId>
 			<artifactId>hystrix-metrics-event-stream</artifactId>
 			<version>1.2.12</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>1.9.12</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-asl</artifactId>
-			<version>1.9.12</version>
 		</dependency>
     </dependencies>
 

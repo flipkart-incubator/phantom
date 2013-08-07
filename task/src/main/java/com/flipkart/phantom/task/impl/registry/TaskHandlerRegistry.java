@@ -17,6 +17,7 @@
 package com.flipkart.phantom.task.impl.registry;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,8 @@ import com.flipkart.phantom.task.spi.HystrixTaskHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.registry.ProxyHandlerConfigInfo;
+import com.flipkart.phantom.task.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.PlatformException;
@@ -56,6 +59,7 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
 	 * @param taskHandler The {@link TaskHandler} instance to be added
 	 */
 	public void registerTaskHandler(TaskHandler taskHandler) {
+        taskHandlers.add(taskHandler);
 		this.initializeThreadPoolMap(taskHandler);
 		for (String commandName:taskHandler.getCommands()) {
             LOGGER.info("Registering task handler " + taskHandler.getName() + " with command " + commandName);
@@ -141,22 +145,30 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
 
     /**
      * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(com.flipkart.phantom.task.spi.TaskContext)
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(java.util.List, com.flipkart.phantom.task.spi.TaskContext)
      * Should call init lifecycle methods of task handlers
      * @param taskContext the TaskContext object
      * @throws Exception
      */
     @Override
-    public void init(TaskContext taskContext) throws Exception {
-        for (TaskHandler taskHandler:taskHandlers) {
-            LOGGER.info("Initializing task handler: " + taskHandler.getName());
-            try {
-                taskHandler.init(taskContext);
-            } catch (Exception e) {
-                LOGGER.error("Failed to initialize task handler: " + taskHandler.getName(), e);
-                throw new Exception("Failed to initialize task handler: " + taskHandler.getName(), e);
+    public void init(List<ProxyHandlerConfigInfo> proxyHandlerConfigInfoList, TaskContext taskContext) throws Exception {
+        for (ProxyHandlerConfigInfo proxyHandlerConfigInfo : proxyHandlerConfigInfoList) {
+            // Init the TaskHandler
+            String[] taskHandlerBeanIds = proxyHandlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(TaskHandler.class);
+            for(String taskHandlerBeanId : taskHandlerBeanIds) {
+                TaskHandler taskHandler = (TaskHandler) proxyHandlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
+                // init the TaskHandler
+                try {
+                    LOGGER.info("Initing TaskHandler: "+taskHandler.getName());
+                    taskHandler.init(taskContext);
+                    taskHandler.setStatus(TaskHandler.ACTIVE);
+                } catch (Exception e) {
+                    LOGGER.error("Error initing TaskHandler {} . Error is : " + e.getMessage(),taskHandler.getName(), e);
+                    throw new PlatformException("Error initing TaskHandler : " + taskHandler.getName(), e);
+                }
+                // Register the taskHandler for all the commands it handles
+                this.registerTaskHandler(taskHandler);
             }
-            this.registerTaskHandler(taskHandler);
         }
     }
 
@@ -177,6 +189,26 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
                 LOGGER.warn("Failed to shutdown task handler: " + taskHandler.getName(), e);
             }
             taskHandler.setStatus(TaskHandler.INACTIVE);
+        }
+    }
+
+    @Override
+    public Map<String,String> getHandlers() {
+        Map<String,String> map = new HashMap<String, String>();
+        for (TaskHandler handler : taskHandlers) {
+            map.put(handler.getName(), StringUtils.join(handler.getCommands(), ","));
+        }
+        return map;
+    }
+
+    @Override
+    public void reinitHandler(String handlerName, TaskContext taskContext) throws Exception {
+        TaskHandler handler = getTaskHandlerByName(handlerName);
+        if (handler != null) {
+            handler.setStatus(TaskHandler.INACTIVE);
+            handler.shutdown(taskContext);
+            handler.init(taskContext);
+            handler.setStatus(TaskHandler.ACTIVE);
         }
     }
 

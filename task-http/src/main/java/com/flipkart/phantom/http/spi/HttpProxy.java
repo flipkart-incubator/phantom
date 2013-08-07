@@ -54,7 +54,6 @@ public abstract class HttpProxy {
             throw new AssertionError("HttpConnectionPool object 'pool' must be given");
         } else {
             pool.initConnectionPool();
-            status.set(ACTIVE);
         }
     }
 
@@ -63,7 +62,6 @@ public abstract class HttpProxy {
      */
     public void shutdown() throws Exception {
         pool.shutdown();
-        status.set(INACTIVE);
     }
 
     /**
@@ -84,6 +82,14 @@ public abstract class HttpProxy {
         return pool.execute(createRequest(method,uri,data));
     }
 
+    /**
+     * Creates a HttpRequestBase object understood by the apache http library
+     * @param method HTTP request method
+     * @param uri HTTP request URI
+     * @param data HTTP request data
+     * @return
+     * @throws Exception
+     */
     private HttpRequestBase createRequest(String method, String uri, byte[] data) throws Exception {
 
         // get
@@ -157,6 +163,9 @@ public abstract class HttpProxy {
     public abstract String getThreadPoolKey();
 
     /** getters / setters */
+    public void setStatus(int status) {
+        this.status.set(status);
+    }
     public HttpConnectionPool getPool() {
         return pool;
     }

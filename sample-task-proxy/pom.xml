@@ -10,10 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.flipkart.phantom</groupId>
-    <artifactId>sample-tcp-proxy</artifactId>
+    <artifactId>sample-task-proxy</artifactId>
     <version>${com.flipkart.phantom.version}</version>
-    <name>Sample TCP Proxy</name>
-    <description>Sample TCP Proxy</description>
+    <name>Sample Task Proxy</name>
+    <description>Sample Task Proxy</description>
 
     <dependencies>
         <dependency>

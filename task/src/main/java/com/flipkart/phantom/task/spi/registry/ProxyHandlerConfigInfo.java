@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.runtime.impl.spring;
+package com.flipkart.phantom.task.spi.registry;
 
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -65,14 +65,16 @@ public class ProxyHandlerConfigInfo {
 	 * Loads and returns an AbstractApplicationContext using data contained in this class
 	 * @return the proxy handler's AbstractApplicationContext
 	 */
-	protected AbstractApplicationContext loadProxyHandlerContext(ClassLoader classLoader) {
+	public AbstractApplicationContext loadProxyHandlerContext(ClassLoader classLoader, AbstractApplicationContext applicationContext) {
 		ClassLoader existingTCCL = Thread.currentThread().getContextClassLoader();
 		// set the custom classloader as the tccl for loading the proxy handler
 		Thread.currentThread().setContextClassLoader(classLoader);
 		// add the "file:" prefix to file names to get around strange behavior of FileSystemXmlApplicationContext that converts absolute path 
 		// to relative path
-		this.proxyHandlerContext = new FileSystemXmlApplicationContext(new String[]{FILE_PREFIX + this.proxyHandlerConfigXML.getAbsolutePath()}, 
-				ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext());
+		this.proxyHandlerContext = new FileSystemXmlApplicationContext(
+                new String[]{FILE_PREFIX + this.proxyHandlerConfigXML.getAbsolutePath()},
+				applicationContext
+        );
 		// now reset the thread's TCCL to the one that existed prior to loading the proxy handler
 		Thread.currentThread().setContextClassLoader(existingTCCL);
 		return this.proxyHandlerContext;
@@ -95,7 +97,7 @@ public class ProxyHandlerConfigInfo {
 		return  "ProxyHandlerConfigInfo [proxyHandlerConfigXML=" + proxyHandlerConfigXML + ", binariesPath=" + binariesPath + "]";
 	}
 	
-	/** Getter methods*/	
+	/** Getter methods*/
 	/**
 	 * Returns the proxy handler's ApplicationContext, if loaded, else null
 	 * @return null or the proxy handler's AbstractApplicationContext

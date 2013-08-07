@@ -19,11 +19,8 @@ import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
 import com.flipkart.phantom.task.impl.TaskContextFactory;
-import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
-import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.TaskHandler;
-import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
-import com.flipkart.phantom.thrift.spi.ThriftProxy;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -35,10 +32,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <code>SPConfigServiceImpl</code> is an implementation of {@link SPConfigService}.
@@ -46,7 +40,7 @@ import java.util.Map;
  * @author devashishshankar
  * @version 1.0, 2nd May, 2013
  */
-public class SPConfigServiceImpl  implements SPConfigService{
+public class SPConfigServiceImpl  implements SPConfigService {
 
 	/** Logger instance for this class*/
 	private static final Logger LOGGER = LoggerFactory.getLogger(SPConfigServiceImpl.class);
@@ -54,12 +48,6 @@ public class SPConfigServiceImpl  implements SPConfigService{
 	/** The previous handler file (save file) */
 	public static final String PREV_HANDLER_FILE = "/spring-proxy-handler-prev.xml";
 	
-	/** The taskHandler registry instance containing the Registered TaskHandlers */
-	private TaskHandlerRegistry taskHandlerRegistry;
-
-    /** The registry holding the list of Thrift Proxy Handlers */
-    private ThriftProxyRegistry thriftProxyRegistry;
-
 	/** The componentCOntainer instance for reloading the config file */
 	private ServiceProxyComponentContainer componentContainer;
 	
@@ -69,21 +57,27 @@ public class SPConfigServiceImpl  implements SPConfigService{
 	/** The list of deployed TCP Servers */
 	private List<AbstractNetworkServer> deployedNetworkServers = new LinkedList<AbstractNetworkServer>();
 
+    /** List of repositories */
+    private List<AbstractHandlerRegistry> registries = new ArrayList<AbstractHandlerRegistry>();
+
+    public void addHandlerRegistry(AbstractHandlerRegistry registry) {
+        registries.add(registry);
+    }
+
+    public void addDeployedNetworkServer(AbstractNetworkServer server) {
+        deployedNetworkServers.add(server);
+    }
+
     /**
      * @param taskHandler The name of the TaskHandler to be re-inited
      * @throws Exception in case of errors
      */
     public void reinitTaskHandler(String taskHandler) throws Exception {
-        TaskHandler toInit = this.taskHandlerRegistry.getTaskHandlerByName(taskHandler);
-        if(toInit==null) {
-            throw new UnsupportedOperationException("Handler to be inited not found: "+taskHandler);
+        for (AbstractHandlerRegistry registry : registries) {
+            if (registry.getHandlers().containsKey(taskHandler)) {
+                registry.reinitHandler(taskHandler,TaskContextFactory.getTaskContext());
+            }
         }
-        this.taskHandlerRegistry.unregisterTaskHandler(toInit);
-        //Get the current taskContext
-        TaskContext taskContext = TaskContextFactory.getTaskContext();
-        toInit.shutdown(taskContext);
-        toInit.init(taskContext);
-        this.taskHandlerRegistry.registerTaskHandler(toInit);
     }
 	/**
 	 * Interface method implementation.
@@ -100,73 +94,69 @@ public class SPConfigServiceImpl  implements SPConfigService{
 		return null;
 	}
 	
-	/**
-	 * Interface method implementation.
-	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#modifyHandlerConfig(java.lang.String, org.springframework.core.io.ByteArrayResource)
-	 */
-	public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) {
-		//Check if Handler file can be read
-		File oldHandlerFile = null;
-		try {
-			oldHandlerFile = this.getHandlerConfig(handlerName).getFile();
-		} catch (IOException e1) {
-			LOGGER.error("Handler Config File for handler: "+handlerName+" not found. Returning");
-			throw new PlatformException("File not found for handler: "+handlerName,e1);
-		}
-		if(!oldHandlerFile.exists()) {
-			LOGGER.error("Handler Config File: "+oldHandlerFile.getAbsolutePath()+" doesn't exist. Returning");
-			throw new PlatformException("File not found: "+oldHandlerFile.getAbsolutePath());
-		}
-		if(!oldHandlerFile.canRead()) {
-			LOGGER.error("No read permission for: "+oldHandlerFile.getAbsolutePath()+". Returning");
-			throw new PlatformException("Read permissions not found for file: "+oldHandlerFile.getAbsolutePath());
-		}
-		//Check if write permission is there
-		if(!oldHandlerFile.canWrite()) {
-			LOGGER.error("No write permission for: "+oldHandlerFile.getAbsolutePath()+". Write permissions are required to modify handler confib");
-			throw new PlatformException("Required permissions not found for modifying file: "+oldHandlerFile.getAbsolutePath());
-		}
-		LOGGER.debug("Reloading configuration for handler: "+handlerName);
-		this.createPrevConfigFile(handlerName);
-		LOGGER.debug("Created previous configuration file");
-		try {
-			this.upload(modifiedHandlerConfigFile.getByteArray(), oldHandlerFile.getAbsolutePath());
-		} catch (IOException e) {
-			LOGGER.error("IOException while uploading file to path: "+oldHandlerFile.getAbsolutePath());
-			this.restorePrevConfigFile(handlerName);
-			throw new PlatformException(e);
-		}
-		//Unregister the TaskHandlers in the file
-		for(TaskHandler taskHandler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
-			this.taskHandlerRegistry.unregisterTaskHandler(taskHandler);
-			LOGGER.debug("Unregistered TaskHandler: "+taskHandler.getName());
-		}
-		try {
-			this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
-		} catch(Exception e) {
-			this.restorePrevConfigFile(handlerName);
-			this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
-			throw new PlatformException(e);
-		}
-		this.removePrevConfigFile(handlerName);
-	}
+	///**
+	// * Interface method implementation.
+	// * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#modifyHandlerConfig(java.lang.String, org.springframework.core.io.ByteArrayResource)
+	// */
+	//public void modifyHandlerConfig(String handlerName, ByteArrayResource modifiedHandlerConfigFile) {
+	//	//Check if Handler file can be read
+	//	File oldHandlerFile = null;
+	//	try {
+	//		oldHandlerFile = this.getHandlerConfig(handlerName).getFile();
+	//	} catch (IOException e1) {
+	//		LOGGER.error("Handler Config File for handler: "+handlerName+" not found. Returning");
+	//		throw new PlatformException("File not found for handler: "+handlerName,e1);
+	//	}
+	//	if(!oldHandlerFile.exists()) {
+	//		LOGGER.error("Handler Config File: "+oldHandlerFile.getAbsolutePath()+" doesn't exist. Returning");
+	//		throw new PlatformException("File not found: "+oldHandlerFile.getAbsolutePath());
+	//	}
+	//	if(!oldHandlerFile.canRead()) {
+	//		LOGGER.error("No read permission for: "+oldHandlerFile.getAbsolutePath()+". Returning");
+	//		throw new PlatformException("Read permissions not found for file: "+oldHandlerFile.getAbsolutePath());
+	//	}
+	//	//Check if write permission is there
+	//	if(!oldHandlerFile.canWrite()) {
+	//		LOGGER.error("No write permission for: "+oldHandlerFile.getAbsolutePath()+". Write permissions are required to modify handler confib");
+	//		throw new PlatformException("Required permissions not found for modifying file: "+oldHandlerFile.getAbsolutePath());
+	//	}
+	//	LOGGER.debug("Reloading configuration for handler: "+handlerName);
+	//	this.createPrevConfigFile(handlerName);
+	//	LOGGER.debug("Created previous configuration file");
+	//	try {
+	//		this.upload(modifiedHandlerConfigFile.getByteArray(), oldHandlerFile.getAbsolutePath());
+	//	} catch (IOException e) {
+	//		LOGGER.error("IOException while uploading file to path: "+oldHandlerFile.getAbsolutePath());
+	//		this.restorePrevConfigFile(handlerName);
+	//		throw new PlatformException(e);
+	//	}
+	//	//Unregister the TaskHandlers in the file
+	//	for(TaskHandler taskHandler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
+	//		this.taskHandlerRegistry.unregisterTaskHandler(taskHandler);
+	//		LOGGER.debug("Unregistered TaskHandler: "+taskHandler.getName());
+	//	}
+	//	try {
+	//		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
+	//	} catch(Exception e) {
+	//		this.restorePrevConfigFile(handlerName);
+	//		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
+	//		throw new PlatformException(e);
+	//	}
+	//	this.removePrevConfigFile(handlerName);
+	//}
 
-	/**
-	 * Interface method implementation.
-	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllTaskHandlers()
-	 */
-	public TaskHandler[] getAllTaskHandlers() {
-		return this.taskHandlerRegistry.getAllTaskHandlers();
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllHandlers()
+     */
+	public Map<String,String> getAllHandlers() {
+        Map<String,String> allHandlers = new HashMap<String, String>();
+        for (AbstractHandlerRegistry registry : registries) {
+            allHandlers.putAll(registry.getHandlers());
+        }
+        return allHandlers;
 	}
 	
-	/**
-	 * Interface method implementation.
-	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllThriftProxies()
-	 */
-	public ThriftProxy[] getAllThriftProxies() {
-		return this.thriftProxyRegistry.getAllThriftProxies();
-	}
-
 	/**
 	 * Creates a temporary file, which is a duplicate of the current config file,
 	 * with the name {@link SPConfigServiceImpl#PREV_HANDLER_FILE}
@@ -277,18 +267,6 @@ public class SPConfigServiceImpl  implements SPConfigService{
 	}
 
     /** Getter/Setter methods */
-	public TaskHandlerRegistry getTaskHandlerRegistry() {
-		return taskHandlerRegistry;
-	}
-	public void setTaskHandlerRegistry(TaskHandlerRegistry taskHandlerRegistry) {
-		this.taskHandlerRegistry = taskHandlerRegistry;
-	}
-	public ThriftProxyRegistry getThriftProxyRegistry() {
-		return thriftProxyRegistry;
-	}
-	public void setThriftProxyRegistry(ThriftProxyRegistry thriftProxyRegistry) {
-		this.thriftProxyRegistry = thriftProxyRegistry;
-	}
 	public ServiceProxyComponentContainer getComponentContainer() {
 		return componentContainer;
 	}

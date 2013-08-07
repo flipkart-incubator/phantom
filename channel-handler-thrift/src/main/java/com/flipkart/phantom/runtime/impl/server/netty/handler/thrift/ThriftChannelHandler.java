@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * <code>ThriftChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that acts as a proxy for Apache Thrift calls using the binary protocol.
- * It wraps the Thrift call using a {@link ProxyExecutor} that provides useful features like monitoring, fallback etc.
+ * It wraps the Thrift call using a {@link ThriftProxyExecutor} that provides useful features like monitoring, fallback etc.
  * 
  * @author Regunath B
  * @version 1.0, 26 Mar 2013
@@ -53,7 +53,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	private ThriftProxyExecutorRepository repository;	
 	
 	/** The ThriftHandler of this channel  */
-	private ThriftProxy thriftProxy;
+	private String thriftProxy;
 	
 	/** The dynamic buffer response size*/
 	private int responseSize = DEFAULT_RESPONSE_SIZE;
@@ -124,10 +124,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	public void setResponseSize(int responseSize) {
 		this.responseSize = responseSize;
 	}		
-	public ThriftProxy getThriftProxy() {
+	public String getThriftProxy() {
 		return thriftProxy;
 	}
-	public void setThriftProxy(ThriftProxy thriftProxy) {
+	public void setThriftProxy(String thriftProxy) {
 		this.thriftProxy = thriftProxy;
 	}
 	/** End Getter/Setter methods */
