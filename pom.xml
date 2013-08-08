@@ -45,7 +45,7 @@
 
     <properties>
         <com.flipkart.phantom.version>1.0.0</com.flipkart.phantom.version>
-        <org.trpr.version>1.2.3</org.trpr.version>
+        <org.trpr.version>1.2.6</org.trpr.version>
         <org.springframework.version>3.0.5.RELEASE</org.springframework.version>
         <com.netflix.hystrix.version>1.2.12</com.netflix.hystrix.version>
 		<org.springframework.version>3.0.5.RELEASE</org.springframework.version>
