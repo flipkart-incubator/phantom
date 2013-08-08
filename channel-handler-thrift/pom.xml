@@ -13,7 +13,7 @@
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>channel-handler-thrift</artifactId>
-    <version>${com.flipkart.phantom.version}</version>
+    <version>1.0.0</version>
     <name>Thrift Channel Handlers</name>
     <description>Thrift Channel Handlers</description>
 
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>task-thrift</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

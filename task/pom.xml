@@ -12,7 +12,7 @@
 	<groupId>com.flipkart.phantom</groupId>
 	<artifactId>task</artifactId>
 	<name>Task</name>
-	<version>${com.flipkart.phantom.version}</version>
+	<version>1.0.0</version>
 	<description>Task Framework</description>
 
 	<licenses>

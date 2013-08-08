@@ -12,7 +12,7 @@
 	<groupId>com.flipkart.phantom</groupId>
 	<artifactId>dashboard</artifactId>
 	<name>Dashboard</name>
-	<version>${org.flipkart.phantom.version}</version>
+	<version>1.0.0</version>
 	<description>Aggregated dashboard</description>
 
 	<licenses>

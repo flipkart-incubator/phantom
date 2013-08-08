@@ -12,7 +12,7 @@
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>runtime-oio-uds</artifactId>
     <name>OIO UDS Server</name>
-    <version>${com.flipkart.phantom.version}</version>
+    <version>1.0.0</version>
     <description>OIO UDS Server Implementation for Phantom</description>
 
     <licenses>
@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.newsclub</groupId>
