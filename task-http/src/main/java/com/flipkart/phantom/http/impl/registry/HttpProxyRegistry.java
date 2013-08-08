@@ -16,22 +16,23 @@
 
 package com.flipkart.phantom.http.impl.registry;
 
-import com.flipkart.phantom.http.impl.HttpProxy;
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.trpr.platform.core.PlatformException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.trpr.platform.core.PlatformException;
+import org.trpr.platform.core.impl.logging.LogFactory;
+import org.trpr.platform.core.spi.logging.Logger;
+
+import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
+
 /**
- * Implementation of AbstractHandlerRegistry for HttpProxy instances
+ * Implementation of {@link AbstractHandlerRegistry} for HttpProxy instances
  *
  * @author kartikbu
  * @version 1.0
@@ -40,7 +41,7 @@ import java.util.Map;
 public class HttpProxyRegistry extends AbstractHandlerRegistry {
 
     /** logger */
-    private static Logger LOGGER = LoggerFactory.getLogger(HttpProxyRegistry.class);
+    private static Logger LOGGER = LogFactory.getLogger(HttpProxyRegistry.class);
 
     /** list of proxies by name */
     private Map<String,HttpProxy> proxies = new HashMap<String,HttpProxy>();

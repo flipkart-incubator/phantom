@@ -15,25 +15,23 @@
  */
 package com.flipkart.phantom.runtime.impl.spring;
 
-import com.flipkart.phantom.runtime.ServiceProxyFrameworkConstants;
-import com.flipkart.phantom.runtime.impl.notifier.HystrixEventReceiver;
-import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
-import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
-import com.netflix.hystrix.Hystrix;
-import com.netflix.hystrix.strategy.HystrixPlugins;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.trpr.platform.core.PlatformException;
+import org.trpr.platform.core.impl.logging.LogFactory;
 import org.trpr.platform.core.spi.event.PlatformEventProducer;
+import org.trpr.platform.core.spi.logging.Logger;
 import org.trpr.platform.model.event.PlatformEvent;
 import org.trpr.platform.runtime.common.RuntimeConstants;
 import org.trpr.platform.runtime.common.RuntimeVariables;
@@ -42,11 +40,16 @@ import org.trpr.platform.runtime.impl.config.FileLocator;
 import org.trpr.platform.runtime.spi.bootstrapext.BootstrapExtension;
 import org.trpr.platform.runtime.spi.component.ComponentContainer;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import com.flipkart.phantom.runtime.ServiceProxyFrameworkConstants;
+import com.flipkart.phantom.runtime.impl.notifier.HystrixEventReceiver;
+import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
+import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
+import com.netflix.hystrix.Hystrix;
+import com.netflix.hystrix.strategy.HystrixPlugins;
 
 /**
  * The <code>ServiceProxyComponentContainer</code> class is a ComponentContainer implementation as defined by Trooper {@link "https://github.com/regunathb/Trooper"}
@@ -76,7 +79,7 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 	private static final String TASK_CONTEXT_BEAN = "taskContext";
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceProxyComponentContainer.class);
+	private static final Logger LOGGER = LogFactory.getLogger(ServiceProxyComponentContainer.class);
 
 	/** The common proxy handler beans context*/
 	private static AbstractApplicationContext commonProxyHandlerBeansContext;    
@@ -191,7 +194,6 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 
         // load all registries
         for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
-
             // handler registries
             String[] registryBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
             for (String registryBean:registryBeans) {
@@ -207,16 +209,12 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
                 // add registry to config
                 configService.addHandlerRegistry(registry);
             }
-
             // add all network servers to config
             String[] networkServerBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractNetworkServer.class);
             for (String networkServerBean : networkServerBeans) {
                 configService.addDeployedNetworkServer((AbstractNetworkServer) handlerConfigInfo.getProxyHandlerContext().getBean(networkServerBean));
             }
-
         }
-
-
 	}
 
 	/**
