@@ -21,14 +21,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.trpr.platform.core.PlatformException;
+import org.trpr.platform.core.impl.logging.LogFactory;
+import org.trpr.platform.core.spi.logging.Logger;
+
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
 import com.flipkart.phantom.thrift.impl.ThriftProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.trpr.platform.core.PlatformException;
 
 /**
  * <code>ThriftProxyRegistry</code>  maintains a registry of ThriftProxys. Provides lookup 
@@ -40,7 +41,7 @@ import org.trpr.platform.core.PlatformException;
 public class ThriftProxyRegistry extends AbstractHandlerRegistry {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyRegistry.class);
+	private static final Logger LOGGER = LogFactory.getLogger(ThriftProxyRegistry.class);
 
     /** Map of all thrift proxies against name */
     private Map<String,ThriftProxy> proxies = new HashMap<String,ThriftProxy>();

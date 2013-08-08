@@ -12,7 +12,7 @@
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>runtime-netty-uds</artifactId>
     <name>Netty UDS Server</name>
-    <version>${com.flipkart.phantom.version}</version>
+    <version>1.0.0</version>
     <description>Netty UDS Server Implementation for Phantom</description>
 
     <licenses>
@@ -59,12 +59,12 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>netty-uds</artifactId>
-            <version>${com.flipkart.phantom.version}</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 

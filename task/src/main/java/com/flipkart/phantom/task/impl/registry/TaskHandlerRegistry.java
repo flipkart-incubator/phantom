@@ -22,16 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.trpr.platform.core.PlatformException;
+import org.trpr.platform.core.impl.logging.LogFactory;
+import org.trpr.platform.core.spi.logging.Logger;
+
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
-import com.flipkart.phantom.task.utils.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.trpr.platform.core.PlatformException;
 
 /**
  * <code>TaskHandlerRegistry</code>  maintains a registry of TaskHandlers. Provides lookup 
@@ -43,7 +43,7 @@ import org.trpr.platform.core.PlatformException;
 public class TaskHandlerRegistry extends AbstractHandlerRegistry {
 
 	/** Logger for this class*/
-	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerRegistry.class);
+	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerRegistry.class);
 
     /** List of TaskHandlers */
     private Map<String,TaskHandler> taskHandlers = new HashMap<String,TaskHandler>();

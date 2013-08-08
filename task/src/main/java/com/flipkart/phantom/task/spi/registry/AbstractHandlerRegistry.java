@@ -16,11 +16,10 @@
 
 package com.flipkart.phantom.task.spi.registry;
 
+import java.util.List;
+
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Abstract class for handler registry. Controls lifecycle methods of all handlers understood by the registry.

@@ -12,7 +12,7 @@
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>netty-uds</artifactId>
     <name>Netty/UDS</name>
-    <version>${com.flipkart.phantom.version}</version>
+    <version>1.0.0</version>
     <description>UDS Library using Netty</description>
 
     <dependencies>
