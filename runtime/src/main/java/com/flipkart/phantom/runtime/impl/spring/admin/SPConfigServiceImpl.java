@@ -15,25 +15,29 @@
  */
 package com.flipkart.phantom.runtime.impl.spring.admin;
 
-import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer;
-import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
-import com.flipkart.phantom.task.impl.TaskContextFactory;
-import com.flipkart.phantom.task.impl.TaskHandler;
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.trpr.platform.core.PlatformException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.trpr.platform.core.PlatformException;
+
+import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer;
+import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import com.flipkart.phantom.task.impl.TaskContextFactory;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 
 /**
  * <code>SPConfigServiceImpl</code> is an implementation of {@link SPConfigService}.
@@ -145,7 +149,8 @@ public class SPConfigServiceImpl  implements SPConfigService {
 
     	// Unregister the TaskHandlers in the file
     	for (AbstractHandler handler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
-            // TODO unregister the handler
+			this.componentContainer.getRegistry(handler.getName()).unregisterTaskHandler(handler);
+			LOGGER.debug("Unregistered TaskHandler: "+handler.getName());
     	}
 
         // load component

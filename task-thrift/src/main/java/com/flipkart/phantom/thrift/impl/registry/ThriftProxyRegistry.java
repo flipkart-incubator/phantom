@@ -18,6 +18,7 @@ package com.flipkart.phantom.thrift.impl.registry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +52,8 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
      * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(java.util.List, com.flipkart.phantom.task.spi.TaskContext)
      */
     @Override
-    public void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+    public AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+    	List<AbstractHandlerRegistry.InitedHandlerInfo> initedHanlderInfos = new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo>();    	
         for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
             String[] proxyBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(ThriftProxy.class);
             for (String proxyBeanId : proxyBeanIds) {
@@ -60,6 +62,7 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
                     LOGGER.info("Initializing ThriftProxy: " + proxy.getName());
                     proxy.init(taskContext);
                     proxy.activate();
+                    initedHanlderInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo(proxy,handlerConfigInfo));                    
                 } catch (Exception e) {
                     LOGGER.error("Error initializing ThriftProxy {}. Error is: " + e.getMessage(), proxy.getName(), e);
                     throw new PlatformException("Error initializing ThriftProxy: " + proxy.getName(), e);
@@ -67,6 +70,7 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
                 this.proxies.put(proxy.getName(),proxy);
             }
         }
+        return initedHanlderInfos.toArray(new AbstractHandlerRegistry.InitedHandlerInfo[0]);        
     }
 
     /**
@@ -123,6 +127,15 @@ public class ThriftProxyRegistry extends AbstractHandlerRegistry {
     public AbstractHandler getHandler(String name) {
         return proxies.get(name);
     }
+    
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#unregisterTaskHandler(com.flipkart.phantom.task.spi.AbstractHandler)
+     */
+    @Override
+    public void unregisterTaskHandler(AbstractHandler taskHandler) {
+		this.proxies.remove(taskHandler.getName());
+    }        
 
     /** getters / setters */
     public Map<String,ThriftProxy> getProxies() {

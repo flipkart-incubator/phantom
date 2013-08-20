@@ -29,6 +29,8 @@ import java.util.Map;
 
 /**
  * <code>ThriftProxy</code> holds the details of a ThriftProxy and loads the necessary Thrift Classes.
+ * Note that this class works only with Thrift classes generated using the IDL compiler version 0.9. This is because it uses reflection to determine
+ * declared methods on the interface. The target service may be of any version. This implementation has been tested with Thrift versions 0.6 and 0.2.
  * 
  * @author Regunath B
  * @version 1.0, 28 March, 2013

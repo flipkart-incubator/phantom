@@ -16,23 +16,22 @@
 
 package com.flipkart.phantom.runtime.impl.spring.web;
 
-import com.flipkart.phantom.runtime.impl.spring.utils.ConfigFileUtils;
-import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import com.flipkart.phantom.runtime.impl.spring.utils.ConfigFileUtils;
+import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
 
 /**
  * The <code>HandlerConfigController</code> is a controller for handling configuration changes.

@@ -34,9 +34,10 @@ abstract public class AbstractHandlerRegistry {
      * Lifecycle init method. This should initialize all individual handlers understood.
      * @param handlerConfigInfoList List of HandlerConfigInfo which is to be analysed and initialize
      * @param taskContext The task context object
+     * @return array of AbstractHandlerRegistry.InitedHandlerInfo instances for each inited handler
      * @throws Exception
      */
-    public abstract void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception;
+    public abstract AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception;
 
     /**
      * Method to reinitialize a handler.
@@ -65,5 +66,29 @@ abstract public class AbstractHandlerRegistry {
      * @return AbstractHandler
      */
     public abstract AbstractHandler getHandler(String name);
+    
+	/**
+	 * Unregisters (removes) a AbstractHandler from this registry.
+	 * @param taskHandler the AbstractHandler to be removed
+	 */    
+    public abstract void unregisterTaskHandler(AbstractHandler taskHandler);
+    
+    /**
+     *  Container object for inited handlers and the respective configuration
+     */
+    public static final class InitedHandlerInfo {
+    	private AbstractHandler initedHandler;
+    	private HandlerConfigInfo handlerConfigInfo;
+    	public InitedHandlerInfo(AbstractHandler initedHandler, HandlerConfigInfo handlerConfigInfo) {
+    		this.initedHandler = initedHandler;
+    		this.handlerConfigInfo = handlerConfigInfo;
+    	}
+		public AbstractHandler getInitedHandler() {
+			return initedHandler;
+		}
+		public HandlerConfigInfo getHandlerConfigInfo() {
+			return handlerConfigInfo;
+		}
+    }
 
 }
