@@ -16,12 +16,16 @@
 
 package com.flipkart.phantom.http.impl;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
+
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.ByteArrayEntity;
 
 /**
  * Abstract class for handling HTTP proxy requests
@@ -31,12 +35,18 @@ import org.apache.http.entity.ByteArrayEntity;
  * @version 1.0
  */
 public abstract class HttpProxy extends AbstractHandler {
+	
+	/** The default thread pool size*/
+	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
 
     /** Name of the proxy */
     private String name;
 
     /** The connection pool implementation instance */
     private HttpConnectionPool pool;
+    
+    /** The thread pool size for this proxy*/
+    private int threadPoolSize = HttpProxy.DEFAULT_THREAD_POOL_SIZE;
 
     /**
      *  Init hook provided by the HttpProxy
@@ -127,6 +137,14 @@ public abstract class HttpProxy extends AbstractHandler {
      * @return String thread pool name
      */
     public abstract String getThreadPoolKey();
+    
+    /**
+     * Returns the thread pool size
+     * @return thread pool size
+     */
+    public int getThreadPoolSize() {
+    	return this.threadPoolSize;
+    }
 
     /**
      * Abstract method implementation
@@ -168,7 +186,11 @@ public abstract class HttpProxy extends AbstractHandler {
     public void setPool(HttpConnectionPool pool) {
         this.pool = pool;
     }
+	public void setThreadPoolSize(int threadPoolSize) {
+		this.threadPoolSize = threadPoolSize;
+	}
     /** getters / setters */
+
 
 
 }

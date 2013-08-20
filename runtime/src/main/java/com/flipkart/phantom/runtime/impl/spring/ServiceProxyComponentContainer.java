@@ -201,7 +201,11 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
                 // init the Registry
                 try {
                     this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
-                    registry.init(this.handlerConfigInfoList,this.taskContext);
+                    AbstractHandlerRegistry.InitedHandlerInfo[] initedHandlerInfos = registry.init(this.handlerConfigInfoList,this.taskContext);
+        			//Add the file path of each inited handler to SPConfigService (for configuration console)
+                    for (AbstractHandlerRegistry.InitedHandlerInfo initedHandlerInfo: initedHandlerInfos) {
+                    	this.configService.addHandlerConfigPath(initedHandlerInfo.getHandlerConfigInfo().getXmlConfigFile(), initedHandlerInfo.getInitedHandler());
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Error initializing registry: " + registry.getClass().getName());
                     throw new PlatformException("Error initializing registry: " + registry.getClass().getName(), e);
@@ -269,6 +273,21 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 		}
 		loadProxyHandlerContext(new HandlerConfigInfo(((FileSystemResource)resource).getFile()));
 	}
+	
+	/**
+	 * Returns the AbstractHandlerRegistry in which an AbstractHandler identified by the specified name has been registered
+	 * @param handlerName the AbstractHandler name
+	 * @return AbstractHandlerRegistry where the handler is registered
+	 * @throws UnsupportedOperationException if a registry is not found
+	 */
+	public AbstractHandlerRegistry getRegistry (String handlerName) {
+		for (AbstractHandlerRegistry registry : this.registries) {
+			if (registry.getHandler(handlerName) != null) {
+				return registry;
+			}
+		}
+		throw new UnsupportedOperationException("No known regsitries exist for AbstractHandler by name : " + handlerName);
+	}
 
 	/**
 	 * Loads the proxy handler context from path specified in the HandlerConfigInfo. Looks for file by name ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG.
@@ -304,7 +323,7 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 		} 
 		// now load the proxy handler context and add it into the handlerConfigInfoList list
 		handlerConfigInfo.loadProxyHandlerContext(proxyHandlerCL,ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext());
-		this.handlerConfigInfoList.add(handlerConfigInfo);
+		this.handlerConfigInfoList.add(handlerConfigInfo);		
 	}
 
 }

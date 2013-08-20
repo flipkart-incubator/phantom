@@ -16,12 +16,15 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.*;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 /**
  * Implements the HystrixCommand class for executing HTTP proxy requests
@@ -53,6 +56,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
             Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
             .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
             .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
+			.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
             .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getPool().getOperationTimeout()))
         );
         this.proxy = proxy;

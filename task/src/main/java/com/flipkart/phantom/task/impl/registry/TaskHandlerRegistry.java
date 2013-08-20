@@ -18,6 +18,7 @@ package com.flipkart.phantom.task.impl.registry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,7 +63,8 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
      * @throws Exception
      */
     @Override
-    public void init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+    public AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
+    	List<AbstractHandlerRegistry.InitedHandlerInfo> initedHanlderInfos = new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo>();    	
         for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
             String[] taskHandlerBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(TaskHandler.class);
             for (String taskHandlerBeanId : taskHandlerBeanIds) {
@@ -71,6 +73,7 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
                     LOGGER.info("Initializing TaskHandler: " + taskHandler.getName());
                     taskHandler.init(taskContext);
                     taskHandler.activate();
+                    initedHanlderInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo(taskHandler,handlerConfigInfo));                    
                 } catch (Exception e) {
                     LOGGER.error("Error initializing TaskHandler {}. Error is: " + e.getMessage(), taskHandler.getName(), e);
                     throw new PlatformException("Error initializing TaskHandler: " + taskHandler.getName(), e);
@@ -79,6 +82,7 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
                 this.registerTaskHandler(taskHandler);
             }
         }
+        return initedHanlderInfos.toArray(new AbstractHandlerRegistry.InitedHandlerInfo[0]);        
     }
 
     /**
@@ -184,16 +188,17 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry {
         }
     }
 
-	/**
-	 * Unregisters (removes) a TaskHandler from registry.
-	 * @param taskHandler
-	 */
-	public void unregisterTaskHandler(TaskHandler taskHandler) {
-		for (String commandName: taskHandler.getCommands()) {
+    /**
+     * Abstract method implementation
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#unregisterTaskHandler(com.flipkart.phantom.task.spi.AbstractHandler)
+     */
+    @Override
+	public void unregisterTaskHandler(AbstractHandler taskHandler) {    	
+		for (String commandName: ((TaskHandler)taskHandler).getCommands()) {
 			this.commandToTaskHandler.remove(commandName);
 		}
 	}
-
+	
     /**
      * Returns the {@link TaskHandler} instance for the given Command String
      * @param commandString The command string

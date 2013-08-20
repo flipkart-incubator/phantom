@@ -16,8 +16,6 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.task.spi.TaskContext;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
 /**
