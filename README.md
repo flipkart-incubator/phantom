@@ -20,7 +20,7 @@ is described in this [Proxies for resilience and fault tolerance in SOA](http://
 ## Phantom Consoles
 ![Monitor](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy.png)
 
-![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy%20Config.png)
+![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Phantom%20http%20config.png)
 
 ## License
 Phantom is licensed under : The Apache Software License, Version 2.0. Here is a copy of the license (http://www.apache.org/licenses/LICENSE-2.0.txt)
