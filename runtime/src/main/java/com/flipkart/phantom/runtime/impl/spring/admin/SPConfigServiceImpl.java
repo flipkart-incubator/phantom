@@ -147,18 +147,14 @@ public class SPConfigServiceImpl  implements SPConfigService {
     		throw new PlatformException(e);
     	}
 
-    	// Unregister the TaskHandlers in the file
-    	for (AbstractHandler handler : this.configURItoHandlerName.get(oldHandlerFile.toURI())) {
-			this.componentContainer.getRegistry(handler.getName()).unregisterTaskHandler(handler);
-			LOGGER.debug("Unregistered TaskHandler: "+handler.getName());
-    	}
-
-        // load component
-        // TODO this has bugs
+    	// get the registered AbstractHandler for the file name
+    	AbstractHandler handler = this.configURItoHandlerName.get(oldHandlerFile.toURI()).get(0);
+        // re-load the handler
+        // TODO
         // loading component destroys all beans in the config file given by the handler config info
         // this mean this only works if only one handler per handler xml file
     	try {
-    		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
+    		this.componentContainer.reloadHandler(handler, this.getHandlerConfig(handlerName));
     	} catch(Exception e) {
     		this.restorePrevConfigFile(handlerName);
     		this.componentContainer.loadComponent(this.getHandlerConfig(handlerName));
