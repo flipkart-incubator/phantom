@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.runtime.impl.spring.web;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -23,12 +24,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.flipkart.phantom.runtime.impl.spring.utils.ConfigFileUtils;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
@@ -109,55 +112,55 @@ public class HandlerConfigController {
         return "message";
     }
 
-///	@RequestMapping(value = {"/deploy/**"}, method = RequestMethod.POST)
-///	public String deployModifiedConfig(ModelMap model,HttpServletRequest request,  @ModelAttribute("handlerName") String handlerName,
-///			@RequestParam(defaultValue = "") String XMLFileContents,
-///			@RequestParam(defaultValue = "0") String identifier) {
-///		//Save the file
-///		XMLFileContents = XMLFileContents.trim();
-///		if(identifier.equals("Save")) {
-///			try {
-///				this.configService.modifyHandlerConfig(handlerName, new ByteArrayResource(XMLFileContents.getBytes()));
-///			} catch (Exception e) { //Loading failed
-///				model.addAttribute("XMLFileError", "Unable to deploy file");
-///				StringWriter errors = new StringWriter();
-///				e.printStackTrace(new PrintWriter(errors));
-///				model.addAttribute("LoadingError", errors.toString());
-///				if(errors.toString()==null) {
-///					model.addAttribute("LoadingError", "Unexpected error");
-///				}
-///				model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(this.configService.getHandlerConfig(handlerName)));
-///				return "modifyConfig";
-///			}
-///		}
-///		//Loading success
-///		model.addAttribute("SuccessMessage", "Successfully Deployed the new Handler Configuration");
-///		model.addAttribute("taskHandlers", this.configService.getAllTaskHandlers());
-///		Resource handlerFile = this.configService.getHandlerConfig(handlerName);
-///		model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(handlerFile));
-///		try {
-///			model.addAttribute("XMLFileName",handlerFile.getURI());
-///		} catch (IOException e) {
-///			model.addAttribute("XMLFileName","File not found");
-///		}
-///		return "viewConfig";
-///	}
-///
-///	@RequestMapping(value = {"**/modify/**"}, method = RequestMethod.GET)
-///	public String modifyConfig(ModelMap model, HttpServletRequest request, @ModelAttribute("handlerName") String handlerName,
-///			@RequestParam(defaultValue = "") String XMLFileContents,
-///			@RequestParam(defaultValue = "0") String identifier) {
-///		model.addAttribute("taskHandlers", this.configService.getAllTaskHandlers());
-///		model.addAttribute("servletPath", request.getContextPath());
-///		Resource handlerFile = this.configService.getHandlerConfig(handlerName);
-///		model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(handlerFile));
-///		try {
-///			model.addAttribute("XMLFileName",handlerFile.getURI());
-///		} catch (IOException e) {
-///			model.addAttribute("XMLFileName","File not found");
-///		}
-///		return "modifyConfig";
-///	}
+	@RequestMapping(value = {"/deploy/**"}, method = RequestMethod.POST)
+	public String deployModifiedConfig(ModelMap model,HttpServletRequest request,  @ModelAttribute("handlerName") String handlerName,
+			@RequestParam(defaultValue = "") String XMLFileContents,
+			@RequestParam(defaultValue = "0") String identifier) {
+		//Save the file
+		XMLFileContents = XMLFileContents.trim();
+		if(identifier.equals("Save")) {
+			try {
+				this.configService.modifyHandlerConfig(handlerName, new ByteArrayResource(XMLFileContents.getBytes()));
+			} catch (Exception e) { //Loading failed
+				model.addAttribute("XMLFileError", "Unable to deploy file");
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				model.addAttribute("LoadingError", errors.toString());
+				if(errors.toString()==null) {
+					model.addAttribute("LoadingError", "Unexpected error");
+				}
+				model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(this.configService.getHandlerConfig(handlerName)));
+				return "modifyConfig";
+			}
+		}
+		//Loading success
+		model.addAttribute("SuccessMessage", "Successfully Deployed the new Handler Configuration");
+		model.addAttribute("taskHandlers", this.configService.getAllHandlers());
+		Resource handlerFile = this.configService.getHandlerConfig(handlerName);
+		model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(handlerFile));
+		try {
+			model.addAttribute("XMLFileName",handlerFile.getURI());
+		} catch (IOException e) {
+			model.addAttribute("XMLFileName","File not found");
+		}
+		return "viewConfig";
+	}
+
+	@RequestMapping(value = {"**/modifyConfig/**"}, method = RequestMethod.GET)
+	public String modifyConfig(ModelMap model, HttpServletRequest request, @ModelAttribute("handlerName") String handlerName,
+			@RequestParam(defaultValue = "") String XMLFileContents,
+			@RequestParam(defaultValue = "0") String identifier) {
+		model.addAttribute("taskHandlers", this.configService.getAllHandlers());
+		model.addAttribute("servletPath", request.getContextPath());
+		Resource handlerFile = this.configService.getHandlerConfig(handlerName);
+		model.addAttribute("XMLFileContents",ConfigFileUtils.getContents(handlerFile));
+		try {
+			model.addAttribute("XMLFileName",handlerFile.getURI());
+		} catch (IOException e) {
+			model.addAttribute("XMLFileName","File not found");
+		}
+		return "modifyConfig";
+	}
 
     /** getter / setter */
     public SPConfigService getConfigService() {

@@ -2,15 +2,17 @@
 <script type="text/javascript">
 
 function configFileSave() {
-	document.forms['NewhandlerForm']['identifier'].value = "Save";
-    document.forms['NewhandlerForm'].submit();
+	var strconfirm = confirm("NOTE: This will reinitialize this handler. This means the handler will not be able to serve requests when it is initializing.");
+	if (strconfirm == true) {
+		document.forms['NewhandlerForm']['identifier'].value = "Save";
+    	document.forms['NewhandlerForm'].submit();
+    }
 }
 	
 </script>
 <div id="handler">
 	
 	<H1> Add/Edit handler Details :  ${handlerName}</H1>
-	
 	<span id="error" style="color:red">
 		<#if XMLFileError??>
 				${XMLFileError}
@@ -34,10 +36,7 @@ function configFileSave() {
 				 <input type="hidden" name="handlerName" value="${handlerName}" />
 			
 			<li> <H2> Edit Configuration File:  </H2> 
-			
-	<!--		<input id="handlerFile" type="file" name="handlerFile" onchange="handlerFileUpload()" />
-			<input type="submit" name="submit" id="submit "value="Upload file"  /> -->
-				
+							
 	<#if XMLFileName??>
 	${XMLFileName}
 	</#if>	

@@ -45,6 +45,7 @@ import com.flipkart.phantom.runtime.impl.notifier.HystrixEventReceiver;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
@@ -211,7 +212,9 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
                     throw new PlatformException("Error initializing registry: " + registry.getClass().getName(), e);
                 }
                 // add registry to config
-                configService.addHandlerRegistry(registry);
+                this.configService.addHandlerRegistry(registry);
+                // add registry to local list
+                this.registries.add(registry);
             }
             // add all network servers to config
             String[] networkServerBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractNetworkServer.class);
@@ -259,6 +262,32 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 	 */
 	public void publishBootstrapEvent(PlatformEvent bootstrapEvent) {	
 		this.publishEvent(bootstrapEvent);
+	}
+	
+	/**
+	 * Reloads and re-initalizes the specified handler. The new definition is loaded from the specified Reosurce location
+	 * @param handler the AbstractHandler to be de-registered
+	 * @param resource the location to load the new definition of the handler from
+	 */
+	public void reloadHandler(AbstractHandler handler, Resource resource) {
+		AbstractHandlerRegistry registry = this.getRegistry(handler.getName());
+		registry.unregisterTaskHandler(handler);
+		LOGGER.debug("Unregistered TaskHandler: "+handler.getName());
+		this.loadComponent(resource);
+		// now add the newly loaded handler to its registry
+		for (HandlerConfigInfo handlerConfigInfo : this.handlerConfigInfoList) {
+			if (handlerConfigInfo.getXmlConfigFile().getAbsolutePath().equalsIgnoreCase(((FileSystemResource)resource).getFile().getAbsolutePath())) {
+				List<HandlerConfigInfo> reloadHandlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
+				reloadHandlerConfigInfoList.add(handlerConfigInfo);
+				try {
+					registry.init(reloadHandlerConfigInfoList, taskContext);
+				}catch (Exception e) {
+		            LOGGER.error("Error updating registry : " +  registry.getClass().getName() + " for handler : " + handler.getName(), e);
+		            throw new PlatformException("Error updating registry : " +  registry.getClass().getName() + " for handler : " + handler.getName(), e);
+		        }
+				return;
+			}
+		}
 	}
 
 	/**
