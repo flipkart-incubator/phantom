@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 public class HttpChannelHandler extends SimpleChannelUpstreamHandler {
 
     /** Constant String literals in the Http protocol */
-    private static final String LINE_FEED = "\n";
     private static final String ENCODING_HEADER = "Transfer-Encoding";
 
 	/** Logger for this class*/

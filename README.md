@@ -10,17 +10,25 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.0.0    | Early August 2013      |     Upcoming release. Porting underway.
+| Version 1.0.0    | August 2013      |    First release
+
+## Changelog
+
+Changelog can be viewed in CHANGELOG.md file (https://github.com/Flipkart/phantom/blob/master/CHANGELOG.md)
 
 ## Why Phantom
 Phantom is the "ghost who walks" - an entity whose presence can be felt (in a good way) but its existence need not be acknowledged.
 The Service Proxies fit this analogy well and therefore earned the moniker "Phantom". Motivation for creating Phantom and design overview 
-is described in this [Proxies for resilience and fault tolerance in SOA](http://tech-blog.flipkart.net/2013/07/proxies-for-resilience-and-fault-tolerance-in-distributed-soa) blog post
+is described in this [Proxies for resilience and fault tolerance in SOA](http://tech-blog.flipkart.net/2013/07/proxies-for-resilience-and-fault-tolerance-in-distributed-soa) blog post.
 
 ## Phantom Consoles
 ![Monitor](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy.png)
 
-![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy%20Config.png)
+![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Phantom%20http%20config.png)
+
+## Documentation and Examples
+Phantom project modules that start with "sample" - for e.g. sample-http-proxy, sample-task-proxy are example proxy implementations.
+Documentation is continuously being added to the Wiki page of Phantom (https://github.com/Flipkart/phantom/wiki)
 
 ## License
 Phantom is licensed under : The Apache Software License, Version 2.0. Here is a copy of the license (http://www.apache.org/licenses/LICENSE-2.0.txt)
