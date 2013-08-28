@@ -76,7 +76,13 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 			executor.setParams(readCommand.getCommandParams());
 			executor.setData(readCommand.getCommandData());
 			try {
-				TaskResult result = executor.execute();
+				TaskResult result = null;
+				if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
+					result = executor.execute();
+				} else {
+					executor.queue(); // dont wait for the result. send back a response that the call has been dispatched for async execution
+					result = new TaskResult(true,TaskHandlerExecutor.ASYNC_QUEUED);
+				}
 				LOGGER.debug("The output is: "+ result);
 				// write the results to the channel output
 				commandInterpreter.writeCommandExecutionResponse(ctx, event, result);
