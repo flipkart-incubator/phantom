@@ -68,13 +68,18 @@ public class JettyWebAppContextFactory  implements FactoryBean<WebAppContext> {
 		for (File file : files) {
 			// we need only WEB-INF from dashboard project and none else even by mistake
 			String fileToString = file.toString();
-			if (fileToString.contains("dashboard")) {
-				path = fileToString;
-				break;
+			if (fileToString.contains(".jar!") && fileToString.startsWith("file:/")) {
+				fileToString = fileToString.replace("file:/","jar:file:/");
+				if (fileToString.contains("dashboard-")) {
+					path = fileToString;
+					break;
+				}
+			} else {
+				if (fileToString.contains("dashboard")) {
+					path = fileToString;
+					break;
+				}
 			}
-		}
-		if (path.contains(".jar!") && path.startsWith("file:/")) {
-			path = path.replace("file:/","jar:file:/");
 		}
 		// trim off the "WEB-INF" part as the WebAppContext path should refer to the parent directory
 		if (path.endsWith("WEB-INF")) {
