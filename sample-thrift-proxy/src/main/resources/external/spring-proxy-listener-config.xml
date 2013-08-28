@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+
+    <!-- the TCP server -->
+    <bean id="networkServer" class= "com.flipkart.phantom.runtime.impl.server.netty.TCPNettyServer">
+        <property name="portNumber" value="8080"/>
+        <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
+        <property name="pipelineFactory" ref="thriftChannelPipelineFactory"/>
+        <property name="bootstrapOptions">
+            <map>
+                <entry key="child.tcpNoDelay" value="true"/>
+                <entry key="child.keepAlive" value="true"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <!--  ChannelHandlerPipelineFactory for TCP Server -->
+    <bean id="thriftChannelPipelineFactory" class="com.flipkart.phantom.runtime.impl.server.netty.ChannelHandlerPipelineFactory">
+        <property name="channelHandlerBeanNamesMap">
+            <map>
+                <entry key="thriftDecoder" value="thriftBufferDecoder"/>
+                <entry key="thriftHandler" value="thriftChannelHandler"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Beans related to CMS Thrift Proxy -->
+    <bean id="thriftBufferDecoder" class="com.flipkart.phantom.runtime.impl.server.netty.decoder.thrift.ThriftBufferDecoder" scope="prototype"/>
+    <bean id="thriftChannelHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.thrift.ThriftChannelHandler" scope="prototype">
+        <property name="repository" ref="thriftProxyRepository" />
+        <property name="thriftProxy" value="thrift.ArithmeticService" />
+    </bean>
+
+    <bean id="thriftProxyRepository" class="com.flipkart.phantom.thrift.impl.ThriftProxyExecutorRepository">
+        <property name="taskContext" ref="taskContext"></property>
+        <property name="registry" ref="thriftProxyRegistry"></property>
+    </bean>
+
+    <bean id="thriftProxyRegistry" class="com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry"></bean>
+
+</beans>

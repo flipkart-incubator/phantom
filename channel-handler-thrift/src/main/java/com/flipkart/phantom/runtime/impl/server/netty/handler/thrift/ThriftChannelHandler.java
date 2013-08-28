@@ -44,10 +44,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 
 	/** Logger for this class*/
 	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftChannelHandler.class);
-	
-	/** The default channel group*/
-	private ChannelGroup defaultChannelGroup;
-	
+
 	/** The TaskRepository to lookup TaskHandlerExecutors from */
 	private ThriftProxyExecutorRepository repository;	
 	
@@ -66,7 +63,6 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	 */
 	public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent event) throws Exception {
 		super.channelOpen(ctx, event);
-		this.defaultChannelGroup.add(event.getChannel());
     }
 	
 	/**
@@ -103,14 +99,6 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 		event.getChannel().close();
 		super.exceptionCaught(ctx, event);
 	}
-
-	/** Start Getter/Setter methods */
-	public ChannelGroup getDefaultChannelGroup() {
-		return this.defaultChannelGroup;
-	}
-	public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
-		this.defaultChannelGroup = defaultChannelGroup;
-	}	
 	public ThriftProxyExecutorRepository getRepository() {
 		return this.repository;
 	}

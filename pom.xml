@@ -67,6 +67,7 @@
         <module>dashboard</module>
         <module>channel-handler-http</module>
         <module>channel-handler-thrift</module>
+        <module>sample-thrift-proxy</module>
     </modules>
     
 </project>
