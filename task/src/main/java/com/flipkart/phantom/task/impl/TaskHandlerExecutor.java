@@ -38,6 +38,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 
+	/** TaskResult message constants */
+	public static final String NO_RESULT = "The command returned no result";
+	public static final String ASYNC_QUEUED = "The command dispatched for async execution";
+
 	/** Logger for this class*/
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
@@ -122,7 +126,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 		try {
 			TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
 			if(result==null) {
-				return new TaskResult(true,"The command returned no result");
+				return new TaskResult(true,TaskHandlerExecutor.NO_RESULT);
 			}
 			if(result.isSuccess()==false) {
 				throw new RuntimeException("Command: "+this.command+" failed: "+(result==null?"":result.getMessage()));
@@ -159,5 +163,8 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 	public void setData(byte[] data) {
 		this.data = data;
 	}
+	public int getCallInvocationType() {
+		return this.taskHandler.getCallInvocationType();
+	}	
 	/** End Getter/Setter methods */	
 }

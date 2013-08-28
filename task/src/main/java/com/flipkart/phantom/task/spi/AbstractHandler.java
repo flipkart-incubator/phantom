@@ -26,12 +26,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 abstract public class AbstractHandler {
 
+	/** Constants to denote command invocation types*/
+	public static final int SYNC_CALL = 0;
+	public static final int ASYNC_CALL = 1;
+
     /** The status showing the TaskHandler is inited and ready to use */
     public static int ACTIVE = 1;
 
     /** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
     public static int INACTIVE = 0;
 
+	/** The default command invocation type for this AbstractHandler*/
+	private int callInvocationType = AbstractHandler.SYNC_CALL;
+    
     /** The status of this ThriftProxy (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
 
@@ -89,5 +96,21 @@ abstract public class AbstractHandler {
         return this.status.get() == AbstractHandler.ACTIVE;
     }
 
+    /**
+     * The default call invocation type for this handler
+     * @return the call invocation type identifier
+     */
+	public int getCallInvocationType() {
+		return this.callInvocationType;
+	}
+	
+	/**
+	 * Sets the call invocation type for this handler
+	 * @param callInvocationType the call invocation type identifier
+	 */
+	public void setCallInvocationType(int callInvocationType) {
+		this.callInvocationType = callInvocationType;
+	}	
+    
 
 }
