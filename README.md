@@ -26,6 +26,9 @@ is described in this [Proxies for resilience and fault tolerance in SOA](http://
 
 ![Admin Console](https://github.com/Flipkart/phantom/raw/master/docs/Phantom%20http%20config.png)
 
+## Getting Started
+The [Getting Started](https://github.com/Flipkart/phantom/wiki/Getting-started-and-Examples) has "5 minute" examples to get you started on Phantom proxies.
+
 ## Documentation and Examples
 Phantom project modules that start with "sample" - for e.g. sample-http-proxy, sample-task-proxy are example proxy implementations.
 Documentation is continuously being added to the Wiki page of Phantom (https://github.com/Flipkart/phantom/wiki)
