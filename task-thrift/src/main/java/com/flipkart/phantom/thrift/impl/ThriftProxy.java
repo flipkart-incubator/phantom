@@ -72,7 +72,6 @@ public abstract class ThriftProxy extends AbstractHandler implements Initializin
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	public void afterPropertiesSet() throws Exception {		
-		Assert.notNull(this.thriftPort, "The 'thriftPort' may not be null");	
 		Assert.notNull(this.thriftServer, "The 'thriftServer' may not be null");	
 		Assert.notNull(this.thriftServiceClass, "The 'thriftServiceClass' may not be null");	
 	}
