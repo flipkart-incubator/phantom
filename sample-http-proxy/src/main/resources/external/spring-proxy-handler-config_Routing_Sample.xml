@@ -7,7 +7,7 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
     http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
 
-<!-- http proxy for GET-->
+<!-- default http proxy -->
 <bean id="defaultProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
     <property name="name" value="defaultProxy" />
     <property name="pool" ref="listingConnectionPool" />
