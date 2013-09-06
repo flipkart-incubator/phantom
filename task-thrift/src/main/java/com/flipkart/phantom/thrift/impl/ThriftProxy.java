@@ -16,16 +16,19 @@
 
 package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.utils.StringUtils;
-import org.apache.thrift.ProcessFunction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.thrift.ProcessFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
+
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.utils.StringUtils;
 
 /**
  * <code>ThriftProxy</code> holds the details of a ThriftProxy and loads the necessary Thrift Classes.
@@ -35,7 +38,7 @@ import java.util.Map;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public abstract class ThriftProxy extends AbstractHandler {
+public abstract class ThriftProxy extends AbstractHandler implements InitializingBean {
 
 	/** The default Thrift interface class name for Thrift services */
 	private static final String DEFAULT_SERVICE_INTERFACE_NAME="Iface";
@@ -64,14 +67,20 @@ public abstract class ThriftProxy extends AbstractHandler {
 	@SuppressWarnings("rawtypes")
 	private Map<String, ProcessFunction> processMap = new HashMap<String, ProcessFunction>();
 	
+	/**
+	 * Interface method implementation. Checks if all mandatory properties have been set
+	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+	 */
+	public void afterPropertiesSet() throws Exception {		
+		Assert.notNull(this.thriftPort, "The 'thriftPort' may not be null");	
+		Assert.notNull(this.thriftServer, "The 'thriftServer' may not be null");	
+		Assert.notNull(this.thriftServiceClass, "The 'thriftServiceClass' may not be null");	
+	}
 
 	/**
 	 * Initialize this ThriftProxy
 	 */
 	public void init(TaskContext context) throws Exception {
-		if (this.thriftServiceClass == null) {
-			throw new AssertionError("The 'thriftServiceClass' may not be null");
-		}
 		if (this.processMap == null || this.processMap.isEmpty()) {
 			throw new AssertionError("ProcessFunctions not populated. Maybe The 'thriftServiceClass' is not a valid class?");
 		}
