@@ -39,9 +39,15 @@
     <bean id="httpChunkAggregator" class="org.jboss.netty.handler.codec.http.HttpChunkAggregator" scope="prototype">
         <constructor-arg value="1048576" />
     </bean>
-    <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
+    <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.MethodRoutingHttpChannelHandler" scope="prototype">
         <property name="repository" ref="httpProxyRepository"/>
         <property name="defaultProxy" value="defaultProxy" />
+		<property name="proxyMap">
+        	<map>
+            	<entry key="GET" value="listingProxy" />
+            	<entry key="POST" value="updateProxy" />
+        	</map> 
+    	</property>        
     </bean>
 
     <!-- The executor repository for handling requests to HttpProxy -->

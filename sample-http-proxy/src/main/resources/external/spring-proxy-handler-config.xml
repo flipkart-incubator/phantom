@@ -9,7 +9,7 @@
 
     <!-- http proxy -->
     <bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
-        <property name="name" value="flipkart" />
+        <property name="name" value="defaultProxy" />
         <property name="pool" ref="sampleConnectionPool" />
     </bean>
 
@@ -18,7 +18,7 @@
         <property name="host" value="www.google.com" />
         <property name="port" value="80" />
         <property name="connectionTimeout" value="10000" />
-        <property name="operationTimeout" value="10000" />
+        <property name="operationTimeout" value="2000" />
     </bean>
 
 </beans>

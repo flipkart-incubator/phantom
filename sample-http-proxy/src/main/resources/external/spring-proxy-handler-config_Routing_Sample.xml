@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+
+<!-- http proxy for GET-->
+<bean id="defaultProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
+    <property name="name" value="defaultProxy" />
+    <property name="pool" ref="listingConnectionPool" />
+</bean>
+
+<!-- http proxy for GET-->
+<bean id="getHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
+    <property name="name" value="listingProxy" />
+    <property name="pool" ref="listingConnectionPool" />
+</bean>
+<!-- http proxy for POST-->
+<bean id="postHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
+    <property name="name" value="updateProxy" />
+    <property name="pool" ref="updateConnectionPool" />
+</bean>
+
+<!-- http connection pool for GET -->
+<bean id="listingConnectionPool" class="com.flipkart.phantom.http.impl.HttpConnectionPool">
+    <property name="host" value="www.flipkart.com" />
+    <property name="port" value="80" />
+    <property name="connectionTimeout" value="10000" />
+    <property name="operationTimeout" value="10000" />
+</bean>
+<!-- http connection pool for POST -->
+<bean id="updateConnectionPool" class="com.flipkart.phantom.http.impl.HttpConnectionPool">
+    <property name="host" value="www.flipkart.com" />
+    <property name="port" value="80" />
+    <property name="connectionTimeout" value="10000" />
+    <property name="operationTimeout" value="10000" />
+</bean>
+
+</beans>

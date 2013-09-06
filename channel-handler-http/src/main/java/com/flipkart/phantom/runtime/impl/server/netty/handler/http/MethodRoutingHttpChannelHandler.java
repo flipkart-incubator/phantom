@@ -19,21 +19,20 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
- * <code>HttpChannelHandler</code> is a sub-type of {@link RoutingHttpChannelHandler} that routes all requests to the default proxy
+ * <code>MethodRoutingHttpChannelHandler</code> is a sub-type of {@link RoutingHttpChannelHandler} that routes requests by request method i.e. GET, POST etc.
  *
  * @author Regunath B
- * @version 1.0, 3 Apr 2013
- * @version 2.0, 6 Sep 2013
+ * @version 1.0, 6 Sep 2013
  */
 
-public class HttpChannelHandler extends RoutingHttpChannelHandler {
+public class MethodRoutingHttpChannelHandler extends RoutingHttpChannelHandler {
 
 	/**
-	 * Abstract method implementation. Returns {@link RoutingHttpChannelHandler#ALL_ROUTES} to indicate that all traffic is routed to the default proxy
+	 * Abstract method implementation. Returns the request method i.e. GET, POST etc.
 	 * @see com.flipkart.phantom.runtime.impl.server.netty.handler.http.RoutingHttpChannelHandler#getRoutingKey(org.jboss.netty.handler.codec.http.HttpRequest)
 	 */
 	protected String getRoutingKey(HttpRequest request) {
-		return RoutingHttpChannelHandler.ALL_ROUTES; // routing all traffic to the default proxy
+		return request.getMethod().getName(); 
 	}    
 
 }
