@@ -33,6 +33,9 @@ The [Getting Started](https://github.com/Flipkart/phantom/wiki/Getting-started-a
 Phantom project modules that start with "sample" - for e.g. sample-http-proxy, sample-task-proxy are example proxy implementations.
 Documentation is continuously being added to the Wiki page of Phantom (https://github.com/Flipkart/phantom/wiki)
 
+## Getting help
+For discussion, help regarding usage, or receiving important announcements, subscribe to the Phantom users mailing list: http://groups.google.com/group/phantom-users
+
 ## License
 Phantom is licensed under : The Apache Software License, Version 2.0. Here is a copy of the license (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
