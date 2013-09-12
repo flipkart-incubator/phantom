@@ -15,7 +15,11 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
-import com.flipkart.phantom.task.impl.TaskResult;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -25,14 +29,9 @@ import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.SerializationUtils;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import com.flipkart.phantom.task.impl.TaskResult;
 
 /**
  * <code>CommandInterpreter</code> interprets a Command from the Netty {@link MessageEvent}
@@ -78,8 +77,6 @@ import java.util.Map;
  */
 
 public class CommandInterpreter {
-
-    private static Logger logger = LoggerFactory.getLogger(CommandInterpreter.class);
 
 	/** Constant for max command input size*/
 	public static final int MAX_COMMAND_INPUT = 20480;
@@ -314,7 +311,11 @@ public class CommandInterpreter {
 						return new ProxyCommand(ReadFailure.INSUFFICIENT_DATA, "Stream ended before all data was read. Length of data bytes needed : " + (dataLength-dataByteReadIndex));
 					}
 				}
-				dataByteReadIndex += inputStream.read(commandData, dataByteReadIndex, dataLength-dataByteReadIndex);					
+				int actualBytesRead = inputStream.read(commandData, dataByteReadIndex, dataLength-dataByteReadIndex);
+				if (actualBytesRead <= 0) { // 0 bytes not possible because dataLength-dataByteReadIndex is non-zero, -1 is returned if no byte is available because the stream is at end of file (as per Javadocs)
+					throw new IllegalArgumentException("Insufficient bytes read for command : " + readCommand.getCommand() + ". Expected : " + (dataLength-dataByteReadIndex) + " but read : " + actualBytesRead);
+				}
+				dataByteReadIndex += actualBytesRead;					
 			}
 			// set the command data on the ProxyCommand object
 			readCommand.setCommandData(commandData);
