@@ -11,10 +11,10 @@ import org.apache.thrift.transport.TTransport;
 public class ArithmeticClient {
  
 	public ArithmeticClient() {
-		ExecutorService executorService = Executors.newFixedThreadPool(10);
-		for (int i=0; i < 10; i++) {
+		ExecutorService executorService = Executors.newFixedThreadPool(100);
+		for (int i=0; i < 10000; i++) {
 			try {
-				Thread.sleep(50);
+				Thread.sleep(5);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

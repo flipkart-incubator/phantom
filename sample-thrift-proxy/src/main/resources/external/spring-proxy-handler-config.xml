@@ -12,7 +12,8 @@
         <property name="thriftServer" value="localhost" />
         <property name="thriftPort" value="8082" />
         <property name="thriftTimeoutMillis" value="1000" />
-        <property name="executorTimeout" value="1000"/>
+        <property name="proxyExecutorTimeout" value="500"/>
+        <property name="proxyThreadPoolSize" value="50"/>
     </bean>
 
 </beans>
