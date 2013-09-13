@@ -40,9 +40,9 @@ public class ThriftProxyExecutorRepository {
 	 * @return a ThriftProxyExecutor instance
 	 */
 	public ThriftProxyExecutor getThriftProxyExecutor (String proxyName, String commandName) {
-        ThriftProxy proxy = (ThriftProxy) registry.getHandler(proxyName);
+		HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
 		if (proxy.isActive()) { // check if the ThriftProxy is indeed active
-			return new ThriftProxyExecutor(proxy, this.taskContext, commandName, proxy.getExecutorTimeout());
+			return new ThriftProxyExecutor(proxy, this.taskContext, commandName);
 		}
 		throw new RuntimeException("The ThriftProxy is not active.");
 	}

@@ -17,6 +17,7 @@ package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
+
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -60,6 +61,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 
 	/** The default Hystrix Thread pool to which the command belongs, unless otherwise mentioned */
 	public static final String DEFAULT_HYSTRIX_THREAD_POOL = "defaultThriftThreadPool";
+	
+	/** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
+	public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;	
 
 	/** The default Thrift call result class name */
 	private static final String DEFAULT_RESULT_CLASS_NAME="_result";
@@ -77,25 +81,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 	private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
 
 	/**
-	 * Basic constructor for {@link ThriftProxy}. The Hystrix command name is commandName. The group name is the ThriftProxy Name
-	 * (ThriftProxy#getName). The Thread Pool Name is {@link ThriftProxyExecutor#DEFAULT_HYSTRIX_THREAD_POOL}
-	 *
-	 * @param thriftProxy the ThriftProxy that must be wrapped by Hystrix
-	 * @param taskContext the TaskContext instance that manages the proxies
-	 * @param commandName the Hystrix command name.
-	 */
-	protected ThriftProxyExecutor(ThriftProxy thriftProxy, TaskContext taskContext, String commandName, int timeout) {
-		super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(thriftProxy.getName()))
-				.andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-				.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL))
-				.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
-		this.thriftProxy = thriftProxy;
-		this.taskContext = taskContext;
-	}
-
-	/**
 	 * Constructor for this class.
-	 * @param hystrixThriftProxy the ThriftProxy that must be wrapped by Hystrix
+	 * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
 	 * @param taskContext the TaskContext instance that manages the proxies
 	 * @param commandName the Hystrix command name.
 	 */
@@ -193,6 +180,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 		} else {
 			setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL));
 		}
+		Integer threadPoolSize = hystrixThriftProxy.getProxyThreadPoolSize() == null ? ThriftProxyExecutor.DEFAULT_HYSTRIX_THREAD_POOL_SIZE :  hystrixThriftProxy.getProxyThreadPoolSize();
+		setter = setter.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize));
+		setter = setter.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(hystrixThriftProxy.getExecutorTimeout(commandName)));
 		if((hystrixThriftProxy.getHystrixProperties()!=null)) {
 			setter = setter.andCommandPropertiesDefaults(hystrixThriftProxy.getHystrixProperties());
 		}
