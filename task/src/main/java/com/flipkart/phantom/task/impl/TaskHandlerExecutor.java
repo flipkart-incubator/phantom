@@ -52,7 +52,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 	public static final String DEFAULT_HYSTRIX_THREAD_POOL = "DEFAULT_THREAD_POOL";
 
 	/** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
-	public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 10;
+	public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;
 
 	/** The {@link TaskHandler} or {@link HystrixTaskHandler} instance which this Command wraps around */
 	protected TaskHandler taskHandler;

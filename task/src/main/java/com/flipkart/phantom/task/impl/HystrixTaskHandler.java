@@ -32,7 +32,7 @@ import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 public abstract class HystrixTaskHandler extends TaskHandler {
 
 	/** The default executor timeout in millis*/
-	public static final int DEFAULT_EXECUTOR_TIMEOUT = 10000;
+	public static final int DEFAULT_EXECUTOR_TIMEOUT = 2000;
 		
     /** 
      * These can be used to limit the maximum concurrent requests at a thread pool level.
@@ -78,7 +78,7 @@ public abstract class HystrixTaskHandler extends TaskHandler {
 	
     /** Getter/Setter methods */
 	/**
-	 * Returns a command specific executor timeout. Default implementation returns {@value TaskHandler#DEFAULT_EXECUTOR_TIMEOUT}
+	 * Returns a command specific executor timeout. Default implementation returns {@value HystrixTaskHandler#DEFAULT_EXECUTOR_TIMEOUT}
 	 * @param commandName the command name being executed
 	 * @return the executor timeout value in milli seconds
 	 */
