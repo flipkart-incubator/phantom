@@ -102,10 +102,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 		//TSocket serviceSocket = this.thriftProxy.getPooledSocket();
 		//boolean isConnectionValid = true;
 
-		TSocket serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
+		TSocket serviceSocket = null;
         try {
-    		serviceSocket.open();
-	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
 
 			//Get Protocol from transport
 			TProtocol clientProtocol = this.protocolFactory.getProtocol(clientTransport);
@@ -120,14 +118,19 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 			args.read(clientProtocol);
 			clientProtocol.readMessageEnd();
 
+			// Instantiate the call result object using the Thrift naming convention used for classes
+			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
+			
+        	serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
+    		serviceSocket.open();
+	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
 
 			//Send the arguments to the server and relay the response back
 			//Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
 			ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
+
 			//Send the request
 			proxyClient.sendBase(message.name, args, message.seqid);
-			// Instantiate the call result object using the Thrift naming convention used for classes
-			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
 			//Get the response back (it is written to client's TProtocol)
 			proxyClient.receiveBase(result, message.name);
 
@@ -141,8 +144,10 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 				throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
 			}
 		} finally {
-            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
-			serviceSocket.close();
+			if (serviceSocket != null) {			
+	            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
+				serviceSocket.close();
+			}
 		}
 		return this.clientTransport;
 	}
