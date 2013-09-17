@@ -122,8 +122,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
 			
         	serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
-    		serviceSocket.open();
 	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
+    		serviceSocket.open();
 
 			//Send the arguments to the server and relay the response back
 			//Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
