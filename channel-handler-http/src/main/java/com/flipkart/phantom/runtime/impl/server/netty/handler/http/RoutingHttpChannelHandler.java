@@ -16,23 +16,16 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.http.impl.HttpProxyExecutor;
+import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -43,9 +36,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import com.flipkart.phantom.http.impl.HttpProxy;
-import com.flipkart.phantom.http.impl.HttpProxyExecutor;
-import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <code>RoutingHttpChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that routes Http requests to one or more {@link HttpProxy} instances.

@@ -18,14 +18,15 @@ package com.flipkart.phantom.runtime.impl.server.oio;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
+import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
 import com.flipkart.phantom.task.impl.TaskResult;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
-import org.springframework.util.Assert;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 import org.trpr.platform.runtime.impl.config.FileLocator;
 
 import java.io.File;
@@ -206,7 +207,8 @@ public class UDSOIOServer extends AbstractNetworkServer {
 				LOGGER.debug("Read Command : " + readCommand);
 				String pool = readCommand.getCommandParams().get("pool");
 				TaskHandlerExecutor executor;
-				//Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
+
+				/*Try to execute command using ThreadPool, if "pool" is found in the command, else the command name */
 				if(pool!=null) {
 					executor = repository.get(readCommand.getCommand(),pool);
 				} else {
@@ -214,8 +216,20 @@ public class UDSOIOServer extends AbstractNetworkServer {
 				}
 				executor.setParams(readCommand.getCommandParams());
 				executor.setData(readCommand.getCommandData());
-				TaskResult result = executor.execute();
+                TaskResult result;
+                /* execute */
+                if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL)
+                {
+                    result = executor.execute();
+                }
+                else
+                {
+                    /* dont wait for the result. send back a response that the call has been dispatched for async execution */
+                    executor.queue();
+                    result = new TaskResult(true,TaskHandlerExecutor.ASYNC_QUEUED);
+                }
 				LOGGER.debug("The output is: "+ result);
+
 				// write the results to the socket output
 				commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);				            
 			} catch(Exception e) {

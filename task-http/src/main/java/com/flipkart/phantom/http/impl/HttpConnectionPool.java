@@ -16,9 +16,6 @@
 
 package com.flipkart.phantom.http.impl;
 
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,9 +29,10 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.apache.http.pool.PoolStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Semaphore;
 
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests

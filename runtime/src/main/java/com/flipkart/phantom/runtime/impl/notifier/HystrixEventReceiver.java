@@ -18,8 +18,8 @@ package com.flipkart.phantom.runtime.impl.notifier;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixEventType;
 import com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifier;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>HystrixEventReceiver</code> is a class that receives Hystrix events and logs them.

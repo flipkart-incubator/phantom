@@ -15,8 +15,8 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 
 
 /**

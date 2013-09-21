@@ -16,9 +16,9 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty;
 
-import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.netty.uds.OioServerSocketChannel;
 import com.flipkart.phantom.netty.uds.OioServerSocketChannelFactory;
+import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import org.jboss.netty.bootstrap.Bootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;

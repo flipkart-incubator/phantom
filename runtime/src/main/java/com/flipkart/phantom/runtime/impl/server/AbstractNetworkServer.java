@@ -16,10 +16,10 @@
 package com.flipkart.phantom.runtime.impl.server;
 
 import com.flipkart.phantom.runtime.spi.server.NetworkServer;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 
 import java.net.InetSocketAddress;
 

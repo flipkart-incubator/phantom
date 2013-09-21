@@ -16,16 +16,14 @@
 
 package com.flipkart.phantom.task.impl;
 
+import com.flipkart.phantom.task.spi.TaskContext;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
-
-import org.codehaus.jackson.map.ObjectMapper;
-
-
-import com.flipkart.phantom.task.spi.TaskContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link TaskContext}

@@ -16,6 +16,8 @@
 package com.flipkart.phantom.task.spi;
 
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,9 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 abstract public class AbstractHandler {
 
-	/** Constants to denote command invocation types*/
-	public static final int SYNC_CALL = 0;
-	public static final int ASYNC_CALL = 1;
+    /** Constants to denote command invocation types*/
+    public static final int SYNC_CALL = 0;
+    public static final int ASYNC_CALL = 1;
 
     /** The status showing the TaskHandler is inited and ready to use */
     public static int ACTIVE = 1;
@@ -36,9 +38,12 @@ abstract public class AbstractHandler {
     /** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
     public static int INACTIVE = 0;
 
-	/** The default command invocation type for this AbstractHandler*/
-	private int callInvocationType = AbstractHandler.SYNC_CALL;
-    
+    /** The default command invocation type for this AbstractHandler*/
+    private int callInvocationType = AbstractHandler.SYNC_CALL;
+
+    /** This provides the invocation type for each command in a Task Handler. */
+    private Map<String,Integer> callInvocationTypePerCommand = new HashMap<String, Integer>();
+
     /** The status of this ThriftProxy (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
 
@@ -100,17 +105,31 @@ abstract public class AbstractHandler {
      * The default call invocation type for this handler
      * @return the call invocation type identifier
      */
-	public int getCallInvocationType() {
-		return this.callInvocationType;
-	}
-	
-	/**
-	 * Sets the call invocation type for this handler
-	 * @param callInvocationType the call invocation type identifier
-	 */
-	public void setCallInvocationType(int callInvocationType) {
-		this.callInvocationType = callInvocationType;
-	}	
-    
+    public int getCallInvocationType() {
+        return this.callInvocationType;
+    }
 
+    /**
+     * Sets the call invocation type for this handler
+     * @param callInvocationType the call invocation type identifier
+     */
+    public void setCallInvocationType(int callInvocationType) {
+        this.callInvocationType = callInvocationType;
+    }
+
+    /**
+     * The callInvocationTypePerCommand for this handler
+     * @return the callInvocationTypePerCommand Map
+     */
+    public Map<String, Integer> getCallInvocationTypePerCommand(){
+        return callInvocationTypePerCommand;
+    }
+
+    /**
+     * Sets the callInvocationTypePerCommand for this handler
+     * @param callInvocationTypePerCommand Map of command Vs Call Invocation Type
+     */
+    public void setCallInvocationTypePerCommand(Map<String, Integer> callInvocationTypePerCommand) {
+        this.callInvocationTypePerCommand = callInvocationTypePerCommand;
+    }
 }

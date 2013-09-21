@@ -15,14 +15,17 @@
  */
 package com.flipkart.phantom.runtime.impl.spring;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.flipkart.phantom.runtime.ServiceProxyFrameworkConstants;
+import com.flipkart.phantom.runtime.impl.notifier.HystrixEventReceiver;
+import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
+import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
+import com.netflix.hystrix.Hystrix;
+import com.netflix.hystrix.strategy.HystrixPlugins;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -40,17 +43,13 @@ import org.trpr.platform.runtime.impl.config.FileLocator;
 import org.trpr.platform.runtime.spi.bootstrapext.BootstrapExtension;
 import org.trpr.platform.runtime.spi.component.ComponentContainer;
 
-import com.flipkart.phantom.runtime.ServiceProxyFrameworkConstants;
-import com.flipkart.phantom.runtime.impl.notifier.HystrixEventReceiver;
-import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl;
-import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
-import com.netflix.hystrix.Hystrix;
-import com.netflix.hystrix.strategy.HystrixPlugins;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * The <code>ServiceProxyComponentContainer</code> class is a ComponentContainer implementation as defined by Trooper {@link "https://github.com/regunathb/Trooper"}

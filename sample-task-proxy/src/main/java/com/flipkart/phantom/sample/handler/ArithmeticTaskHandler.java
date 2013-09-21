@@ -15,8 +15,8 @@
  */
 package com.flipkart.phantom.sample.handler;
 
-import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
+import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.TaskContext;
 
 import java.util.Map;

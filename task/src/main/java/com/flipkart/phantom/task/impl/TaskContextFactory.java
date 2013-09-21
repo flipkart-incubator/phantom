@@ -16,9 +16,8 @@
 
 package com.flipkart.phantom.task.impl;
 
-import org.springframework.beans.factory.FactoryBean;
-
 import com.flipkart.phantom.task.spi.TaskContext;
+import org.springframework.beans.factory.FactoryBean;
 
 /**
  * Factory for creating {@link TaskContext} instance. This class returns a classloader scope singleton instance. Also implements the Spring {@link FactoryBean}

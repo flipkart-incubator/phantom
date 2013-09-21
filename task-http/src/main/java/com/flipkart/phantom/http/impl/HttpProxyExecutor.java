@@ -16,15 +16,9 @@
 
 package com.flipkart.phantom.http.impl;
 
-import org.apache.http.HttpResponse;
-
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties;
-import com.netflix.hystrix.HystrixThreadPoolKey;
-import com.netflix.hystrix.HystrixThreadPoolProperties;
+import com.netflix.hystrix.*;
+import org.apache.http.HttpResponse;
 
 /**
  * Implements the HystrixCommand class for executing HTTP proxy requests
