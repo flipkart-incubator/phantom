@@ -17,6 +17,7 @@ package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
+
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -60,6 +61,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 
 	/** The default Hystrix Thread pool to which the command belongs, unless otherwise mentioned */
 	public static final String DEFAULT_HYSTRIX_THREAD_POOL = "defaultThriftThreadPool";
+	
+	/** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
+	public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;	
 
 	/** The default Thrift call result class name */
 	private static final String DEFAULT_RESULT_CLASS_NAME="_result";
@@ -77,25 +81,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 	private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
 
 	/**
-	 * Basic constructor for {@link ThriftProxy}. The Hystrix command name is commandName. The group name is the ThriftProxy Name
-	 * (ThriftProxy#getName). The Thread Pool Name is {@link ThriftProxyExecutor#DEFAULT_HYSTRIX_THREAD_POOL}
-	 *
-	 * @param thriftProxy the ThriftProxy that must be wrapped by Hystrix
-	 * @param taskContext the TaskContext instance that manages the proxies
-	 * @param commandName the Hystrix command name.
-	 */
-	protected ThriftProxyExecutor(ThriftProxy thriftProxy, TaskContext taskContext, String commandName, int timeout) {
-		super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(thriftProxy.getName()))
-				.andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-				.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL))
-				.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
-		this.thriftProxy = thriftProxy;
-		this.taskContext = taskContext;
-	}
-
-	/**
 	 * Constructor for this class.
-	 * @param hystrixThriftProxy the ThriftProxy that must be wrapped by Hystrix
+	 * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
 	 * @param taskContext the TaskContext instance that manages the proxies
 	 * @param commandName the Hystrix command name.
 	 */
@@ -115,10 +102,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 		//TSocket serviceSocket = this.thriftProxy.getPooledSocket();
 		//boolean isConnectionValid = true;
 
-		TSocket serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
+		TSocket serviceSocket = null;
         try {
-    		serviceSocket.open();
-	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
 
 			//Get Protocol from transport
 			TProtocol clientProtocol = this.protocolFactory.getProtocol(clientTransport);
@@ -133,14 +118,19 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 			args.read(clientProtocol);
 			clientProtocol.readMessageEnd();
 
+			// Instantiate the call result object using the Thrift naming convention used for classes
+			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
+			
+        	serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
+	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
+    		serviceSocket.open();
 
 			//Send the arguments to the server and relay the response back
 			//Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
 			ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
+
 			//Send the request
 			proxyClient.sendBase(message.name, args, message.seqid);
-			// Instantiate the call result object using the Thrift naming convention used for classes
-			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
 			//Get the response back (it is written to client's TProtocol)
 			proxyClient.receiveBase(result, message.name);
 
@@ -154,8 +144,10 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 				throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
 			}
 		} finally {
-            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
-			serviceSocket.close();
+			if (serviceSocket != null) {			
+	            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
+				serviceSocket.close();
+			}
 		}
 		return this.clientTransport;
 	}
@@ -193,6 +185,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 		} else {
 			setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL));
 		}
+		Integer threadPoolSize = hystrixThriftProxy.getProxyThreadPoolSize() == null ? ThriftProxyExecutor.DEFAULT_HYSTRIX_THREAD_POOL_SIZE :  hystrixThriftProxy.getProxyThreadPoolSize();
+		setter = setter.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize));
+		setter = setter.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(hystrixThriftProxy.getExecutorTimeout(commandName)));
 		if((hystrixThriftProxy.getHystrixProperties()!=null)) {
 			setter = setter.andCommandPropertiesDefaults(hystrixThriftProxy.getHystrixProperties());
 		}
