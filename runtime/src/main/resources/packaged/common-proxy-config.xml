@@ -15,7 +15,15 @@
 	</bean>
 
 	<bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
-	</bean>
+        <property name="executorRepository" ref="taskHandlerRepository" />
+    </bean>
+
+    <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
+        <property name="taskContext" ref="taskContext" />
+        <property name="taskHandlerRegistry" ref="taskHandlerRegistry" />
+    </bean>
+
+    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry"/>
 
 	<!-- Netty common beans -->
 	<bean id="defaultChannelGroup" class="org.jboss.netty.channel.group.DefaultChannelGroup">
