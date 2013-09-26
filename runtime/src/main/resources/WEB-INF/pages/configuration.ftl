@@ -12,14 +12,12 @@
 			<tr>
 				<th>ServerType</th>
 				<th>Endpoint</th>
-				<th>Registered Channel Handlers</th>
 			</tr>
 			<#if networkServers?? && networkServers?size!=0>
 				<#list networkServers as nServer>
 					<tr>
 						<td>${nServer.getServerType()}</td>
 						<td>${nServer.getServerEndpoint()}</td>
-						<td><#list nServer.pipelineFactory.channelHandlersMap?keys as chkey> ${chkey}, </#list></td>
 					</tr>
 				</#list>
 			</#if>

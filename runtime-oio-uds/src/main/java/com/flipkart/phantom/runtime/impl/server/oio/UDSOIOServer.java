@@ -167,7 +167,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
     @Override
     public String getServerEndpoint() {
-        return this.socketDir + this.socketFile;
+        return this.socketFile.toString();
     }
 
     /**
