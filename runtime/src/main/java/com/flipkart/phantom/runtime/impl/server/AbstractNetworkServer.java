@@ -52,14 +52,19 @@ public abstract class AbstractNetworkServer implements NetworkServer, Initializi
 	 * Interface method implementation. Checks if all manadatory properties have been set
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
-	public void afterPropertiesSet() throws Exception {		
-		// start the server using the InetSocketAddress if specified, else use the port set
-		if (this.getSocketAddress() != null) {
-			this.startServer(this.getSocketAddress());
-		} else {
-			this.startServer(this.getPortNumber());
-		}
-	}
+	public void afterPropertiesSet() throws Exception {	}
+
+    /**
+     * Method to init server
+     */
+    public void init() throws Exception {
+        // start the server using the InetSocketAddress if specified, else use the port set
+        if (this.getSocketAddress() != null) {
+            this.startServer(this.getSocketAddress());
+        } else {
+            this.startServer(this.getPortNumber());
+        }
+    }
 
 	/**
 	 * Interface method implementation. Starts up this network server using the default port

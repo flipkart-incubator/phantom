@@ -179,10 +179,11 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
             HandlerConfigInfo handlerConfigInfo = new HandlerConfigInfo(proxyHandlerBeansFile);
             // load the proxy handler's appcontext
             this.loadProxyHandlerContext(handlerConfigInfo);
+            LOGGER.info("Loaded: " + proxyHandlerBeansFile);
         }
 
 		// add the proxy listener beans to the contexts list (these have the thrift handlers)
-		File[] proxyListenerBeanFiles = FileLocator.findFiles(ServiceProxyFrameworkConstants.SPRING_PROXY_LISTENER_CONFIG);			
+		File[] proxyListenerBeanFiles = FileLocator.findFiles(ServiceProxyFrameworkConstants.SPRING_PROXY_LISTENER_CONFIG);
 		for (File proxyListenerBeanFile : proxyListenerBeanFiles) {
 			// locate and load the service proxy listener defined in the file identified by {@link ServiceProxyFrameworkConstants#SPRING_PROXY_LISTENER_CONFIG}
 			AbstractApplicationContext listenerContext = new FileSystemXmlApplicationContext(
@@ -190,6 +191,7 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
 					ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
             );
 			this.handlerConfigInfoList.add(new HandlerConfigInfo(proxyListenerBeanFile, null, listenerContext));
+            LOGGER.info("Loaded: " + proxyListenerBeanFile);
 		}
 
         // load all registries
@@ -198,10 +200,12 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
             String[] registryBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
             for (String registryBean:registryBeans) {
                 AbstractHandlerRegistry registry = (AbstractHandlerRegistry) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
+                LOGGER.info("Found handler registry: " + registry.getClass().getName());
                 // init the Registry
                 try {
                     this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
                     AbstractHandlerRegistry.InitedHandlerInfo[] initedHandlerInfos = registry.init(this.handlerConfigInfoList,this.taskContext);
+                    LOGGER.info("Initialized handler registry: " + registry.getClass().getName());
         			//Add the file path of each inited handler to SPConfigService (for configuration console)
                     for (AbstractHandlerRegistry.InitedHandlerInfo initedHandlerInfo: initedHandlerInfos) {
                     	this.configService.addHandlerConfigPath(initedHandlerInfo.getHandlerConfigInfo().getXmlConfigFile(), initedHandlerInfo.getInitedHandler());
@@ -215,11 +219,21 @@ public class ServiceProxyComponentContainer  implements ComponentContainer {
                 // add registry to local list
                 this.registries.add(registry);
             }
+
             // add all network servers to config
             String[] networkServerBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractNetworkServer.class);
             for (String networkServerBean : networkServerBeans) {
-                configService.addDeployedNetworkServer((AbstractNetworkServer) handlerConfigInfo.getProxyHandlerContext().getBean(networkServerBean));
+                AbstractNetworkServer networkServer = (AbstractNetworkServer)handlerConfigInfo.getProxyHandlerContext().getBean(networkServerBean);
+                // init the server
+                try {
+                    networkServer.init();
+                } catch (Exception e) {
+                    LOGGER.error("Error initializeing network server: " + networkServer.getServerType() + ": " + networkServer.getServerEndpoint());
+                    throw new PlatformException("Error initializeing network server: " + networkServer.getServerType() + ": " + networkServer.getServerEndpoint(),e);
+                }
+                configService.addDeployedNetworkServer(networkServer);
             }
+
         }
 	}
 
