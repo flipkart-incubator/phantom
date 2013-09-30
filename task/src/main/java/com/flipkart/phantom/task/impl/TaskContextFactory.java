@@ -77,6 +77,8 @@ public class TaskContextFactory implements FactoryBean<TaskContext> {
 	}
 	public void setExecutorRepository(TaskHandlerExecutorRepository executorRepository) {
 		this.executorRepository = executorRepository;
+		// make sure that the TaskHandlerExecutorRepository is set on the singleton instance created by this factory
+		((TaskContextImpl)TaskContextFactory.singleton).setExecutorRepository(this.executorRepository);
 	}
 	
 }
