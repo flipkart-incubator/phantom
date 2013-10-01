@@ -39,7 +39,7 @@ public class TaskHandlerExecutorRepository {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);
 
 	/** Regex for finding all non alphanumeric characters */
-	public static final String ONLY_ALPHANUMERIC_REGEX = "[^\\dA-Za-z ]";
+	public static final String ONLY_ALPHANUMERIC_REGEX = "[^\\dA-Za-z_]";
 
 	/** Regex for finding all whitespace characters */
 	public static final String WHITESPACE_REGEX = "\\s+";
