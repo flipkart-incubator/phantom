@@ -2,15 +2,18 @@
 - **Bug fixes:**
   - Making sure the task repository is set on the singleton task context
   - Allowing _ in valid command names
+<br />
 ## 1.1.3 (September 29, 2013)
 - **Bug fixes:**
   - Single task handler executor repository and task handler registry initialization in common-beans-context
   - UI fixes for dashboard
   - Initializing all listener servers at the end
+<br />
 ## 1.1.0 (September 25, 2013)
 - **New features:**
   - Support for async execution of commands
   - Support for thrift method level timeouts and thread pools in Thrift proxy
+<br />
 ## 1.0.0 (August 22, 2013)
 - **New features:**
   - Task module that defines API interfaces for writing proxy handlers
