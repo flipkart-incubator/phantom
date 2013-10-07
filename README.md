@@ -11,6 +11,12 @@ of API calls in production deployments at Flipkart.
 | Release | Date | Description |
 |:------------|:----------------|:------------|
 | Version 1.0.0    | August 2013      |    First release
+|:------------|:----------------|:------------|
+| Version 1.1.0    | September 2013      |   Second release 
+|:------------|:----------------|:------------|
+| Version 1.1.3    | September 2013      |    Bugfix release
+|:------------|:----------------|:------------|
+| Version 1.1.5    | October 2013      |   Bugfix release 
 
 ## Changelog
 
