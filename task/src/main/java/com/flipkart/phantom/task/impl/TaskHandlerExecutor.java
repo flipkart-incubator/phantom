@@ -124,7 +124,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
                 return new TaskResult(true,TaskHandlerExecutor.NO_RESULT);
             }
             if(result.isSuccess()==false) {
-                throw new RuntimeException("Command: "+this.command+" failed: "+(result==null?"":result.getMessage()));
+                throw new RuntimeException("Command returned FALSE: "+(result==null?"":result.getMessage()));
             }
             return result;
         } catch(Exception e) {
