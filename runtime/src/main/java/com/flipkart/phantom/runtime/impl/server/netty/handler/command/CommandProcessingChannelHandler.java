@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
+import com.flipkart.phantom.task.utils.RequestLogger;
 import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
@@ -89,7 +90,9 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 			} catch(Exception e) {
 				LOGGER.error("Error in executing command/fallBack : " + readCommand, e);
 				throw new RuntimeException("Error in executing command : " + readCommand, e);
-			}
+			} finally {
+                RequestLogger.log(executor);
+            }
 		} 		
 		super.handleUpstream(ctx, event);
 	}	

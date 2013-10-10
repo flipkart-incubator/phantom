@@ -16,6 +16,7 @@
 package com.flipkart.phantom.runtime.impl.server.oio;
 
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.task.utils.RequestLogger;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
 import com.flipkart.phantom.task.impl.TaskHandler;
@@ -201,12 +202,12 @@ public class UDSOIOServer extends AbstractNetworkServer {
 			this.client = client;
 		}
 		public void run() {
+            TaskHandlerExecutor executor = null;
 			try {
 				CommandInterpreter commandInterpreter = new CommandInterpreter();
 				CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand(client.getInputStream());	
 				LOGGER.debug("Read Command : " + readCommand);
 				String pool = readCommand.getCommandParams().get("pool");
-				TaskHandlerExecutor executor;
 
 				/*Try to execute command using ThreadPool, if "pool" is found in the command, else the command name */
 				if(pool!=null) {
@@ -236,6 +237,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 				LOGGER.error("Error in processing command : " + e.getMessage(), e);
 				throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
 			} finally {
+                RequestLogger.log(executor);
 				if (client !=null) {
 					try {
 						client.close();

@@ -19,6 +19,7 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 import com.flipkart.phantom.http.impl.HttpProxy;
 import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
+import com.flipkart.phantom.task.utils.RequestLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -110,7 +111,15 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         HttpProxyExecutor executor = this.repository.getHttpProxyExecutor(proxy,request.getMethod().toString(),request.getUri(),requestData);
 
         // excute
-        HttpResponse response = executor.execute();
+        HttpResponse response = null;
+        try {
+            response = executor.execute();
+        } catch (Exception e) {
+            LOGGER.error("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
+            throw new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
+        } finally {
+            RequestLogger.log(executor);
+        }
 
         // send response
         writeCommandExecutionResponse(ctx,messageEvent,response);

@@ -18,6 +18,7 @@ package com.flipkart.phantom.task.impl;
 
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.utils.RequestLogger;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,8 +149,15 @@ public class TaskHandlerExecutorRepository {
 		} else {
 			command.setData(data);
 			command.setParams(params);
-			return command.execute();
-		}
+            try {
+                return command.execute();
+            } catch (Exception e) {
+                LOGGER.error("Error in processing command "+commandName+": " + e.getMessage(), e);
+                throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
+            } finally {
+                RequestLogger.log(command);
+            }
+        }
 	}
 
 	/**
