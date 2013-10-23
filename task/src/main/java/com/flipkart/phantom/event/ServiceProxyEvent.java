@@ -40,12 +40,12 @@ public class ServiceProxyEvent extends PlatformEvent {
     }
 
     /**
-     * @param commandName Command which executor executed from which this event was generated.
-     * @param eventSource Name of the executor class which executed this event. In case executor was not found it refers to the class
-     *                    responsible for finding appropriate executor.
-     * @param eventType {@link com.flipkart.phantom.event.ServiceProxyEventType} value based on origin
+     * @param commandName      Command which executor executed from which this event was generated.
+     * @param eventSource      Name of the executor class which executed this event. In case executor was not found it refers to the class
+     *                         responsible for finding appropriate executor.
+     * @param eventType        {@link ServiceProxyEventType} value based on origin
      * @param hystrixEventList Sequential list of events which executor executed to serve the request.
-     * @param exception In case of failure this field holds the exception which caused the failure otherwise it is {@code null}
+     * @param exception        In case of failure this field holds the exception which caused the failure otherwise it is {@code null}
      */
     public ServiceProxyEvent(String commandName, String eventSource, ServiceProxyEventType eventType, List<HystrixEventType> hystrixEventList, Exception exception) {
         /** Inherited Fields */

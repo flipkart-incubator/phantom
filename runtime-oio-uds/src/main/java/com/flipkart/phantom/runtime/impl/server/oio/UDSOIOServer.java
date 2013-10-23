@@ -15,7 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.oio;
 
-import com.flipkart.phantom.event.ServiceProxyEventHelper;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
@@ -30,7 +30,6 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
-import org.trpr.platform.core.spi.event.EndpointEventProducer;
 import org.trpr.platform.runtime.impl.config.FileLocator;
 
 import java.io.File;
@@ -91,7 +90,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 	private TaskHandlerExecutorRepository repository;
 
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
-	private EndpointEventProducer eventProducer;
+	private ServiceProxyEventProducer eventProducer;
 
 	/**
 	 * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#UDS} (Unix domain Sockets)
@@ -246,7 +245,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 // Publishes event both in case of success and failure.
                 Class eventSource = executor == null ? this.getClass() : executor.getTaskHandler().getClass();
                 String commandName = readCommand == null ? null : readCommand.getCommand();
-                ServiceProxyEventHelper.publishEvent(eventProducer, executor, commandName, eventSource, ServiceProxyEventType.TASK_HANDLER);
+                eventProducer.publishEvent(executor, commandName, eventSource, ServiceProxyEventType.TASK_HANDLER);
                 RequestLogger.log(executor);
                 if (client != null) {
                     try {
@@ -304,10 +303,10 @@ public class UDSOIOServer extends AbstractNetworkServer {
 	public void setRepository(TaskHandlerExecutorRepository repository) {
 		this.repository = repository;
 	}
-	public void setEventProducer(EndpointEventProducer eventProducer)
-	{
-		this.eventProducer = eventProducer;
-	}
-	/** End Getter/Setter methods */
+
+    public void setEventProducer(ServiceProxyEventProducer eventProducer) {
+        this.eventProducer = eventProducer;
+    }
+    /** End Getter/Setter methods */
 	
 }

@@ -68,7 +68,6 @@
         <module>channel-handler-http</module>
         <module>channel-handler-thrift</module>
         <module>sample-thrift-proxy</module>
-        <module>publisher-subscriber</module>
     </modules>
     
 </project>

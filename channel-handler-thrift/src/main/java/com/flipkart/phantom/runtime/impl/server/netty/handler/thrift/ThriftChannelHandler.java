@@ -15,7 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.thrift;
 
-import com.flipkart.phantom.event.ServiceProxyEventHelper;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
 import com.flipkart.phantom.task.utils.RequestLogger;
@@ -31,7 +31,6 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.trpr.platform.core.spi.event.EndpointEventProducer;
 
 /**
  * <code>ThriftChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that acts as a proxy for Apache Thrift calls using the binary protocol.
@@ -61,7 +60,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
 
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
-	private EndpointEventProducer eventProducer;
+	private ServiceProxyEventProducer eventProducer;
 	
 	/**
 	 * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
@@ -98,7 +97,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	            // Publishes event both in case of success and failure.
 	            Class eventSource = (executor == null) ? this.getClass() : Class.forName(executor.getThriftProxy().getThriftServiceClass());
 	            String commandName = thriftProxy + ":" + message.name;
-	            ServiceProxyEventHelper.publishEvent(eventProducer, executor, commandName, eventSource, ServiceProxyEventType.THRIFT_HANDLER);
+	            eventProducer.publishEvent(executor, commandName, eventSource, ServiceProxyEventType.THRIFT_HANDLER);
 	            RequestLogger.log(executor);
             }
 			// write the result to the output channel buffer
@@ -134,7 +133,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 	public void setThriftProxy(String thriftProxy) {
 		this.thriftProxy = thriftProxy;
 	}
-	public void setEventProducer(EndpointEventProducer eventProducer) {
+	public void setEventProducer(ServiceProxyEventProducer eventProducer) {
 		this.eventProducer = eventProducer;
 	}
 	/** End Getter/Setter methods */
