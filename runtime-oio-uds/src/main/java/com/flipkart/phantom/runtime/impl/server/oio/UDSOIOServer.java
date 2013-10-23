@@ -15,19 +15,22 @@
  */
 package com.flipkart.phantom.runtime.impl.server.oio;
 
+import com.flipkart.phantom.event.ServiceProxyEventHelper;
+import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
 import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
 import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.utils.RequestLogger;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
+import org.trpr.platform.core.spi.event.EndpointEventProducer;
 import org.trpr.platform.runtime.impl.config.FileLocator;
 
 import java.io.File;
@@ -85,8 +88,11 @@ public class UDSOIOServer extends AbstractNetworkServer {
 	public AFUNIXServerSocket socket;	
 	
 	/** The TaskRepository to lookup TaskHandlerExecutors from */
-	private TaskHandlerExecutorRepository repository;	
-	
+	private TaskHandlerExecutorRepository repository;
+
+	/** The publisher used to broadcast events to Service Proxy Subscribers */
+	private EndpointEventProducer eventProducer;
+
 	/**
 	 * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#UDS} (Unix domain Sockets)
 	 * @see com.flipkart.phantom.runtime.spi.server.NetworkServer#getTransmissionProtocol()
@@ -171,7 +177,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
         return this.socketFile.toString();
     }
 
-    /**
+	/**
 	 * The Socket listener thread
 	 */
 	class SocketListener extends Thread {
@@ -203,9 +209,10 @@ public class UDSOIOServer extends AbstractNetworkServer {
 		}
 		public void run() {
             TaskHandlerExecutor executor = null;
+			CommandInterpreter.ProxyCommand readCommand=null;
 			try {
 				CommandInterpreter commandInterpreter = new CommandInterpreter();
-				CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand(client.getInputStream());	
+				readCommand = commandInterpreter.readCommand(client.getInputStream());
 				LOGGER.debug("Read Command : " + readCommand);
 				String pool = readCommand.getCommandParams().get("pool");
 
@@ -232,21 +239,26 @@ public class UDSOIOServer extends AbstractNetworkServer {
 				LOGGER.debug("The output is: "+ result);
 
 				// write the results to the socket output
-				commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);				            
-			} catch(Exception e) {
-				LOGGER.error("Error in processing command : " + e.getMessage(), e);
-				throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
-			} finally {
+				commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);
+            } catch (Exception e) {
+                throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
+            } finally {
+                // Publishes event both in case of success and failure.
+                Class eventSource = executor == null ? this.getClass() : executor.getTaskHandler().getClass();
+                String commandName = readCommand == null ? null : readCommand.getCommand();
+                ServiceProxyEventHelper.publishEvent(eventProducer, executor, commandName, eventSource, ServiceProxyEventType.TASK_HANDLER);
                 RequestLogger.log(executor);
-				if (client !=null) {
-					try {
-						client.close();
-					} catch (IOException e) {
-						LOGGER.error("Error closing client socket : " + e.getMessage(), e);
-					}					
-				}
-			}
-		}		
+                if (client != null) {
+                    try {
+                        client.close();
+                    } catch (IOException e) {
+                        LOGGER.error("Error closing client socket : " + e.getMessage(), e);
+                    }
+                }
+            }
+        }
+
+
 	}
 
 	/** Start Getter/Setter methods */
@@ -291,7 +303,11 @@ public class UDSOIOServer extends AbstractNetworkServer {
 	}
 	public void setRepository(TaskHandlerExecutorRepository repository) {
 		this.repository = repository;
-	}	
+	}
+	public void setEventProducer(EndpointEventProducer eventProducer)
+	{
+		this.eventProducer = eventProducer;
+	}
 	/** End Getter/Setter methods */
 	
 }
