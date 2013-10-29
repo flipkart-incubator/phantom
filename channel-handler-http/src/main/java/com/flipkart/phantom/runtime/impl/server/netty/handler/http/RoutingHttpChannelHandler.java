@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
+import com.flipkart.phantom.event.ServiceProxyEventHelper;
+import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.http.impl.HttpProxy;
 import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpProxyExecutorRepository;
@@ -36,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
+import org.trpr.platform.core.spi.event.EndpointEventProducer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +72,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
     /** The default HTTP proxy handler */
     private String defaultProxy;
-    
+
+	/** The publisher used to broadcast events to Service Proxy Subscribers */
+	private EndpointEventProducer eventProducer;
+
 	/**
 	 * Interface method implementation. Checks if all mandatory properties have been set
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -118,7 +124,11 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
             LOGGER.error("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
             throw new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
         } finally {
-            RequestLogger.log(executor);
+
+	        // Publishes event both in case of success and failure.
+	        Class eventSource = (executor == null) ? this.getClass() : executor.getProxy().getClass();
+	        ServiceProxyEventHelper.publishEvent(eventProducer, executor, request.getUri(), eventSource, ServiceProxyEventType.HTTP_HANDLER);
+	        RequestLogger.log(executor);
         }
 
         // send response
@@ -192,7 +202,12 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 	}
 	public void setDefaultProxy(String defaultProxy) {
 		this.defaultProxy = defaultProxy;
-	}		
+	}
+
+	public void setEventProducer(EndpointEventProducer eventProducer) {
+		this.eventProducer = eventProducer;
+
+	}
 	/** End Getter/Setter methods */
 
 }

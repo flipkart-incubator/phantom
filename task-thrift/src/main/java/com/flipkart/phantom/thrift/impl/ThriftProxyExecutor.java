@@ -17,7 +17,6 @@ package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
-
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -200,7 +199,12 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
 	}
 	public void setClientTransport(TTransport clientTransport) {
 		this.clientTransport = clientTransport;
-	}	
-	/** End Getter/Setter methods */	
+	}
+
+    public ThriftProxy getThriftProxy() {
+        return thriftProxy;
+    }
+
+	/** End Getter/Setter methods */
 
 }
