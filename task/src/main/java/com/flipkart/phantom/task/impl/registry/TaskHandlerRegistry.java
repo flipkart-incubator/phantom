@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
-public class TaskHandlerRegistry extends AbstractHandlerRegistry {
+public class TaskHandlerRegistry implements AbstractHandlerRegistry {
 
 	/** Logger for this class*/
 	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerRegistry.class);

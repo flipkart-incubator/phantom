@@ -15,9 +15,10 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
-
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -41,166 +42,171 @@ import java.util.Map;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutor extends HystrixCommand<TTransport> {
+public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor{
 
-	/** Thrift transport errors */
-	private static final Map<Integer, String> THRIFT_ERRORS = new HashMap<Integer, String>();
-	static {
-		THRIFT_ERRORS.put(TTransportException.UNKNOWN,"Unknown exception");
-		THRIFT_ERRORS.put(TTransportException.NOT_OPEN,"Transport not open");
-		THRIFT_ERRORS.put(TTransportException.ALREADY_OPEN,"Transport already open");
-		THRIFT_ERRORS.put(TTransportException.TIMED_OUT,"Thrift timed out");
-		THRIFT_ERRORS.put(TTransportException.END_OF_FILE,"Reached end of file");
-	}
+    /** Thrift transport errors */
+    private static final Map<Integer, String> THRIFT_ERRORS = new HashMap<Integer, String>();
+    static {
+        THRIFT_ERRORS.put(TTransportException.UNKNOWN,"Unknown exception");
+        THRIFT_ERRORS.put(TTransportException.NOT_OPEN,"Transport not open");
+        THRIFT_ERRORS.put(TTransportException.ALREADY_OPEN,"Transport already open");
+        THRIFT_ERRORS.put(TTransportException.TIMED_OUT,"Thrift timed out");
+        THRIFT_ERRORS.put(TTransportException.END_OF_FILE,"Reached end of file");
+    }
 
-	/** Logger for this class*/
-	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyExecutor.class);
+    /** Logger for this class*/
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyExecutor.class);
 
-	/** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
-	public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
+    /** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
+    public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
 
-	/** The default Hystrix Thread pool to which the command belongs, unless otherwise mentioned */
-	public static final String DEFAULT_HYSTRIX_THREAD_POOL = "defaultThriftThreadPool";
-	
-	/** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
-	public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;	
+    /** The default Hystrix Thread pool to which the command belongs, unless otherwise mentioned */
+    public static final String DEFAULT_HYSTRIX_THREAD_POOL = "defaultThriftThreadPool";
 
-	/** The default Thrift call result class name */
-	private static final String DEFAULT_RESULT_CLASS_NAME="_result";
+    /** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
+    public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;
 
-	/** The {@link ThriftProxy} or {@link ThriftProxy} instance which this Command wraps around */
-	protected ThriftProxy thriftProxy;
+    /** The default Thrift call result class name */
+    private static final String DEFAULT_RESULT_CLASS_NAME="_result";
 
-	/** The TaskContext instance*/
-	protected TaskContext taskContext;
+    /** The {@link ThriftProxy} or {@link ThriftProxy} instance which this Command wraps around */
+    protected ThriftProxy thriftProxy;
 
-	/** The client's TTransport*/
-	protected TTransport clientTransport;
+    /** The TaskContext instance*/
+    protected TaskContext taskContext;
 
-	/** The Thrift binary protocol factory*/
-	private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
+    /** The client's TTransport*/
+    protected TTransport clientTransport;
 
-	/**
-	 * Constructor for this class.
-	 * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
-	 * @param taskContext the TaskContext instance that manages the proxies
-	 * @param commandName the Hystrix command name.
-	 */
-	protected ThriftProxyExecutor(HystrixThriftProxy hystrixThriftProxy, TaskContext taskContext, String commandName) {
-		super(constructHystrixSetter(hystrixThriftProxy,commandName));
-		this.thriftProxy = hystrixThriftProxy;
-		this.taskContext = taskContext;
-	}
 
-	/**
-	 * Interface method implementation. @see HystrixCommand#run()
-	 */
-	@SuppressWarnings("rawtypes")
-	@Override
-	protected TTransport run() {
-		// not using Thrift pooled sockets
-		//TSocket serviceSocket = this.thriftProxy.getPooledSocket();
-		//boolean isConnectionValid = true;
+    /** The Thrift binary protocol factory*/
+    private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
 
-		TSocket serviceSocket = null;
+    /**
+     * Constructor for this class.
+     * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
+     * @param taskContext the TaskContext instance that manages the proxies
+     * @param commandName the Hystrix command name.
+     */
+    protected ThriftProxyExecutor(HystrixThriftProxy hystrixThriftProxy, TaskContext taskContext, String commandName, RequestWrapper requestWrapper) {
+        super(constructHystrixSetter(hystrixThriftProxy,commandName));
+        this.thriftProxy = hystrixThriftProxy;
+        this.taskContext = taskContext;
+
+        ThriftRequestWrapper thriftRequestWrapper = (ThriftRequestWrapper)requestWrapper;
+        this.clientTransport = thriftRequestWrapper.getClientSocket();
+    }
+
+    /**
+     * Interface method implementation. @see HystrixCommand#run()
+     */
+    @SuppressWarnings("rawtypes")
+    @Override
+    protected TTransport run() {
+        // not using Thrift pooled sockets
+        //TSocket serviceSocket = this.thriftProxy.getPooledSocket();
+        //boolean isConnectionValid = true;
+
+        TSocket serviceSocket = null;
         try {
 
-			//Get Protocol from transport
-			TProtocol clientProtocol = this.protocolFactory.getProtocol(clientTransport);
-			TMessage message = clientProtocol.readMessageBegin();
-			//Arguments
-			ProcessFunction invokedProcessFunction = this.thriftProxy.getProcessMap().get(message.name);
-			if (invokedProcessFunction == null) {
-				throw new RuntimeException("Unable to find a matching ProcessFunction for invoked method : " + message.name);
-			}
-			TBase args = invokedProcessFunction.getEmptyArgsInstance(); // get the empty args. The values will then be read from the client's TProtocol
-			//Read the argument values from the client's TProtocol
-			args.read(clientProtocol);
-			clientProtocol.readMessageEnd();
+            //Get Protocol from transport
+            TProtocol clientProtocol = this.protocolFactory.getProtocol(clientTransport);
 
-			// Instantiate the call result object using the Thrift naming convention used for classes
-			TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
-			
-        	serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
-	        TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
-    		serviceSocket.open();
+            TMessage message = clientProtocol.readMessageBegin();
+            //Arguments
+            ProcessFunction invokedProcessFunction = this.thriftProxy.getProcessMap().get(message.name);
+            if (invokedProcessFunction == null) {
+                throw new RuntimeException("Unable to find a matching ProcessFunction for invoked method : " + message.name);
+            }
+            TBase args = invokedProcessFunction.getEmptyArgsInstance(); // get the empty args. The values will then be read from the client's TProtocol
+            //Read the argument values from the client's TProtocol
+            args.read(clientProtocol);
+            clientProtocol.readMessageEnd();
 
-			//Send the arguments to the server and relay the response back
-			//Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
-			ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
+            // Instantiate the call result object using the Thrift naming convention used for classes
+            TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
 
-			//Send the request
-			proxyClient.sendBase(message.name, args, message.seqid);
-			//Get the response back (it is written to client's TProtocol)
-			proxyClient.receiveBase(result, message.name);
+            serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
+            TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
+            serviceSocket.open();
 
-			LOGGER.debug("Processed message : " + this.thriftProxy.getThriftServiceClass() + "." + message.name);
+            //Send the arguments to the server and relay the response back
+            //Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
+            ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
 
-		} catch (Exception e) {
-			if (e.getClass().isAssignableFrom(TTransportException.class)) {
-				//isConnectionValid = false;
-				throw new RuntimeException("Thrift transport exception executing the proxy service call : " + THRIFT_ERRORS.get(((TTransportException)e).getType()), e);
-			} else {
-				throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
-			}
-		} finally {
-			if (serviceSocket != null) {			
-	            //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
-				serviceSocket.close();
-			}
-		}
-		return this.clientTransport;
-	}
+            //Send the request
+            proxyClient.sendBase(message.name, args, message.seqid);
+            //Get the response back (it is written to client's TProtocol)
+            proxyClient.receiveBase(result, message.name);
 
-	/**
-	 * Interface method implementation. @see HystrixCommand#getFallback()
-	 */
-	@Override
-	protected TTransport getFallback() {
-		if(this.thriftProxy instanceof HystrixThriftProxy) {
-			HystrixThriftProxy hystrixThriftProxy = (HystrixThriftProxy) this.thriftProxy;
-			hystrixThriftProxy.fallbackThriftRequest(this.clientTransport,this.taskContext);
-			return this.clientTransport;
-		}
-		return null;
-	}
+            LOGGER.debug("Processed message : " + this.thriftProxy.getThriftServiceClass() + "." + message.name);
 
-	/**
-	 * Helper method that constructs the {@link com.netflix.hystrix.HystrixCommand.Setter} according to the properties set in the {@link ThriftProxy}.
-	 * Falls back to default properties, if any of them has not been set
-	 * 
-	 * @param hystrixThriftProxy The {@link ThriftProxy} for whom properties have to be set
-	 * @return Setter
-	 */
-	private static Setter constructHystrixSetter(HystrixThriftProxy hystrixThriftProxy, String commandName) {
-		Setter setter = null;
-		if((hystrixThriftProxy.getGroupName()!=null) || !hystrixThriftProxy.getGroupName().equals("")) {
-			setter = Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(hystrixThriftProxy.getGroupName()));
-		} else {
-			setter = Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(hystrixThriftProxy.getName()));
-		}
-		setter = setter.andCommandKey(HystrixCommandKey.Factory.asKey(commandName));
-		if((hystrixThriftProxy.getThreadPoolName()!=null) || !hystrixThriftProxy.getThreadPoolName().equals("")) {
-			setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(hystrixThriftProxy.getThreadPoolName()));
-		} else {
-			setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL));
-		}
-		Integer threadPoolSize = hystrixThriftProxy.getProxyThreadPoolSize() == null ? ThriftProxyExecutor.DEFAULT_HYSTRIX_THREAD_POOL_SIZE :  hystrixThriftProxy.getProxyThreadPoolSize();
-		setter = setter.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize));
-		setter = setter.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(hystrixThriftProxy.getExecutorTimeout(commandName)));
-		if((hystrixThriftProxy.getHystrixProperties()!=null)) {
-			setter = setter.andCommandPropertiesDefaults(hystrixThriftProxy.getHystrixProperties());
-		}
-		return setter;
-	}
+        } catch (Exception e) {
+            if (e.getClass().isAssignableFrom(TTransportException.class)) {
+                //isConnectionValid = false;
+                throw new RuntimeException("Thrift transport exception executing the proxy service call : " + THRIFT_ERRORS.get(((TTransportException)e).getType()), e);
+            } else {
+                throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
+            }
+        } finally {
+            if (serviceSocket != null) {
+                //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
+                serviceSocket.close();
+            }
+        }
+        return this.clientTransport;
+    }
 
-	/**Getter/Setter methods */	
-	public TTransport getClientTransport() {
-		return this.clientTransport;
-	}
-	public void setClientTransport(TTransport clientTransport) {
-		this.clientTransport = clientTransport;
-	}	
-	/** End Getter/Setter methods */	
+    /**
+     * Interface method implementation. @see HystrixCommand#getFallback()
+     */
+    @Override
+    protected TTransport getFallback() {
+        if(this.thriftProxy instanceof HystrixThriftProxy) {
+            HystrixThriftProxy hystrixThriftProxy = (HystrixThriftProxy) this.thriftProxy;
+            hystrixThriftProxy.fallbackThriftRequest(this.clientTransport,this.taskContext);
+            return this.clientTransport;
+        }
+        return null;
+    }
+
+    /**
+     * Helper method that constructs the {@link com.netflix.hystrix.HystrixCommand.Setter} according to the properties set in the {@link ThriftProxy}.
+     * Falls back to default properties, if any of them has not been set
+     *
+     * @param hystrixThriftProxy The {@link ThriftProxy} for whom properties have to be set
+     * @return Setter
+     */
+    private static Setter constructHystrixSetter(HystrixThriftProxy hystrixThriftProxy, String commandName) {
+        Setter setter = null;
+        if((hystrixThriftProxy.getGroupName()!=null) || !hystrixThriftProxy.getGroupName().equals("")) {
+            setter = Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(hystrixThriftProxy.getGroupName()));
+        } else {
+            setter = Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(hystrixThriftProxy.getName()));
+        }
+        setter = setter.andCommandKey(HystrixCommandKey.Factory.asKey(commandName));
+        if((hystrixThriftProxy.getThreadPoolName()!=null) || !hystrixThriftProxy.getThreadPoolName().equals("")) {
+            setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(hystrixThriftProxy.getThreadPoolName()));
+        } else {
+            setter = setter.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(DEFAULT_HYSTRIX_THREAD_POOL));
+        }
+        Integer threadPoolSize = hystrixThriftProxy.getProxyThreadPoolSize() == null ? ThriftProxyExecutor.DEFAULT_HYSTRIX_THREAD_POOL_SIZE :  hystrixThriftProxy.getProxyThreadPoolSize();
+        setter = setter.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize));
+        setter = setter.andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(hystrixThriftProxy.getExecutorTimeout(commandName)));
+        if((hystrixThriftProxy.getHystrixProperties()!=null)) {
+            setter = setter.andCommandPropertiesDefaults(hystrixThriftProxy.getHystrixProperties());
+        }
+        return setter;
+    }
+
+    /**Getter/Setter methods */
+    public TTransport getClientTransport() {
+        return this.clientTransport;
+    }
+    public void setClientTransport(TTransport clientTransport) {
+        this.clientTransport = clientTransport;
+    }
+    /** End Getter/Setter methods */
 
 }

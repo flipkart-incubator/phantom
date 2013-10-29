@@ -59,6 +59,11 @@
             <name>Kartik Ukhalkar</name>
             <email>kartikssj@gmail.com</email>
         </developer>
+        <developer>
+            <id>arya.ketan</id>
+            <name>Arya Ketan</name>
+            <email>ketan.arya@gmail.com</email>
+        </developer>
     </developers>
 
 
@@ -86,7 +91,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
-            <version>3.3.1.Final</version>
+            <version>${netty.version}</version>
         </dependency>
     </dependencies>
 

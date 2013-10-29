@@ -41,7 +41,7 @@ public class CommandBufferDecoder extends FrameDecoder {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandBufferDecoder.class);
 
 	/**
-	 * Overriden super class method. Uses the {@link CommandInterpreter#readCommand(ChannelBuffer)} to interpret the Command and thereby check if all bytes have
+	 * Overriden super class method. Uses the {@link CommandInterpreter#readCommand(MessageEvent)} to interpret the Command and thereby check if all bytes have
 	 * been received, returns a null otherwise.
 	 * @see org.jboss.netty.handler.codec.frame.FrameDecoder#decode(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.Channel, org.jboss.netty.buffer.ChannelBuffer)
 	 */

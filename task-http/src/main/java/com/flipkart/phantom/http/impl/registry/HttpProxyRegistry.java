@@ -34,7 +34,7 @@ import java.util.*;
  * @version 1.0
  * @created 30/7/13 1:57 AM
  */
-public class HttpProxyRegistry extends AbstractHandlerRegistry {
+public class HttpProxyRegistry implements AbstractHandlerRegistry {
 
     /** logger */
     private static Logger LOGGER = LogFactory.getLogger(HttpProxyRegistry.class);

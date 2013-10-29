@@ -52,6 +52,11 @@
             <name>Kartik Ukhalkar</name>
             <email>kartikssj@gmail.com</email>
         </developer>
+        <developer>
+            <id>arya.ketan</id>
+            <name>Arya Ketan</name>
+            <email>ketan.arya@gmail.com</email>
+        </developer>
   	</developers>
 
 	<dependencies>

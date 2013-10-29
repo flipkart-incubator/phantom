@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.task.impl;
 
+import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
@@ -31,7 +32,7 @@ import java.util.Map;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
-public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
+public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor{
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
@@ -54,8 +55,14 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
 
     /** The params required to execute a TaskHandler */
     protected TaskContext taskContext;
+
+    /** The command for which this task is executed */
     protected String command;
+
+    /** The parameters which are utilized by the task for execution */
     protected Map<String,String> params;
+
+    /** Data which is utilized by the task for execution */
     protected byte[] data;
 
     /**
@@ -68,8 +75,10 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
      * @param timeout the timeout for the Hystrix thread
      * @param threadPoolName Name of the thread pool
      * @param threadPoolSize core size of the thread pool
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
-    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout, String threadPoolName, int threadPoolSize) {
+    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
+                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
@@ -78,6 +87,8 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
     }
 
     /**
@@ -87,8 +98,9 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
      * @param taskHandler The taskHandler to be wrapped
      * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
      * @param commandName name of the command
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
-    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName) {
+    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,TaskRequestWrapper taskRequestWrapper ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
@@ -97,8 +109,9 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
     }
-
 
     /**
      * Constructor for TaskHandlerExecutor run through Default Hystrix Thread Pool ({@link TaskHandlerExecutor#DEFAULT_HYSTRIX_THREAD_POOL})
@@ -106,11 +119,11 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
      * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
      * @param commandName name of the command
      * @param executorTimeout the timeout for the Hystrix thread
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
-    public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout) {
-        this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,DEFAULT_HYSTRIX_THREAD_POOL_SIZE);
+    public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,TaskRequestWrapper taskRequestWrapper) {
+        this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper);
     }
-
 
     /**
      * Interface method implementation. @see HystrixCommand#run()
@@ -143,20 +156,6 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> {
             return hystrixTaskHandler.getFallBack(taskContext, command, params, data);
         }
         return null;
-    }
-
-    /**Getter/Setter methods */
-    public Map<String, String> getParams() {
-        return params;
-    }
-    public void setParams(Map<String, String> params) {
-        this.params = params;
-    }
-    public byte[] getData() {
-        return data;
-    }
-    public void setData(byte[] data) {
-        this.data = data;
     }
 
     /**

@@ -199,7 +199,7 @@ public class CommandInterpreter {
 	/**
 	 * Helper method to read and return a ProxyCommand from an input {@link InputStream}
 	 * @param inputStream the InputStream instance
-	 * @param throwException boolean indicator that defines mechanism for reporting errors - Exceptions vs a ProxyCommand with error description 
+	 * @param isFramedTransport boolean indicator that defines mechanism for reporting errors - Exceptions vs a ProxyCommand with error description
 	 * @return the read ProxyCommand
 	 * @throws Exception in case of errors
 	 */    
