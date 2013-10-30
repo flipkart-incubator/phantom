@@ -207,6 +207,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     public void setClientTransport(TTransport clientTransport) {
         this.clientTransport = clientTransport;
     }
+    public ThriftProxy getThriftProxy() {
+        return thriftProxy;
+    }
     /** End Getter/Setter methods */
 
 }

@@ -57,6 +57,11 @@
             <name>Arya Ketan</name>
             <email>ketan.arya@gmail.com</email>
         </developer>
+        <developer>
+            <id>amanpreet.singh</id>
+            <name>Amanpreet Singh</name>
+            <email>coool.aman@gmail.com</email>
+        </developer>
   	</developers>
 
 	<dependencies>

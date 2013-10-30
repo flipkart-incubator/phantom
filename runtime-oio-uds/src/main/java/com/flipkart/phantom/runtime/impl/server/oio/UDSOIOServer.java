@@ -16,13 +16,15 @@
 package com.flipkart.phantom.runtime.impl.server.oio;
 
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.task.impl.*;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
+import com.flipkart.phantom.task.impl.TaskRequestWrapper;
+import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.flipkart.phantom.task.utils.RequestLogger;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
@@ -89,6 +91,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
     
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
 	private ServiceProxyEventProducer eventProducer;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String TASK_HANDLER = "TASK_HANDLER";
 
     /**
      * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#UDS} (Unix domain Sockets)
@@ -206,9 +211,10 @@ public class UDSOIOServer extends AbstractNetworkServer {
         }
         public void run() {
             TaskHandlerExecutor executor = null;
+            CommandInterpreter.ProxyCommand readCommand = null;
             try {
                 CommandInterpreter commandInterpreter = new CommandInterpreter();
-                CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand(client.getInputStream());
+                readCommand = commandInterpreter.readCommand(client.getInputStream());
                 LOGGER.debug("Read Command : " + readCommand);
                 String pool = readCommand.getCommandParams().get("pool");
 
@@ -244,9 +250,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
             } finally {
                 // Publishes event both in case of success and failure.
-                Class eventSource = executor == null ? this.getClass() : executor.getTaskHandler().getClass();
-                String commandName = readCommand == null ? null : readCommand.getCommand();
-                eventProducer.publishEvent(executor, commandName, eventSource, ServiceProxyEventType.TASK_HANDLER);
+                Class eventSource = (executor == null) ? this.getClass() : executor.getTaskHandler().getClass();
+                String commandName = (readCommand == null) ? null : readCommand.getCommand();
+                eventProducer.publishEvent(executor, commandName, eventSource, TASK_HANDLER);
                 RequestLogger.log(executor);
                 if (client !=null) {
                     try {

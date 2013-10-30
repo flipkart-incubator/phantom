@@ -16,7 +16,6 @@
 package com.flipkart.phantom.runtime.impl.server.netty.handler.thrift;
 
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.event.ServiceProxyEventType;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
@@ -63,6 +62,9 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
 	private ServiceProxyEventProducer eventProducer;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
 	
     /**
      * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
@@ -104,9 +106,9 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
                 throw new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
             } finally {
 	            // Publishes event both in case of success and failure.
-	            Class eventSource = (executor == null) ? this.getClass() : Class.forName(executor.getThriftProxy().getThriftServiceClass());
+	            Class eventSource = (executor == null) ? this.getClass() : Class.forName(((ThriftProxyExecutor)executor).getThriftProxy().getThriftServiceClass());
 	            String commandName = thriftProxy + ":" + message.name;
-	            eventProducer.publishEvent(executor, commandName, eventSource, ServiceProxyEventType.THRIFT_HANDLER);
+	            eventProducer.publishEvent(executor, commandName, eventSource, THRIFT_HANDLER);
                 RequestLogger.log(executor);
             }
             // write the result to the output channel buffer
