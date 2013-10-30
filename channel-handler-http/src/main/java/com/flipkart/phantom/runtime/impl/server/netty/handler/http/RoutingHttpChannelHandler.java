@@ -16,7 +16,9 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpRequestWrapper;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
@@ -70,6 +72,12 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
     /** The default HTTP proxy handler */
     private String defaultProxy;
+
+	/** The publisher used to broadcast events to Service Proxy Subscribers */
+	private ServiceProxyEventProducer eventProducer;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String HTTP_HANDLER = "HTTP_HANDLER";
 
     /**
      * Interface method implementation. Checks if all mandatory properties have been set
@@ -128,6 +136,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
             LOGGER.error("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
             throw new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
         } finally {
+
+	        // Publishes event both in case of success and failure.
+	        Class eventSource = (executor == null) ? this.getClass() :((HttpProxyExecutor)executor).getProxy().getClass();
+	        eventProducer.publishEvent(executor, request.getUri(), eventSource, HTTP_HANDLER);
             RequestLogger.log(executor);
         }
 
@@ -203,6 +215,11 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     public void setDefaultProxy(String defaultProxy) {
         this.defaultProxy = defaultProxy;
     }
+
+	public void setEventProducer(ServiceProxyEventProducer eventProducer) {
+		this.eventProducer = eventProducer;
+
+	}
     /** End Getter/Setter methods */
 
 }

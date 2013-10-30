@@ -27,8 +27,8 @@ import org.apache.http.HttpResponse;
  * Implements the HystrixCommand class for executing HTTP proxy requests
  *
  * @author kartikbu
- * @created 16/7/13 1:54 AM
  * @version 1.0
+ * @created 16/7/13 1:54 AM
  */
 public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor{
 
@@ -89,4 +89,9 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         return proxy.fallbackRequest(method,uri,data);
     }
 
+    /** Getter/Setter methods */
+    public HttpProxy getProxy() {
+        return proxy;
+    }
+    /** End Getter/Setter methods */
 }

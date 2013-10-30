@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a 
- * wrapper around {@link TaskHandler}, providing a means for the TaskHandler to to be called using 
+ * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
+ * wrapper around {@link TaskHandler}, providing a means for the TaskHandler to to be called using
  * a Hystrix Command.
  *
  * @author devashishshankar
@@ -141,6 +141,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
             }
             return result;
         } catch(Exception e) {
+	        //TODO:Remove logging here
             LOGGER.error("Command: "+this.command+" failed. Params: "+this.params+". Data:"+this.data,e);
             throw e;
         }
@@ -172,6 +173,10 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
             }
         }
         return this.taskHandler.getCallInvocationType();
+    }
+
+    public TaskHandler getTaskHandler() {
+        return taskHandler;
     }
     /** End Getter/Setter methods */
 }

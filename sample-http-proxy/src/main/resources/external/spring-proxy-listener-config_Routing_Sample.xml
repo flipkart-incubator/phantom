@@ -47,7 +47,8 @@
             	<entry key="GET" value="listingProxy" />
             	<entry key="POST" value="updateProxy" />
         	</map> 
-    	</property>        
+    	</property>
+        <property name="eventProducer" ref="serviceProxyEventProducer"/>
     </bean>
 
     <!-- The executor repository for handling requests to HttpProxy -->

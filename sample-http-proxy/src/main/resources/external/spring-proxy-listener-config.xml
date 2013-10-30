@@ -42,6 +42,7 @@
     <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
         <property name="repository" ref="httpProxyRepository"/>
         <property name="defaultProxy" value="defaultProxy" />
+        <property name="eventProducer" ref="serviceProxyEventProducer"/>
     </bean>
 
     <!-- The executor repository for handling requests to HttpProxy -->
