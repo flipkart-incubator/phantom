@@ -34,7 +34,7 @@ import java.util.*;
  * @author devashishshankar
  * @version 1.0, 3rd April, 2013
  */
-public class ThriftProxyRegistry extends AbstractHandlerRegistry {
+public class ThriftProxyRegistry implements AbstractHandlerRegistry {
 
 	/** Logger for this class*/
 	private static final Logger LOGGER = LogFactory.getLogger(ThriftProxyRegistry.class);

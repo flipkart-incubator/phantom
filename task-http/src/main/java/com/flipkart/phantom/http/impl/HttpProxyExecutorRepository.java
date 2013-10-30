@@ -17,7 +17,11 @@
 package com.flipkart.phantom.http.impl;
 
 import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 
 /**
  * Provides a repository of HttpProxyExecutor classes which execute HTTP requests using Hystrix commands
@@ -26,7 +30,7 @@ import com.flipkart.phantom.task.spi.TaskContext;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public class HttpProxyExecutorRepository {
+public class HttpProxyExecutorRepository implements ExecutorRepository{
 
     /** repository */
     private HttpProxyRegistry registry;
@@ -35,31 +39,38 @@ public class HttpProxyExecutorRepository {
     private TaskContext taskContext;
 
     /**
-     * Returns {@link HttpProxyExecutor} for the specified request
-     * @param name the HttpProxy name
-     * @param method the HTTP request method
-     * @param uri the HTTP request URI
-     * @param requestData the HTTP request payload
-     * @return an HttpProxyExecutor instance
+     * Returns {@link Executor} for the specified requestWrapper
+     * @param commandName command Name as specified by Executor. Not used in this case.
+     * @param proxyName   proxyName the HttpProxy name
+     * @param requestWrapper requestWrapper Object containing requestWrapper Data
+     * @return  an {@link HttpProxyExecutor} instance
      */
-    public HttpProxyExecutor getHttpProxyExecutor (String name, String method, String uri, byte[] requestData) throws Exception {
-        HttpProxy proxy = (HttpProxy) registry.getHandler(name);
+    public Executor getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
+        HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
-            return new HttpProxyExecutor(proxy, this.taskContext, method, uri, requestData);
+            return new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
         }
         throw new RuntimeException("The HttpProxy is not active.");
     }
 
     /** Getter/Setter methods */
-    public HttpProxyRegistry getRegistry() {
+
+    @Override
+    public AbstractHandlerRegistry getRegistry() {
         return registry;
     }
-    public void setRegistry(HttpProxyRegistry registry) {
-        this.registry = registry;
+
+    @Override
+    public void setRegistry(AbstractHandlerRegistry registry) {
+        this.registry = (HttpProxyRegistry)registry;
     }
+
+    @Override
     public TaskContext getTaskContext() {
         return this.taskContext;
     }
+
+    @Override
     public void setTaskContext(TaskContext taskContext) {
         this.taskContext = taskContext;
     }

@@ -16,9 +16,12 @@
 
 package com.flipkart.phantom.http.impl;
 
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
 import org.apache.http.HttpResponse;
+
 
 /**
  * Implements the HystrixCommand class for executing HTTP proxy requests
@@ -27,7 +30,7 @@ import org.apache.http.HttpResponse;
  * @version 1.0
  * @created 16/7/13 1:54 AM
  */
-public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
+public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor{
 
     /** method */
     String method;
@@ -44,8 +47,8 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
     /** current task context */
     private TaskContext taskContext;
 
-    /** only constructor uses the proxy client, task context and the http request */
-    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, String method, String uri, byte[] data) {
+    /** only constructor uses the proxy client, task context and the http requestWrapper */
+    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, RequestWrapper requestWrapper) {
         super(
             Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
             .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
@@ -53,11 +56,17 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> {
 			.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
             .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getPool().getOperationTimeout()))
         );
+
         this.proxy = proxy;
         this.taskContext = taskContext;
-        this.method = method;
-        this.uri = uri;
-        this.data = data;
+
+        /** Get the Http Request */
+        HttpRequestWrapper httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
+
+        /** get necessary data required for the output */
+        this.method = httpRequestWrapper.getMethod();
+        this.uri = httpRequestWrapper.getUri();
+        this.data = httpRequestWrapper.getData();
     }
 
     /**

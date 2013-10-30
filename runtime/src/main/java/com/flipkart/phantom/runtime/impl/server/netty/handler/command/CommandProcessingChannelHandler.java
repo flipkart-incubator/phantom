@@ -15,11 +15,9 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
+import com.flipkart.phantom.task.impl.*;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import com.flipkart.phantom.task.utils.RequestLogger;
-import com.flipkart.phantom.task.impl.TaskHandler;
-import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
-import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
-import com.flipkart.phantom.task.impl.TaskResult;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
@@ -45,7 +43,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 	private ChannelGroup defaultChannelGroup;
 
 	/** The TaskRepository to lookup TaskHandlerExecutors from */
-	private TaskHandlerExecutorRepository repository;
+	private ExecutorRepository repository;
 
 	/**
 	 * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
@@ -68,14 +66,18 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 			LOGGER.debug("Read Command : " + readCommand);
 			String pool = readCommand.getCommandParams().get("pool");
 			TaskHandlerExecutor executor;
-			//Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
+
+            // Prepare the request Wrapper
+            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+            taskRequestWrapper.setData(readCommand.getCommandData());
+            taskRequestWrapper.setParams(readCommand.getCommandParams());
+
+			// Get the Executor :: Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
 			if(pool!=null) {
-				executor = this.repository.get(readCommand.getCommand(),pool);
+				executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), pool,taskRequestWrapper);
 			} else {
-				executor = this.repository.get(readCommand.getCommand(),readCommand.getCommand());
+				executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(),taskRequestWrapper);
 			}
-			executor.setParams(readCommand.getCommandParams());
-			executor.setData(readCommand.getCommandData());
 			try {
 				TaskResult result = null;
 				if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
@@ -113,10 +115,10 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 	public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
 		this.defaultChannelGroup = defaultChannelGroup;
 	}
-	public TaskHandlerExecutorRepository getRepository() {
+	public ExecutorRepository getRepository() {
 		return this.repository;
 	}
-	public void setRepository(TaskHandlerExecutorRepository repository) {
+	public void setRepository(ExecutorRepository repository) {
 		this.repository = repository;
 	}
 	/** End Getter/Setter methods */

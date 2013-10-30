@@ -17,12 +17,11 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
+import com.flipkart.phantom.task.impl.TaskRequestWrapper;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * <code>AsyncCommandProcessingChannelHandler</code> is similar to @link{CommandProcessingChannelHandler} except it executes the
@@ -56,7 +55,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 
 	/**
 	 * Interface method implementation. Reads and processes commands sent to the service proxy. Expects data in the command protocol defined in the class summary.
-	 * Discards commands that do not have a {@link com.flipkart.sp.task.spi.task.TaskHandler} mapping.
+	 * Discards commands that do not have a {@link com.flipkart.phantom.task.impl.TaskHandler} mapping.
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
 	 */
 	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {    
@@ -73,10 +72,15 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             } else {
                 poolName = commandName;
             }
-            Map params = readCommand.getCommandParams();
-            byte[] data = readCommand.getCommandData();
+
+             /** Prepare the request Wrapper */
+            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+            taskRequestWrapper.setData(readCommand.getCommandData());
+            taskRequestWrapper.setParams(readCommand.getCommandParams());
+
+            /** Execute */
             try {
-                this.repository.executeAsyncCommand(commandName,poolName,data,params);
+                this.repository.executeAsyncCommand(commandName,poolName,taskRequestWrapper);
                 LOGGER.debug("Successfully started execution for async command "+commandName);
             } catch(Exception e) {
                 LOGGER.error("Error asynchronously executing the command", e);

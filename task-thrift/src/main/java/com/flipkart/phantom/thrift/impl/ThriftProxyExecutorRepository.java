@@ -15,50 +15,67 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 
 
 /**
  * <code>ThriftProxyExecutorRepository</code> is a repository of {@link ThriftProxyExecutor} instances. Provides methods to control instantiation of
  * ThriftProxyExecutor instances.
- * 
+ *
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutorRepository {
+public class ThriftProxyExecutorRepository implements ExecutorRepository{
 
-	/** The TaskContext instance */
-	private TaskContext taskContext;
+    /** The TaskContext instance */
+    private TaskContext taskContext;
 
-	/** Thrift Proxy Registry containing the list of Thrift Proxies */
-	private ThriftProxyRegistry registry;
+    /** Thrift Proxy Registry containing the list of Thrift Proxies */
+    private ThriftProxyRegistry registry;
 
-	/**
-	 * Returns a {@link ThriftProxyExecutor} for the specified ThriftProxy and command name
-	 * @param commandName the name of the HystrixCommand
-	 * @return a ThriftProxyExecutor instance
-	 */
-	public ThriftProxyExecutor getThriftProxyExecutor (String proxyName, String commandName) {
-		HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
-		if (proxy.isActive()) { // check if the ThriftProxy is indeed active
-			return new ThriftProxyExecutor(proxy, this.taskContext, commandName);
-		}
-		throw new RuntimeException("The ThriftProxy is not active.");
-	}
+    /**
+     *  Returns a {@link ThriftProxyExecutor} for the specified ThriftProxy and command name
+     *
+     * @param commandName  commandName the name of the HystrixComman
+     * @param proxyName proxyName the HttpProxy name
+     * @param requestWrapper requestWrapper Payload
+     * @return  a ThriftProxyExecutor instance
+     */
+     @Override
+    public Executor getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper)
+    {
+        HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
+        if (proxy.isActive()) { // check if the ThriftProxy is indeed active
+            return new ThriftProxyExecutor(proxy, this.taskContext, commandName, requestWrapper);
+        }
+        throw new RuntimeException("The ThriftProxy is not active.");
+    }
 
-	/** Getter/Setter methods */
-	public TaskContext getTaskContext() {
-		return this.taskContext;
-	}
-	public void setTaskContext(TaskContext taskContext) {
-		this.taskContext = taskContext;
-	}
-	public ThriftProxyRegistry getRegistry() {
-		return this.registry;
-	}
-	public void setRegistry(ThriftProxyRegistry registry) {
-		this.registry = registry;
-	}
-	/** End Getter/Setter methods */
+    /** Start Getter/Setter methods */
+
+    @Override
+    public TaskContext getTaskContext() {
+        return this.taskContext;
+    }
+
+    @Override
+    public void setTaskContext(TaskContext taskContext) {
+        this.taskContext = taskContext;
+    }
+
+    @Override
+    public AbstractHandlerRegistry getRegistry() {
+        return this.registry;
+    }
+
+    @Override
+    public void setRegistry(AbstractHandlerRegistry registry) {
+        this.registry =  (ThriftProxyRegistry) registry;
+    }
+    /** End End Getter/Setter methods */
 }

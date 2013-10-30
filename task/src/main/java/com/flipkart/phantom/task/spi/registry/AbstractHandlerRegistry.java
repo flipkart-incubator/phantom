@@ -22,13 +22,13 @@ import com.flipkart.phantom.task.spi.TaskContext;
 import java.util.List;
 
 /**
- * Abstract class for handler registry. Controls lifecycle methods of all handlers understood by the registry.
+ * Interface for handler registry. Controls lifecycle methods of all handlers understood by the registry.
  *
  * @author kartikbu
  * @version 1.0
  * @created 30/7/13 12:43 AM
  */
-abstract public class AbstractHandlerRegistry {
+public interface AbstractHandlerRegistry {
 
     /**
      * Lifecycle init method. This should initialize all individual handlers understood.
@@ -37,7 +37,7 @@ abstract public class AbstractHandlerRegistry {
      * @return array of AbstractHandlerRegistry.InitedHandlerInfo instances for each inited handler
      * @throws Exception
      */
-    public abstract AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception;
+    public AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception;
 
     /**
      * Method to reinitialize a handler.
@@ -45,33 +45,33 @@ abstract public class AbstractHandlerRegistry {
      * @param taskContext task context object
      * @throws Exception
      */
-    public abstract void reinitHandler(String name, TaskContext taskContext) throws Exception;
+    public void reinitHandler(String name, TaskContext taskContext) throws Exception;
 
     /**
      * Lifecycle shutdown method. This should shutdown all individual handlers understood.
      * @param taskContext The task context object
      * @throws Exception
      */
-    public abstract void shutdown(TaskContext taskContext) throws Exception;
+    public void shutdown(TaskContext taskContext) throws Exception;
 
     /**
      * Enumeration method for all handlers. This should returns a List of AbstractHandler instances
      * @return List
      */
-    public abstract List<AbstractHandler> getHandlers();
+    public List<AbstractHandler> getHandlers();
 
     /**
      * Get a handler given name
      * @param name String name of the handler
      * @return AbstractHandler
      */
-    public abstract AbstractHandler getHandler(String name);
+    public AbstractHandler getHandler(String name);
     
 	/**
 	 * Unregisters (removes) a AbstractHandler from this registry.
 	 * @param taskHandler the AbstractHandler to be removed
-	 */    
-    public abstract void unregisterTaskHandler(AbstractHandler taskHandler);
+	 */
+    public void unregisterTaskHandler(AbstractHandler taskHandler);
     
     /**
      *  Container object for inited handlers and the respective configuration

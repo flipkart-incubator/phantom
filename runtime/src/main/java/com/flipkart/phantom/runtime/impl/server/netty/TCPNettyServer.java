@@ -83,7 +83,7 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
 	
 	/**
 	 * Interface method implementation. Creates and returns a Netty ServerBootstrap instance
-	 * @see com.flipkart.phantom.runtime.impl.server.netty.AbstractNetworkServer#createServerBootstrap()
+	 * @see com.flipkart.phantom.runtime.impl.server.netty.AbstractNettyNetworkServer#createServerBootstrap()
 	 */
 	protected Bootstrap createServerBootstrap() throws RuntimeException {
 		return new ServerBootstrap(new NioServerSocketChannelFactory(this.getServerExecutors(), this.getWorkerExecutors()));
@@ -92,7 +92,7 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
 	/**
 	 * Abstract method implementation. Creates and returns a Netty Channel from the ServerBootstrap that was
 	 * previously created in {@link TCPNettyServer#createServerBootstrap()}
-	 * @see com.flipkart.phantom.runtime.impl.server.netty.AbstractNetworkServer#createChannel()
+	 * @see com.flipkart.phantom.runtime.impl.server.netty.AbstractNettyNetworkServer#createChannel()
 	 */
 	protected Channel createChannel() throws RuntimeException {
 		if (this.getServerBootstrap() == null) {

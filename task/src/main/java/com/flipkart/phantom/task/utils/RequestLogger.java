@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.task.utils;
 
+import com.flipkart.phantom.task.spi.Executor;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixEventType;
 import org.slf4j.Logger;
@@ -49,26 +50,28 @@ public class RequestLogger {
      *  - Is response from Fallback
      * @param executor The Hystrix command which was executed
      */
-    public static void log(HystrixCommand executor) {
+    public static void log(Executor executor) {
 
         if (executor == null) return;
 
-        if (executor.isExecutionComplete()) {
+        if(executor instanceof HystrixCommand)
+        {
+            HystrixCommand hystrixCommand = (HystrixCommand) executor;
+            if (hystrixCommand.isExecutionComplete()) {
 
-            List<HystrixEventType> events = executor.getExecutionEvents();
-            if (events.size() > 1 || !events.contains(HystrixEventType.SUCCESS)) {
-                LOGGER.warn(
-                    "Command=" + executor.getCommandKey().name() + " " +
-                    "Group=" + executor.getCommandGroup().name() + " " +
-                    "ThreadPoolKey=" + executor.getThreadPoolKey().name() + " " +
-                    (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
-                    "TimeTaken=" + executor.getExecutionTimeInMilliseconds() + " " +
-                    "IsResponseFromFallback=" + executor.isResponseFromFallback()
-                );
+                List<HystrixEventType> events = hystrixCommand.getExecutionEvents();
+                if (events.size() > 1 || !events.contains(HystrixEventType.SUCCESS)) {
+                    LOGGER.warn(
+                            "Command=" + hystrixCommand.getCommandKey().name() + " " +
+                                    "Group=" + hystrixCommand.getCommandGroup().name() + " " +
+                                    "ThreadPoolKey=" + hystrixCommand.getThreadPoolKey().name() + " " +
+                                    (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
+                                    "TimeTaken=" + hystrixCommand.getExecutionTimeInMilliseconds() + " " +
+                                    "IsResponseFromFallback=" + hystrixCommand.isResponseFromFallback()
+                    );
+                }
             }
-
         }
-
     }
 
     /**
