@@ -24,7 +24,6 @@ import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskRequestWrapper;
 import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
@@ -93,7 +92,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 	private ServiceProxyEventProducer eventProducer;
 
     /** Event Type for publishing all events which are generated here */
-    private final static String TASK_HANDLER = "TASK_HANDLER";
+    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
 
     /**
      * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#UDS} (Unix domain Sockets)
@@ -246,14 +245,12 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 // write the results to the socket output
                 commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);
             } catch(Exception e) {
-                LOGGER.error("Error in processing command : " + e.getMessage(), e);
                 throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
             } finally {
                 // Publishes event both in case of success and failure.
                 Class eventSource = (executor == null) ? this.getClass() : executor.getTaskHandler().getClass();
                 String commandName = (readCommand == null) ? null : readCommand.getCommand();
-                eventProducer.publishEvent(executor, commandName, eventSource, TASK_HANDLER);
-                RequestLogger.log(executor);
+                eventProducer.publishEvent(executor, commandName, eventSource, COMMAND_HANDLER);
                 if (client !=null) {
                     try {
                         client.close();

@@ -19,7 +19,6 @@ import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import com.flipkart.phantom.thrift.impl.ThriftProxyExecutor;
 import com.flipkart.phantom.thrift.impl.ThriftRequestWrapper;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -102,14 +101,12 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             try {
                 executor.execute();
             } catch (Exception e) {
-                LOGGER.error("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
                 throw new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
             } finally {
 	            // Publishes event both in case of success and failure.
 	            Class eventSource = (executor == null) ? this.getClass() : Class.forName(((ThriftProxyExecutor)executor).getThriftProxy().getThriftServiceClass());
 	            String commandName = thriftProxy + ":" + message.name;
 	            eventProducer.publishEvent(executor, commandName, eventSource, THRIFT_HANDLER);
-                RequestLogger.log(executor);
             }
             // write the result to the output channel buffer
 			Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer)clientTransport).getOutputBuffer());

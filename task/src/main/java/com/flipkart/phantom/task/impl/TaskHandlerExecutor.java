@@ -131,20 +131,14 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      */
     @Override
     protected TaskResult run() throws Exception {
-        try {
-            TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
-            if(result==null) {
-                return new TaskResult(true,TaskHandlerExecutor.NO_RESULT);
-            }
-            if(result.isSuccess()==false) {
-                throw new RuntimeException("Command returned FALSE: "+(result==null?"":result.getMessage()));
-            }
-            return result;
-        } catch(Exception e) {
-	        //TODO:Remove logging here
-            LOGGER.error("Command: "+this.command+" failed. Params: "+this.params+". Data:"+this.data,e);
-            throw e;
+        TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
+        if(result==null) {
+            return new TaskResult(true,TaskHandlerExecutor.NO_RESULT);
         }
+        if(result.isSuccess()==false) {
+            throw new RuntimeException("Command returned FALSE: "+(result==null?"":result.getMessage()));
+        }
+        return result;
     }
 
     /**

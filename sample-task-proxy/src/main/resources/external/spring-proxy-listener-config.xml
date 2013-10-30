@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="
     http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
@@ -36,6 +35,7 @@
     <bean id="commandProcessingChannelHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandProcessingChannelHandler" scope="prototype">
         <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
         <property name="repository" ref="taskHandlerRepository"/>
+        <property name="eventProducer" ref="serviceProxyEventProducer"/>
     </bean>
 
     <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">

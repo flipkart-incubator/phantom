@@ -45,7 +45,9 @@ public class ServiceProxyEventProducer {
      * @param commandName   Command which executor executed. This corresponds to command name, uri, proxy
      *                      in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
      * @param eventSource   Refers to the class of the executor which executed the request.
-     * @param eventType     String value which identifies originating Handler of the Event.
+     * @param eventType     String value which identifies originating Handler of the Event. If this parameter
+     *                      starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
+     *                      is skipped before publishing the event.
      */
     public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
         List<HystrixEventType> executionEvents = Collections.EMPTY_LIST;
@@ -54,13 +56,22 @@ public class ServiceProxyEventProducer {
         /** Executor would be null in case there is a problem finding proper executor for the request. */
         if (executor != null) {
             HystrixCommand command = (HystrixCommand) executor;
+
             /**
-             * Some Handlers produce events multiple times for a single request. We log event once per request
-             * hence we wait until executor marked request as complete.
-             * @see com.netflix.hystrix.HystrixCommand#isExecutionComplete()
+             *  For ASYNC executors {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
+             *  would be false at the time of scheduling. Thus we publish all scheduled events in case of
+             *  ASYNC executors.
              */
-            if (!command.isExecutionComplete())
-                return;
+            /** TODO://Improve way Async Publishing is Handled */
+            if (!eventType.startsWith("ASYNC")) {
+                /**
+                 * Some Handlers produce events multiple times for a single request. We log event once per request
+                 * hence we wait until executor marked request as complete.
+                 * @see com.netflix.hystrix.HystrixCommand#isExecutionComplete()
+                 */
+                if (!command.isExecutionComplete())
+                    return;
+            }
 
             executionEvents = command.getExecutionEvents();
             exception = (Exception) command.getFailedExecutionException();

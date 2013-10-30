@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
 import com.flipkart.phantom.task.impl.TaskRequestWrapper;
@@ -44,7 +45,13 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 	/** The TaskRepository to lookup TaskHandlerExecutors from */
 	private TaskHandlerExecutorRepository repository;
 
-	/**
+    /** The publisher used to broadcast events to Service Proxy Subscribers */
+    private ServiceProxyEventProducer eventProducer;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String ASYNC_COMMAND_HANDLER = "ASYNC_COMMAND_HANDLER";
+
+    /**
 	 * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)} method
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelOpen(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)
 	 */
@@ -64,7 +71,6 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 			CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent)event);	
 			LOGGER.debug("Read Command : " + readCommand);
 			String pool = readCommand.getCommandParams().get("pool");
-			TaskHandlerExecutor executor;
             String commandName = readCommand.getCommand();
             String poolName;
             if(pool!=null) {
@@ -77,6 +83,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
+            TaskHandlerExecutor executor = (TaskHandlerExecutor) this.repository.getExecutor(commandName, poolName, taskRequestWrapper);
 
             /** Execute */
             try {
@@ -85,7 +92,13 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             } catch(Exception e) {
                 LOGGER.error("Error asynchronously executing the command", e);
             }
-		} 		
+            finally {
+                // Publishes event both in case of success and failure.
+                Class eventSource = (executor == null) ? this.getClass() : executor.getTaskHandler().getClass();
+                commandName = (readCommand == null) ? null : readCommand.getCommand();
+                eventProducer.publishEvent(executor, commandName, eventSource, ASYNC_COMMAND_HANDLER);
+            }
+        }
 		super.handleUpstream(ctx, event);
 	}	
 
@@ -111,7 +124,10 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 	public void setRepository(TaskHandlerExecutorRepository repository) {
 		this.repository = repository;
 	}
-	/** End Getter/Setter methods */
+    public void setEventProducer(final ServiceProxyEventProducer eventProducer) {
+        this.eventProducer = eventProducer;
+    }
+    /** End Getter/Setter methods */
 }
 
 
