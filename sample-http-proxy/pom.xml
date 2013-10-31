@@ -5,13 +5,13 @@
     <parent>
         <artifactId>phantom</artifactId>
         <groupId>com.flipkart</groupId>
-        <version>1.1.6</version>
+        <version>1.1.7</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>sample-http-proxy</artifactId>
-    <version>1.1.6</version>
+    <version>1.1.7</version>
     <name>Sample HTTP Proxy</name>
     <description>Sample HTTP Proxy</description>
 
@@ -19,12 +19,12 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>
-            <version>1.1.6</version>
+            <version>1.1.7</version>
         </dependency>
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>channel-handler-http</artifactId>
-            <version>1.1.6</version>
+            <version>1.1.7</version>
         </dependency>
     </dependencies>
 

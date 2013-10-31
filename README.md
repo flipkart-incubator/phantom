@@ -13,7 +13,8 @@ of API calls in production deployments at Flipkart.
 | Version 1.0.0    | August 2013      |    First release
 | Version 1.1.0    | September 2013      |   Second release 
 | Version 1.1.3    | September 2013      |    Bugfix release
-| Version 1.1.5    | October 2013      |   Bugfix release 
+| Version 1.1.5    | October 2013      |   Bugfix release
+| Version 1.1.7    | October 2013      |   Third release
 
 ## Changelog
 
@@ -46,4 +47,6 @@ Phantom is licensed under : The Apache Software License, Version 2.0. Here is a 
 * Regunath B ([@regunathb](http://twitter.com/RegunathB))
 * Devashish Shankar ([@devashishshankar](https://github.com/devashishshankar))
 * Kartik B Ukhalkar ([@kartikbu](https://github.com/kartikbu))
+* Arya Ketan ([@aryaKetan](https://github.com/aryaKetan))
+* Amanpreet Singh ([@aman_high](https://github.com/aman_high))
 

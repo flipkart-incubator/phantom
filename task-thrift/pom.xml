@@ -8,13 +8,13 @@
     <parent>
         <groupId>com.flipkart</groupId>
         <artifactId>phantom</artifactId>
-        <version>1.1.6</version>
+        <version>1.1.7</version>
     </parent>
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>task-thrift</artifactId>
     <name>Thrift Task</name>
-    <version>1.1.6</version>
+    <version>1.1.7</version>
     <description>Thrift Task Framework</description>
 
     <licenses>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>task</artifactId>
-            <version>1.1.6</version>
+            <version>1.1.7</version>
         </dependency>
         <dependency>
             <groupId>com.netflix.hystrix</groupId>

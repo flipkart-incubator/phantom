@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>com.flipkart</groupId>
 		<artifactId>phantom</artifactId>
-		<version>1.1.6</version>
+		<version>1.1.7</version>
 	</parent>
 
 	<groupId>com.flipkart.phantom</groupId>
 	<artifactId>dashboard</artifactId>
 	<name>Dashboard</name>
-	<version>1.1.6</version>
+	<version>1.1.7</version>
 	<description>Aggregated dashboard</description>
 
 	<licenses>

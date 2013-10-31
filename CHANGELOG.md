@@ -1,3 +1,8 @@
+## 1.1.7 (October 29, 2013)
+- **New Features:**
+  - Abstraction of Executor and Executor Repository.
+  - Event publish/consumption frame-work for request
+
 ## 1.1.5 (October 1, 2013)
 - **Bug fixes:**
   - Making sure the task repository is set on the singleton task context
