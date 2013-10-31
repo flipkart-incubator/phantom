@@ -22,7 +22,6 @@ import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpRequestWrapper;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -133,14 +132,12 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         try {
             response = (HttpResponse) executor.execute();
         } catch (Exception e) {
-            LOGGER.error("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
             throw new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
         } finally {
 
 	        // Publishes event both in case of success and failure.
 	        Class eventSource = (executor == null) ? this.getClass() :((HttpProxyExecutor)executor).getProxy().getClass();
 	        eventProducer.publishEvent(executor, request.getUri(), eventSource, HTTP_HANDLER);
-            RequestLogger.log(executor);
         }
 
         // send response

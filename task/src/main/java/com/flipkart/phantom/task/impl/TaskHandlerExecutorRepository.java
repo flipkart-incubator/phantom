@@ -22,7 +22,6 @@ import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.task.utils.RequestLogger;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +103,6 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                         refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
             }
         } else {
-            LOGGER.error("No TaskHandler found for command: '"+commandName+"'. Disconnecting");
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         }
     }
@@ -154,10 +152,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
             try {
                 return command.execute();
             } catch (Exception e) {
-                LOGGER.error("Error in processing command "+commandName+": " + e.getMessage(), e);
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
-            } finally {
-                RequestLogger.log(command);
             }
         }
     }

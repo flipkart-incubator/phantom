@@ -17,7 +17,7 @@
 
     <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
     <bean id="serviceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
-        <!--Current implementation publishes events to endpoints TASK_HANDLER,THRIFT_HANDLER,HTTP_HANDLER. Nothing is published to ALL-->
+        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
         <property name="eventProducer" ref="endpointEventProducer"/>
     </bean>
 
@@ -25,9 +25,10 @@
     <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
         <property name="subscriptions">
             <list>
-                <value>evt://com.flipkart.phantom.events.TASK_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
             </list>
         </property>
     </bean>
