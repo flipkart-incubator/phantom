@@ -10,17 +10,6 @@
 	<!-- This event producer bean is declared primarily for publishing Bootstrap lifecycle events -->
 	<bean id="platformEventProducer" class="org.trpr.platform.core.impl.event.PlatformEventProducerImpl"/>
 
-    <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
-    <bean id="endpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
-        <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
-    </bean>
-
-    <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
-    <bean id="serviceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
-        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
-        <property name="eventProducer" ref="endpointEventProducer"/>
-    </bean>
-
     <!--Three types of subscriptions are supported based on Protocol used by handler.-->
     <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
         <property name="subscriptions">

@@ -70,5 +70,7 @@ public interface TaskContext {
 
 	/** Gets the ObjectMapper instance for result serialization to JSON*/
 	public ObjectMapper getObjectMapper();
-	
+
+    /** Gets Host Name of current server */
+    String getHostName();
 }

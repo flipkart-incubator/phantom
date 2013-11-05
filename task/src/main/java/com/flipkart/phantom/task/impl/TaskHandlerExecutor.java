@@ -168,9 +168,5 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         }
         return this.taskHandler.getCallInvocationType();
     }
-
-    public TaskHandler getTaskHandler() {
-        return taskHandler;
-    }
     /** End Getter/Setter methods */
 }

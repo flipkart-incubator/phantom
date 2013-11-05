@@ -63,7 +63,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 		this.defaultChannelGroup.add(event.getChannel());
 	}
 
-	/**
+    /**
 	 * Interface method implementation. Reads and processes commands sent to the service proxy. Expects data in the command protocol defined in the class summary.
 	 * Discards commands that do not have a {@link TaskHandler} mapping. 
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
@@ -103,10 +103,12 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 			}
             finally {
                 // Publishes event both in case of success and failure.
-                Class eventSource = (executor == null) ? this.getClass() : executor.getTaskHandler().getClass();
+                Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
                 String commandName = (readCommand == null) ? null : readCommand.getCommand();
-                eventProducer.publishEvent(executor, commandName, eventSource, COMMAND_HANDLER);
-
+                if (eventProducer !=null)
+                    eventProducer.publishEvent(executor, commandName, eventSource, COMMAND_HANDLER);
+                else
+                    LOGGER.debug("eventProducer not set, not publishing event");
             }
         }
 		super.handleUpstream(ctx, event);

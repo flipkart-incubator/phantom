@@ -88,10 +88,4 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     protected HttpResponse getFallback() {
         return proxy.fallbackRequest(method,uri,data);
     }
-
-    /** Getter/Setter methods */
-    public HttpProxy getProxy() {
-        return proxy;
-    }
-    /** End Getter/Setter methods */
 }
