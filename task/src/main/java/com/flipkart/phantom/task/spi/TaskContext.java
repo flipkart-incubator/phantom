@@ -72,5 +72,5 @@ public interface TaskContext {
 	public ObjectMapper getObjectMapper();
 
     /** Gets Host Name of current server */
-    String getHostName();
+    public String getHostName();
 }
