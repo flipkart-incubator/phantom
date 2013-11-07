@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="
     http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
@@ -59,5 +58,32 @@
 
     <!-- the registry of HttpProxies -->
     <bean id="httpProxyRegistry" class="com.flipkart.phantom.http.impl.registry.HttpProxyRegistry" />
+
+    <!-- Task Handler Event Publishers & Consumers-->
+
+    <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
+    <bean id="endpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
+        <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
+    </bean>
+
+    <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
+    <bean id="serviceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
+        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
+        <property name="eventProducer" ref="endpointEventProducer"/>
+    </bean>
+
+    <!--This bean corresponds to consumer of Service Proxy Events which listens to all event types and logs errors-->
+    <bean id="errorRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TASK_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+            </list>
+        </property>
+    </bean>
+    <!-- Task Handler Event Publishers & Consumers-->
 
 </beans>

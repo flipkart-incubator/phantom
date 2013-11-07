@@ -64,7 +64,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
 
     /** Event Type for publishing all events which are generated here */
     private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
-	
+
     /**
      * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelOpen(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)
@@ -104,9 +104,12 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
                 throw new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
             } finally {
 	            // Publishes event both in case of success and failure.
-	            Class eventSource = (executor == null) ? this.getClass() : Class.forName(((ThriftProxyExecutor)executor).getThriftProxy().getThriftServiceClass());
+	            Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
 	            String commandName = thriftProxy + ":" + message.name;
-	            eventProducer.publishEvent(executor, commandName, eventSource, THRIFT_HANDLER);
+                if (eventProducer !=null)
+                    eventProducer.publishEvent(executor, commandName, eventSource, THRIFT_HANDLER);
+                else
+                    LOGGER.debug("eventProducer not set, not publishing event");
             }
             // write the result to the output channel buffer
 			Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer)clientTransport).getOutputBuffer());
