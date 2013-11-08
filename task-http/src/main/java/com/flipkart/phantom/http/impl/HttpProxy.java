@@ -30,16 +30,16 @@ import org.apache.http.entity.ByteArrayEntity;
  * @version 1.0
  */
 public abstract class HttpProxy extends AbstractHandler {
-	
-	/** The default thread pool size*/
-	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
+
+    /** The default thread pool size*/
+    public static final int DEFAULT_THREAD_POOL_SIZE = 10;
 
     /** Name of the proxy */
     private String name;
 
     /** The connection pool implementation instance */
     private HttpConnectionPool pool;
-    
+
     /** The thread pool size for this proxy*/
     private int threadPoolSize = HttpProxy.DEFAULT_THREAD_POOL_SIZE;
 
@@ -64,8 +64,10 @@ public abstract class HttpProxy extends AbstractHandler {
     /**
      * The main method which makes the HTTP request
      */
-    public HttpResponse doRequest(String method, String uri, byte[] data) throws Exception {
-        return pool.execute(createRequest(method,uri,data));
+    public HttpResponse doRequest(HttpRequestWrapper httpRequestWrapper) throws Exception {
+        /** get necessary data required for the output */
+        return pool.execute(createRequest(httpRequestWrapper.getMethod(),httpRequestWrapper.getUri(),
+                httpRequestWrapper.getData()), httpRequestWrapper.getHeaders());
     }
 
     /**
@@ -108,12 +110,10 @@ public abstract class HttpProxy extends AbstractHandler {
 
     /**
      * Abstract fallback request method
-     * @param method String HTTP request method
-     * @param uri String HTTP request URI
-     * @param data byte[] HTTP request payload
+     * @param httpRequestWrapper the http Request Wrapper object
      * @return HttpResponse response after executing the fallback
      */
-    public abstract HttpResponse fallbackRequest(String method, String uri, byte[] data);
+    public abstract HttpResponse fallbackRequest(HttpRequestWrapper httpRequestWrapper);
 
     /**
      * Abstract method which gives group key
@@ -132,13 +132,13 @@ public abstract class HttpProxy extends AbstractHandler {
      * @return String thread pool name
      */
     public abstract String getThreadPoolKey();
-    
+
     /**
      * Returns the thread pool size
      * @return thread pool size
      */
     public int getThreadPoolSize() {
-    	return this.threadPoolSize;
+        return this.threadPoolSize;
     }
 
     /**
@@ -181,9 +181,9 @@ public abstract class HttpProxy extends AbstractHandler {
     public void setPool(HttpConnectionPool pool) {
         this.pool = pool;
     }
-	public void setThreadPoolSize(int threadPoolSize) {
-		this.threadPoolSize = threadPoolSize;
-	}
+    public void setThreadPoolSize(int threadPoolSize) {
+        this.threadPoolSize = threadPoolSize;
+    }
     /** getters / setters */
 
 

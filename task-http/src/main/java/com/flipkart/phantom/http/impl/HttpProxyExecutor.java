@@ -32,14 +32,8 @@ import org.apache.http.HttpResponse;
  */
 public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor{
 
-    /** method */
-    String method;
-
-    /** uri */
-    String uri;
-
-    /** data */
-    byte[] data;
+    /** Http Request Wrapper */
+    HttpRequestWrapper httpRequestWrapper;
 
     /** the proxy client */
     private HttpProxy proxy;
@@ -50,23 +44,19 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     /** only constructor uses the proxy client, task context and the http requestWrapper */
     public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, RequestWrapper requestWrapper) {
         super(
-            Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
-            .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
-            .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
-			.andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
-            .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(proxy.getPool().getOperationTimeout()))
+                Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
+                        .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
+                        .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
+                        .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
+                        .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds
+                                (proxy.getPool().getOperationTimeout()))
         );
 
         this.proxy = proxy;
         this.taskContext = taskContext;
 
         /** Get the Http Request */
-        HttpRequestWrapper httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
-
-        /** get necessary data required for the output */
-        this.method = httpRequestWrapper.getMethod();
-        this.uri = httpRequestWrapper.getUri();
-        this.data = httpRequestWrapper.getData();
+        this.httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
     }
 
     /**
@@ -76,7 +66,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
      */
     @Override
     protected HttpResponse run() throws Exception {
-        return proxy.doRequest(method,uri,data);
+        return proxy.doRequest(this.httpRequestWrapper);
     }
 
     /**
@@ -86,6 +76,6 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
      */
     @Override
     protected HttpResponse getFallback() {
-        return proxy.fallbackRequest(method,uri,data);
+        return proxy.fallbackRequest(this.httpRequestWrapper);
     }
 }

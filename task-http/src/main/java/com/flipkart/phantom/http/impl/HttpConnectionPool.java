@@ -32,6 +32,8 @@ import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -73,6 +75,9 @@ public class HttpConnectionPool {
     /** the semaphore to separate the process queue */
     private Semaphore processQueue;
 
+    /** Headers which can be set as part of init */
+    private Map<String, String> headers;
+
     /**
      * Initialize the connection pool
      */
@@ -112,7 +117,8 @@ public class HttpConnectionPool {
      * @param request HttpRequestBase object
      * @return response HttpResponse object
      */
-    public HttpResponse execute(HttpRequestBase request) throws Exception {
+    public HttpResponse execute(HttpRequestBase request, List<Map.Entry<String,String>> headers) throws Exception {
+        setRequestHeaders(request, headers);
         logger.debug("Sending request: "+request.getURI());
         if (processQueue.tryAcquire()) {
             HttpResponse response;
@@ -126,6 +132,25 @@ public class HttpConnectionPool {
             return response;
         } else {
             throw new Exception("Process queue full!");
+        }
+    }
+
+    /**
+     * This method sets the headers to the http request base.
+     *
+     * @param request {@link HttpRequestBase} to add headers to.
+     * @param headers the List of header tuples which are added to the request
+     */
+    private void setRequestHeaders(HttpRequestBase request, List<Map.Entry<String,String>> headers) {
+        if(this.headers != null && this.headers.isEmpty()) {
+            for(String headerKey : this.headers.keySet()) {
+                request.addHeader(headerKey, this.headers.get(headerKey));
+            }
+        }
+        if(headers != null && !headers.isEmpty()) {
+            for(Map.Entry<String,String> headerMap : headers) {
+                request.addHeader(headerMap.getKey(), headerMap.getValue());
+            }
         }
     }
 
@@ -194,6 +219,14 @@ public class HttpConnectionPool {
 
     public void setRequestQueueSize(int requestQueueSize) {
         this.requestQueueSize = requestQueueSize;
+    }
+
+    public Map<String,String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String,String> headers) {
+        this.headers = headers;
     }
     /** Getters / Setters */
 

@@ -1,3 +1,12 @@
+## 1.1.9 (November 08, 2013)
+- **Bug Fixes:**
+  - Ability to pass request headers to down-stream http services
+
+## 1.1.8 (November 07, 2013)
+- **Bug Fixes:**
+  - Removing casting of executor repositories which made the abstraction logic obsolete
+  - Adding getHostName method in task context
+
 ## 1.1.7 (October 29, 2013)
 - **New Features:**
   - Abstraction of Executor and Executor Repository.

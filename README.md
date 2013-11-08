@@ -10,11 +10,11 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.0.0    | August 2013      |    First release
-| Version 1.1.0    | September 2013      |   Second release 
-| Version 1.1.3    | September 2013      |    Bugfix release
-| Version 1.1.5    | October 2013      |   Bugfix release
-| Version 1.1.7    | October 2013      |   Third release
+| Version 1.1.9    | November 2013      |    Http-Proxy enhancement release
+| Version 1.1.8    | November 2013      |    Bugfix for Removing casting of executor repositories  release
+| Version 1.1.7    | October 2013       |    Abstraction of executor and executor repository and publisher-consumer frame-work
+| Version 1.1.5    | October 2013       |    Repository is set on the singleton task context
+| Version 1.1.3    | September 2013     |    Multiple bug fixes. Please see change-log for details
 
 ## Changelog
 

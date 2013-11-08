@@ -29,10 +29,10 @@ public class SimpleHttpProxy extends HttpProxy {
 
     /**
      * Abstract method implementation
-     * @see com.flipkart.phantom.http.impl.HttpProxy#fallbackRequest(String, String, byte[])
+     * @see com.flipkart.phantom.http.impl.HttpProxy#fallbackRequest(HttpRequestWrapper)
      */
     @Override
-    public HttpResponse fallbackRequest(String method, String uri, byte[] data) {
+    public HttpResponse fallbackRequest(HttpRequestWrapper requestWrapper) {
         return null;
     }
 

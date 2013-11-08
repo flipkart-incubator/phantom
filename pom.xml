@@ -7,7 +7,7 @@
     <artifactId>phantom</artifactId>
     <name>Phantom Full Build</name>
     <packaging>pom</packaging>
-    <version>1.1.8</version>
+    <version>1.1.9</version>
     
 	<licenses>
     	<license>
@@ -53,6 +53,7 @@
         <maven-compiler-plugin.version>2.0.2</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.2</maven-jar-plugin.version>
         <netty.version>3.3.1.Final</netty.version>
+        <com.flipkart.phantom.version>1.1.9</com.flipkart.phantom.version>
     </properties>
 
     <modules>
