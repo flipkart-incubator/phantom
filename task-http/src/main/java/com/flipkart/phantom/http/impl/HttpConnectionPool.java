@@ -118,7 +118,7 @@ public class HttpConnectionPool {
      * @return response HttpResponse object
      */
     public HttpResponse execute(HttpRequestBase request, List<Map.Entry<String,String>> headers) throws Exception {
-        setRequestHeaders(request, headers);
+        //setRequestHeaders(request, headers);
         logger.debug("Sending request: "+request.getURI());
         if (processQueue.tryAcquire()) {
             HttpResponse response;
