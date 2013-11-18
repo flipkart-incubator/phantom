@@ -16,11 +16,16 @@
 
 package com.flipkart.phantom.http.impl;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
+
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.ByteArrayEntity;
 
 /**
  * Abstract class for handling HTTP proxy requests
@@ -33,7 +38,7 @@ public abstract class HttpProxy extends AbstractHandler {
 
     /** The default thread pool size*/
     public static final int DEFAULT_THREAD_POOL_SIZE = 10;
-
+    
     /** Name of the proxy */
     private String name;
 
@@ -42,7 +47,7 @@ public abstract class HttpProxy extends AbstractHandler {
 
     /** The thread pool size for this proxy*/
     private int threadPoolSize = HttpProxy.DEFAULT_THREAD_POOL_SIZE;
-
+    
     /**
      *  Init hook provided by the HttpProxy
      */
