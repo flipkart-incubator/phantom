@@ -10,6 +10,7 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.2.0    | November 2013      |    Upgrade to Trooper 1.3.0, Spring 3.2.5.RELEASE. Bug fixes.
 | Version 1.1.9    | November 2013      |    Http-Proxy enhancement release
 | Version 1.1.8    | November 2013      |    Bugfix for Removing casting of executor repositories  release
 | Version 1.1.7    | October 2013       |    Abstraction of executor and executor repository and publisher-consumer frame-work

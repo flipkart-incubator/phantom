@@ -1,3 +1,8 @@
+## 1.2.0 (November 18, 2013)
+- Upgrade to Trooper 1.3.0 and therefore to Spring 3.2.5.RELEASE
+- **Bug Fixes:**
+  - Selective ability to pass request headers to down-stream http services. Issue #5
+  
 ## 1.1.9 (November 08, 2013)
 - **Bug Fixes:**
   - Ability to pass request headers to down-stream http services
