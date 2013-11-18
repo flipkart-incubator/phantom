@@ -16,18 +16,26 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
-import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.http.impl.HttpProxy;
-import com.flipkart.phantom.http.impl.HttpRequestWrapper;
-import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -38,8 +46,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.http.impl.HttpRequestWrapper;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 
 /**
  * <code>RoutingHttpChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that routes Http requests to one or more {@link HttpProxy} instances.
@@ -50,15 +61,25 @@ import java.util.Map;
 
 public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHandler implements InitializingBean {
 
-    /** The empty routing key which is default*/
-    public static final String ALL_ROUTES = "";
-
-    /** Constant String literals in the Http protocol */
-    private static final String ENCODING_HEADER = "Transfer-Encoding";
-
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(RoutingHttpChannelHandler.class);
 
+    /** The empty routing key which is default*/
+    public static final String ALL_ROUTES = "";
+
+    /** Set of Http headers that we want to remove */
+    public static final Set<String> REMOVE_HEADERS = new HashSet<String>();
+    static {
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TRANSFER_ENCODING);    	
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_DIRECTIVE);
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_KEEP_ALIVE);
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TARGET_HOST);
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add("Proxy-Authenticate");
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add("TE");
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add("Trailers");
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add("Upgrade");
+    }
+    
     /** The default channel group*/
     private ChannelGroup defaultChannelGroup;
 
@@ -104,6 +125,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         HttpRequest request = (HttpRequest) messageEvent.getMessage();
         LOGGER.debug("Request is: " + request.getMethod() + " " + request.getUri());
 
+        this.processRequestHeaders(request);
+        
         ChannelBuffer inputBuffer = request.getContent();
         byte[] requestData = new byte[inputBuffer.readableBytes()];
         inputBuffer.readBytes(requestData, 0, requestData.length);
@@ -177,16 +200,28 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         org.jboss.netty.handler.codec.http.HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()));
         // write headers
         for (Header header : response.getAllHeaders()) {
-            if (!header.getName().equals(ENCODING_HEADER)) {
+            if (!RoutingHttpChannelHandler.REMOVE_HEADERS.contains(header.getName())) {
                 httpResponse.setHeader(header.getName(),header.getValue());
             }
         }
+        
         // write entity
         HttpEntity responseEntity = response.getEntity();
         byte[] responseData = EntityUtils.toByteArray(responseEntity);
         httpResponse.setContent(ChannelBuffers.copiedBuffer(responseData));
         // write response
         event.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
+    }
+    
+    /**
+     * Helper method to remove or otherwise modify Http request headers that we dont want to propagate. This implementation removes all headers specified
+     * under {@link RoutingHttpChannelHandler#REMOVE_HEADERS}. Sub-types may override this method to change this behavior
+     * @param request the HttpRequest that needs to be processed for remove headers 
+     */
+    protected void processRequestHeaders(HttpRequest request) {
+        for (String header : RoutingHttpChannelHandler.REMOVE_HEADERS) {
+        	request.removeHeader(header);
+        }    	
     }
 
     /** Start Getter/Setter methods */
