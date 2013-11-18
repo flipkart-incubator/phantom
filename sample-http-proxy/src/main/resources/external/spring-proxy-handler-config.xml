@@ -18,7 +18,7 @@
         <property name="host" value="www.google.com" />
         <property name="port" value="80" />
         <property name="connectionTimeout" value="10000" />
-        <property name="operationTimeout" value="2000" />
+        <property name="operationTimeout" value="200000" />
     </bean>
 
 </beans>
