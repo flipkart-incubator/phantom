@@ -1,3 +1,6 @@
+## 1.2.1 (December 10, 2013)
+- Refactoring ThriftProxy ,ThriftExecutor classes
+
 ## 1.2.0 (November 18, 2013)
 - Upgrade to Trooper 1.3.0 and therefore to Spring 3.2.5.RELEASE
 - **Bug Fixes:**

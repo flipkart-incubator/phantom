@@ -11,7 +11,7 @@
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>sample-task-proxy</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <name>Sample Task Proxy</name>
     <description>Sample Task Proxy</description>
 
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.1</version>
         </dependency>
     </dependencies>
 

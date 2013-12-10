@@ -16,10 +16,6 @@
 
 package com.flipkart.phantom.http.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -35,6 +31,10 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests
@@ -152,7 +152,7 @@ public class HttpConnectionPool {
      * to change this behavior.
      * 
      * @param request {@link HttpRequestBase} to add headers to.
-     * @param headers the List of header tuples which are added to the request
+     * @param requestHeaders the List of header tuples which are added to the request
      */
     protected void setRequestHeaders(HttpRequestBase request, List<Map.Entry<String,String>> requestHeaders) {
         if(this.headers != null && this.headers.isEmpty()) {

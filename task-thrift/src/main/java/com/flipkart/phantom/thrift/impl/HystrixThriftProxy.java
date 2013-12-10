@@ -15,14 +15,13 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.thrift.transport.TTransport;
-
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.utils.StringUtils;
 import com.netflix.hystrix.HystrixCommandProperties;
+import org.apache.thrift.transport.TTransport;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An extension of {@link ThriftProxy}. Adds additional methods required by Hystrix. Uses the Thrift call name as the

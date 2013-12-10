@@ -19,20 +19,7 @@ import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
-import org.apache.thrift.ProcessFunction;
-import org.apache.thrift.TBase;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TMessage;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * <code>ThriftProxyExecutor</code> is an extension of {@link com.netflix.hystrix.HystrixCommand}. It is essentially a
@@ -44,19 +31,6 @@ import java.util.Map;
  */
 public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor{
 
-    /** Thrift transport errors */
-    private static final Map<Integer, String> THRIFT_ERRORS = new HashMap<Integer, String>();
-    static {
-        THRIFT_ERRORS.put(TTransportException.UNKNOWN,"Unknown exception");
-        THRIFT_ERRORS.put(TTransportException.NOT_OPEN,"Transport not open");
-        THRIFT_ERRORS.put(TTransportException.ALREADY_OPEN,"Transport already open");
-        THRIFT_ERRORS.put(TTransportException.TIMED_OUT,"Thrift timed out");
-        THRIFT_ERRORS.put(TTransportException.END_OF_FILE,"Reached end of file");
-    }
-
-    /** Logger for this class*/
-    private static final Logger LOGGER = LoggerFactory.getLogger(ThriftProxyExecutor.class);
-
     /** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
     public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
 
@@ -66,9 +40,6 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     /** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
     public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;
 
-    /** The default Thrift call result class name */
-    private static final String DEFAULT_RESULT_CLASS_NAME="_result";
-
     /** The {@link ThriftProxy} or {@link ThriftProxy} instance which this Command wraps around */
     protected ThriftProxy thriftProxy;
 
@@ -77,10 +48,6 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
 
     /** The client's TTransport*/
     protected TTransport clientTransport;
-
-
-    /** The Thrift binary protocol factory*/
-    private TProtocolFactory protocolFactory =  new TBinaryProtocol.Factory();
 
     /**
      * Constructor for this class.
@@ -103,59 +70,7 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     @SuppressWarnings("rawtypes")
     @Override
     protected TTransport run() {
-        // not using Thrift pooled sockets
-        //TSocket serviceSocket = this.thriftProxy.getPooledSocket();
-        //boolean isConnectionValid = true;
-
-        TSocket serviceSocket = null;
-        try {
-
-            //Get Protocol from transport
-            TProtocol clientProtocol = this.protocolFactory.getProtocol(clientTransport);
-
-            TMessage message = clientProtocol.readMessageBegin();
-            //Arguments
-            ProcessFunction invokedProcessFunction = this.thriftProxy.getProcessMap().get(message.name);
-            if (invokedProcessFunction == null) {
-                throw new RuntimeException("Unable to find a matching ProcessFunction for invoked method : " + message.name);
-            }
-            TBase args = invokedProcessFunction.getEmptyArgsInstance(); // get the empty args. The values will then be read from the client's TProtocol
-            //Read the argument values from the client's TProtocol
-            args.read(clientProtocol);
-            clientProtocol.readMessageEnd();
-
-            // Instantiate the call result object using the Thrift naming convention used for classes
-            TBase result = (TBase) Class.forName( this.thriftProxy.getThriftServiceClass() + "$" + message.name + DEFAULT_RESULT_CLASS_NAME).newInstance();
-
-            serviceSocket = new TSocket(this.thriftProxy.getThriftServer(), this.thriftProxy.getThriftPort(), this.thriftProxy.getThriftTimeoutMillis());
-            TProtocol serviceProtocol = new TBinaryProtocol(serviceSocket);
-            serviceSocket.open();
-
-            //Send the arguments to the server and relay the response back
-            //Create the custom TServiceClient client which sends request to actual Thrift servers and relays the response back to the client
-            ProxyServiceClient proxyClient = new ProxyServiceClient(clientProtocol,serviceProtocol,serviceProtocol);
-
-            //Send the request
-            proxyClient.sendBase(message.name, args, message.seqid);
-            //Get the response back (it is written to client's TProtocol)
-            proxyClient.receiveBase(result, message.name);
-
-            LOGGER.debug("Processed message : " + this.thriftProxy.getThriftServiceClass() + "." + message.name);
-
-        } catch (Exception e) {
-            if (e.getClass().isAssignableFrom(TTransportException.class)) {
-                //isConnectionValid = false;
-                throw new RuntimeException("Thrift transport exception executing the proxy service call : " + THRIFT_ERRORS.get(((TTransportException)e).getType()), e);
-            } else {
-                throw new RuntimeException("Exception executing the proxy service call : " + e.getMessage(), e);
-            }
-        } finally {
-            if (serviceSocket != null) {
-                //this.thriftProxy.returnPooledSocket(serviceSocket, isConnectionValid);
-                serviceSocket.close();
-            }
-        }
-        return this.clientTransport;
+          return thriftProxy.doRequest(this.clientTransport);
     }
 
     /**
