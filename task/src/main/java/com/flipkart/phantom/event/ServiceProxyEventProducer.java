@@ -41,17 +41,19 @@ public class ServiceProxyEventProducer {
     private EndpointEventProducer eventProducer;
 
     /**
-     * @param executor      executor object which serviced the request of event being published.
-     * @param commandName   Command which executor executed. This corresponds to command name, uri, proxy
-     *                      in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
-     * @param eventSource   Refers to the class of the executor which executed the request.
-     * @param eventType     String value which identifies originating Handler of the Event. If this parameter
-     *                      starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
+     * @param executor    executor object which serviced the request of event being published.
+     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
+     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
+     * @param eventSource Refers to the class of the executor which executed the request.
+     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
+     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
      *                      is skipped before publishing the event.
+     * @param requestID   Id of request for which this event is generated.
      */
-    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
+    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType, String requestID) {
         List<HystrixEventType> executionEvents = Collections.EMPTY_LIST;
         Exception exception = null;
+        int executionTime = -1;
 
         /** Executor would be null in case there is a problem finding proper executor for the request. */
         if (executor != null) {
@@ -72,13 +74,12 @@ public class ServiceProxyEventProducer {
                 if (!command.isExecutionComplete())
                     return;
             }
-
             executionEvents = command.getExecutionEvents();
             exception = (Exception) command.getFailedExecutionException();
-
+            executionTime = command.getExecutionTimeInMilliseconds();
         }
 
-        ServiceProxyEvent event = new ServiceProxyEvent(commandName, eventSource.getName(), eventType, executionEvents, exception);
+        ServiceProxyEvent event = new ServiceProxyEvent(commandName, eventSource.getName(), eventType, executionEvents, exception, executionTime,requestID);
         final String endpointURI = EVENT_PUBLISHING_URI + eventType;
         eventProducer.publishEvent(event, endpointURI);
     }

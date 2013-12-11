@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2012-2015, the original author or authors.
  *
@@ -50,6 +49,8 @@ public class ServiceProxyEvent extends PlatformEvent {
      * in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
      */
     private final String commandName;
+    private final int executionTime;
+    private final String requestID;
 
     //Enum just to denote string constants for event status.
     enum EventStatus {
@@ -63,8 +64,10 @@ public class ServiceProxyEvent extends PlatformEvent {
      * @param eventType        String value which identifies originating Handler of the Event.
      * @param hystrixEventList Sequential list of events which executor executed to serve the request.
      * @param exception        In case of failure this field holds the exception which caused the failure otherwise it is {@code null}
+     * @param executionTime    Time it took to execute the command. In case command is not found value is -1.
+     * @param requestID        Request Id corresponding to which this event is generated.
      */
-    public ServiceProxyEvent(String commandName, String eventSource, String eventType, List<HystrixEventType> hystrixEventList, Exception exception) {
+    public ServiceProxyEvent(String commandName, String eventSource, String eventType, List<HystrixEventType> hystrixEventList, Exception exception, int executionTime, final String requestID) {
         /** Inherited Fields */
         this.eventSource = eventSource;
         this.eventType = eventType;
@@ -74,10 +77,11 @@ public class ServiceProxyEvent extends PlatformEvent {
         setCreatedDate(Calendar.getInstance());
 
         /** Introduced Fields */
+        this.requestID = requestID;
         this.hystrixEventList = hystrixEventList;
         this.commandName = commandName;
         this.exception = exception;
-
+        this.executionTime = executionTime;
     }
 
     /** Getter/Setter methods */
@@ -92,5 +96,14 @@ public class ServiceProxyEvent extends PlatformEvent {
     public String getCommandName() {
         return commandName;
     }
-    /** End Getter/Setter methods */
+
+    public int getExecutionTime() {
+        return executionTime;
+    }
+
+    public String getRequestID() {
+        return requestID;
+    }
+
+/** End Getter/Setter methods */
 }
