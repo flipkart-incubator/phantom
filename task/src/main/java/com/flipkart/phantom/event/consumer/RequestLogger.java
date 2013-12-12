@@ -76,7 +76,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
         List<HystrixEventType> events = event.getHystrixEventList();
         if (events.size() > 1 || !events.contains(HystrixEventType.SUCCESS)) {
             LOGGER.error(
-                            "ClientRequestId=" + event.getRequestID() + " " +
+                            "ClientRequestId=" + event.getRequestId() + " " +
                             "Command=" + event.getCommandName() + " " +
                             (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
                             "TimeStamp=" + dateFormatter.format(event.getCreatedDate().getTime()) + " " +

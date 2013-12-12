@@ -18,11 +18,7 @@ package com.flipkart.phantom.event;
 
 import com.flipkart.phantom.task.spi.Executor;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixEventType;
 import org.trpr.platform.core.spi.event.EndpointEventProducer;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The <Code>ServiceProxyEventProducer</Code> class which encodes publishing logic of {@link ServiceProxyEvent}
@@ -51,10 +47,8 @@ public class ServiceProxyEventProducer {
      * @param requestID   Id of request for which this event is generated.
      */
     public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType, String requestID) {
-        List<HystrixEventType> executionEvents = Collections.EMPTY_LIST;
-        Exception exception = null;
-        int executionTime = -1;
-
+        ServiceProxyEvent.Builder eventBuilder = new ServiceProxyEvent.Builder(commandName, eventType);
+        eventBuilder.eventSource(eventSource.getName()).requestId(requestID);
         /** Executor would be null in case there is a problem finding proper executor for the request. */
         if (executor != null) {
             HystrixCommand command = (HystrixCommand) executor;
@@ -74,14 +68,18 @@ public class ServiceProxyEventProducer {
                 if (!command.isExecutionComplete())
                     return;
             }
-            executionEvents = command.getExecutionEvents();
-            exception = (Exception) command.getFailedExecutionException();
-            executionTime = command.getExecutionTimeInMilliseconds();
+
+            eventBuilder.eventList(command.getExecutionEvents())
+                    .executionTime(command.getExecutionTimeInMilliseconds()).
+                    exception((Exception) command.getFailedExecutionException());
         }
 
-        ServiceProxyEvent event = new ServiceProxyEvent(commandName, eventSource.getName(), eventType, executionEvents, exception, executionTime,requestID);
         final String endpointURI = EVENT_PUBLISHING_URI + eventType;
-        eventProducer.publishEvent(event, endpointURI);
+        eventProducer.publishEvent(eventBuilder.build(), endpointURI);
+    }
+
+    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
+        publishEvent(executor,commandName,eventSource,eventType,null);
     }
 
     /** Getter/Setter methods */
