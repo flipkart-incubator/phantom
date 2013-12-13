@@ -10,6 +10,7 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.2.2    | December 2013      |    Added more details to Published Events and logging.
 | Version 1.2.1    | December 2013      |    Refactoring Thrift Proxy and ThriftExecutor classes.
 | Version 1.2.0    | November 2013      |    Upgrade to Trooper 1.3.0, Spring 3.2.5.RELEASE. Bug fixes.
 | Version 1.1.9    | November 2013      |    Http-Proxy enhancement release

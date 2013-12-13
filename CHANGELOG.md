@@ -1,3 +1,6 @@
+## 1.2.2 (December 12, 2013)
+- Added RequestId, Execution time to ServiceProxyEvent. RequestLogger now logs added fields.
+
 ## 1.2.1 (December 10, 2013)
 - Refactoring ThriftProxy ,ThriftExecutor classes
 

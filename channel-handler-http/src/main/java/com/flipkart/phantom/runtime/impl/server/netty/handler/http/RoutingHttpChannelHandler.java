@@ -151,7 +151,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
 	        // Publishes event both in case of success and failure.
 	        Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-            if (eventProducer !=null)
+            if (eventProducer != null)
                 eventProducer.publishEvent(executor, request.getUri(), eventSource, HTTP_HANDLER);
             else
                 LOGGER.debug("eventProducer not set, not publishing event");
