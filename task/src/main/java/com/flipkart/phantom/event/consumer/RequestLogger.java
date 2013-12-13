@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl;
 import org.trpr.platform.model.event.PlatformEvent;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -47,6 +48,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
 
     /** Logger for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestLogger.class);
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss");
 
     /** Implementation of {@link org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl#handlePlatformEvent(org.trpr.platform.model.event.PlatformEvent)} */
     @Override
@@ -74,11 +76,13 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
         List<HystrixEventType> events = event.getHystrixEventList();
         if (events.size() > 1 || !events.contains(HystrixEventType.SUCCESS)) {
             LOGGER.error(
-                    "Command=" + event.getCommandName() + " " +
+                            "ClientRequestId=" + event.getRequestId() + " " +
+                            "Command=" + event.getCommandName() + " " +
                             (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
-                            "TimeStamp=" + event.getCreatedDate().getTime() + " " +
+                            "TimeStamp=" + dateFormatter.format(event.getCreatedDate().getTime()) + " " +
                             "EventType=" + event.getEventType() + " " +
-                            "EventSource=" + event.getEventSource()
+                            "EventSource=" + event.getEventSource() + " " +
+                            "TimeTaken=" + event.getExecutionTime()
                     , event.getException()
             );
         }

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2012-2015, the original author or authors.
  *
@@ -21,6 +20,7 @@ import com.netflix.hystrix.HystrixEventType;
 import org.trpr.platform.model.event.PlatformEvent;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,36 +51,36 @@ public class ServiceProxyEvent extends PlatformEvent {
      */
     private final String commandName;
 
+    /** Time it took to execute the command. In case command is not found value is -1. */
+    private final int executionTime;
+
+    /** Request Id corresponding to which this event is generated. */
+    private final String requestId;
+
     //Enum just to denote string constants for event status.
     enum EventStatus {
         SUCCESS, FAILURE
     }
 
-    /**
-     * @param commandName      Command which executor executed from which this event was generated.
-     * @param eventSource      Name of the executor class which executed this event. In case executor was not found it refers to the class
-     *                         responsible for finding appropriate executor.
-     * @param eventType        String value which identifies originating Handler of the Event.
-     * @param hystrixEventList Sequential list of events which executor executed to serve the request.
-     * @param exception        In case of failure this field holds the exception which caused the failure otherwise it is {@code null}
-     */
-    public ServiceProxyEvent(String commandName, String eventSource, String eventType, List<HystrixEventType> hystrixEventList, Exception exception) {
+    private ServiceProxyEvent(Builder builder) {
         /** Inherited Fields */
-        this.eventSource = eventSource;
-        this.eventType = eventType;
+        this.eventSource = builder.eventSource;
+        this.eventType = builder.eventType;
+
+        /** Introduced Fields */
+        this.requestId = builder.requestId;
+        this.hystrixEventList = builder.hystrixEventList;
+        this.commandName = builder.commandName;
+        this.exception = builder.exception;
+        this.executionTime = builder.executionTime;
+
         /** EventStatus is SUCCESS in case of request TimeOuts see class description for more detail */
         this.eventStatus = exception == null ? EventStatus.SUCCESS.name() : EventStatus.FAILURE.name();
         this.eventMessage = exception == null ? EventStatus.SUCCESS.name() : exception.getMessage();
         setCreatedDate(Calendar.getInstance());
-
-        /** Introduced Fields */
-        this.hystrixEventList = hystrixEventList;
-        this.commandName = commandName;
-        this.exception = exception;
-
     }
 
-    /** Getter/Setter methods */
+    /** Getter methods */
     public Exception getException() {
         return exception;
     }
@@ -92,5 +92,81 @@ public class ServiceProxyEvent extends PlatformEvent {
     public String getCommandName() {
         return commandName;
     }
-    /** End Getter/Setter methods */
+
+    public int getExecutionTime() {
+        return executionTime;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    /** End Getter methods */
+
+    public static class Builder {
+        /** Mandatory Fields */
+        private final String commandName;
+        private final String eventType;
+
+        /** Optional Fields */
+        private String requestId = null;
+        private int executionTime = -1;
+        private Exception exception = null;
+        private String eventSource = "unspecified";
+        private List<HystrixEventType> hystrixEventList = Collections.EMPTY_LIST;
+
+        /**
+         * @param commandName Command which executor executed from which this event was generated.
+         * @param eventType Refer to {@link org.trpr.platform.model.event.PlatformEvent#eventType}
+         */
+        public Builder(String commandName, String eventType) {
+            this.commandName = commandName;
+            this.eventType = eventType;
+        }
+
+        /**
+         * @param eventSource Name of the executor class which executed this event. In case executor was not found it refers to the class
+         *                    responsible for finding appropriate executor.
+         */
+        public Builder withEventSource(String eventSource) {
+            this.eventSource = eventSource;
+            return this;
+        }
+
+        /**
+         * @param hystrixEventList Sequential list of events which executor executed to serve the request.
+         */
+        public Builder withEventList(List<HystrixEventType> hystrixEventList) {
+            this.hystrixEventList = hystrixEventList;
+            return this;
+        }
+
+        /**
+         * @param exception In case of failure this field holds the exception which caused the failure.
+         */
+        public Builder withException(Exception exception) {
+            this.exception = exception;
+            return this;
+        }
+
+        /**
+         * @param executionTime Time it took to execute the command. In case command is not found value is -1.
+         */
+        public Builder withExecutionTime(int executionTime) {
+            this.executionTime = executionTime;
+            return this;
+        }
+
+        /**
+         * @param requestId Request Id corresponding to which this event is generated.
+         */
+        public Builder withRequestId(String requestId) {
+            this.requestId = requestId;
+            return this;
+        }
+
+        public ServiceProxyEvent build() {
+            return new ServiceProxyEvent(this);
+        }
+    }
 }

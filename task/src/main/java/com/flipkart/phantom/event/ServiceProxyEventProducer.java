@@ -18,11 +18,7 @@ package com.flipkart.phantom.event;
 
 import com.flipkart.phantom.task.spi.Executor;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixEventType;
 import org.trpr.platform.core.spi.event.EndpointEventProducer;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The <Code>ServiceProxyEventProducer</Code> class which encodes publishing logic of {@link ServiceProxyEvent}
@@ -41,18 +37,18 @@ public class ServiceProxyEventProducer {
     private EndpointEventProducer eventProducer;
 
     /**
-     * @param executor      executor object which serviced the request of event being published.
-     * @param commandName   Command which executor executed. This corresponds to command name, uri, proxy
-     *                      in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
-     * @param eventSource   Refers to the class of the executor which executed the request.
-     * @param eventType     String value which identifies originating Handler of the Event. If this parameter
-     *                      starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
+     * @param executor    executor object which serviced the request of event being published.
+     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
+     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
+     * @param eventSource Refers to the class of the executor which executed the request.
+     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
+     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
      *                      is skipped before publishing the event.
+     * @param requestID   Id of request for which this event is generated.
      */
-    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
-        List<HystrixEventType> executionEvents = Collections.EMPTY_LIST;
-        Exception exception = null;
-
+    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType, String requestID) {
+        ServiceProxyEvent.Builder eventBuilder = new ServiceProxyEvent.Builder(commandName, eventType);
+        eventBuilder.withEventSource(eventSource.getName()).withRequestId(requestID);
         /** Executor would be null in case there is a problem finding proper executor for the request. */
         if (executor != null) {
             HystrixCommand command = (HystrixCommand) executor;
@@ -73,14 +69,26 @@ public class ServiceProxyEventProducer {
                     return;
             }
 
-            executionEvents = command.getExecutionEvents();
-            exception = (Exception) command.getFailedExecutionException();
-
+            eventBuilder.withEventList(command.getExecutionEvents())
+                    .withExecutionTime(command.getExecutionTimeInMilliseconds())
+                    .withException((Exception) command.getFailedExecutionException());
         }
 
-        ServiceProxyEvent event = new ServiceProxyEvent(commandName, eventSource.getName(), eventType, executionEvents, exception);
         final String endpointURI = EVENT_PUBLISHING_URI + eventType;
-        eventProducer.publishEvent(event, endpointURI);
+        eventProducer.publishEvent(eventBuilder.build(), endpointURI);
+    }
+
+    /**
+     * @param executor    executor object which serviced the request of event being published.
+     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
+     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
+     * @param eventSource Refers to the class of the executor which executed the request.
+     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
+     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
+     *                      is skipped before publishing the event.
+     */
+    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
+        publishEvent(executor,commandName,eventSource,eventType,null);
     }
 
     /** Getter/Setter methods */

@@ -96,8 +96,9 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
                 // Publishes event both in case of success and failure.
                 Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
                 commandName = (readCommand == null) ? null : readCommand.getCommand();
-                if (eventProducer !=null)
-                    eventProducer.publishEvent(executor, commandName, eventSource, ASYNC_COMMAND_HANDLER);
+                final String requestID = readCommand.getCommandParams().get("requestID");
+                if (eventProducer != null)
+                    eventProducer.publishEvent(executor, commandName, eventSource, ASYNC_COMMAND_HANDLER, requestID);
                 else
                     LOGGER.debug("eventProducer not set, not publishing event");
             }
