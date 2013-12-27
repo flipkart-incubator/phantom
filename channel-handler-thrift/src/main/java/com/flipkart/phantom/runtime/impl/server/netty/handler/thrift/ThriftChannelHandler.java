@@ -105,9 +105,8 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             } finally {
 	            // Publishes event both in case of success and failure.
 	            Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-	            String commandName = thriftProxy + ":" + message.name;
                 if (eventProducer != null)
-                    eventProducer.publishEvent(executor, commandName, eventSource, THRIFT_HANDLER);
+                    eventProducer.publishEvent(executor, message.name, eventSource, THRIFT_HANDLER);
                 else
                     LOGGER.debug("eventProducer not set, not publishing event");
             }
