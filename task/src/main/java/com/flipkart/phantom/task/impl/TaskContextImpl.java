@@ -114,8 +114,7 @@ public class TaskContextImpl implements TaskContext {
             }
 
             tsdbDataParams.put("value", String.valueOf(diff));
-            // Commenting just for verification will remove this function and reference in the next checkin
-            //this.executeCommand("sendMetric", null, tsdbDataParams);
+            this.executeCommand("sendMetric", null, tsdbDataParams);
         } catch (Exception e) {
             LOGGER.error("Exception while profiling agent command", e);
         }
