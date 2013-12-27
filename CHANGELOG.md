@@ -1,3 +1,6 @@
+## 1.2.3 (December 27, 2013)
+- Changed command name being published for Thrift Handlers. Uncommented sending of profiling metrics.
+
 ## 1.2.2 (December 12, 2013)
 - Added RequestId, Execution time to ServiceProxyEvent. RequestLogger now logs added fields.
 
