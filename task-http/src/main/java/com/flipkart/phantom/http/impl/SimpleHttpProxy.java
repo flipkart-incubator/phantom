@@ -33,7 +33,7 @@ public class SimpleHttpProxy extends HttpProxy {
      */
     @Override
     public HttpResponse fallbackRequest(HttpRequestWrapper requestWrapper) {
-        return null;
+		throw new UnsupportedOperationException("No fallback implementation found!");
     }
 
     /**

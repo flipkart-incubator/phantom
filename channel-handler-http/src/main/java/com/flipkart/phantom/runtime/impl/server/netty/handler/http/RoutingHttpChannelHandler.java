@@ -187,6 +187,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     private void writeCommandExecutionResponse(ChannelHandlerContext ctx, ChannelEvent event, HttpResponse response) throws Exception {
         // Don't write anything if the response is null
         if (response == null) {
+            // write empty response
+            event.getChannel().write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NO_CONTENT)).addListener(ChannelFutureListener.CLOSE);
             return;
         }
         org.jboss.netty.handler.codec.http.HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()));
