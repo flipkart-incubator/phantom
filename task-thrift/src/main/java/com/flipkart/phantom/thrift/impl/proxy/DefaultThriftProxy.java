@@ -31,6 +31,6 @@ public class DefaultThriftProxy extends HystrixThriftProxy {
 	/** FallBack, to be executed when command fails */
 	@Override
 	public void fallbackThriftRequest(TTransport clientTransport, TaskContext taskContext) {
-	
+		throw new UnsupportedOperationException("No fallback implementation found!");
 	}
 }
