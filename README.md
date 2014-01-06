@@ -10,15 +10,11 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.2.4    | January 2014      |    Default Thrift proxy throws unsupported operation in fallback
 | Version 1.2.3    | December 2013      |    Changed command name published in Thrift Handler.
 | Version 1.2.2    | December 2013      |    Added more details to Published Events and logging.
 | Version 1.2.1    | December 2013      |    Refactoring Thrift Proxy and ThriftExecutor classes.
 | Version 1.2.0    | November 2013      |    Upgrade to Trooper 1.3.0, Spring 3.2.5.RELEASE. Bug fixes.
-| Version 1.1.9    | November 2013      |    Http-Proxy enhancement release
-| Version 1.1.8    | November 2013      |    Bugfix for Removing casting of executor repositories  release
-| Version 1.1.7    | October 2013       |    Abstraction of executor and executor repository and publisher-consumer frame-work
-| Version 1.1.5    | October 2013       |    Repository is set on the singleton task context
-| Version 1.1.3    | September 2013     |    Multiple bug fixes. Please see change-log for details
 
 ## Changelog
 
