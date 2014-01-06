@@ -7,7 +7,7 @@
     <artifactId>phantom</artifactId>
     <name>Phantom Full Build</name>
     <packaging>pom</packaging>
-    <version>1.2.4</version>
+    <version>1.2.5</version>
 
     <licenses>
         <license>
