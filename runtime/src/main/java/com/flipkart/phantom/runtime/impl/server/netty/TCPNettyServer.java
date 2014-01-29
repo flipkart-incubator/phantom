@@ -42,7 +42,11 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
 	/** The server and worker ExecutorService instances*/
 	private ExecutorService serverExecutors;
 	private ExecutorService workerExecutors;
-	
+
+    /** Server Type */
+    private String serverType = "TCP Netty Server";
+
+
 	/**
 	 * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#TCP}
 	 * @see com.flipkart.phantom.runtime.spi.server.NetworkServer#getTransmissionProtocol()
@@ -105,7 +109,11 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
      * Abstract method implementation. Returns server type as string.
      */
     public String getServerType() {
-        return "TCP Netty Server";
+        return  this.serverType;
+    }
+
+    public void setServerType(String serverType) {
+        this.serverType = serverType;
     }
 
     /**

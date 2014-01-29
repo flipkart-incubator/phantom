@@ -32,8 +32,10 @@ import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -47,9 +49,13 @@ public class HttpConnectionPool {
 
     /** Default settings for forwarding Http headers*/
     public static final boolean FORWARD_HEADERS = false;
-    
-    /** */
-    
+
+    /** Set of Http headers that we want to remove */
+    public static final Set<String> REMOVE_HEADERS = new HashSet<String>();
+    static {
+        HttpConnectionPool.REMOVE_HEADERS.add(HTTP.CONTENT_LEN);
+    }
+
     /** logger */
     private static Logger logger = LoggerFactory.getLogger(HttpConnectionPool.class);
 
@@ -85,7 +91,7 @@ public class HttpConnectionPool {
 
     /** Setting for forwarding Http headers*/
     private boolean forwardHeaders = HttpConnectionPool.FORWARD_HEADERS;
-    
+
     /**
      * Initialize the connection pool
      */
@@ -150,7 +156,7 @@ public class HttpConnectionPool {
      * the headers that came with the specified Http request if {@link HttpConnectionPool#isForwardHeaders()} is set to 'true' and in this case sets the
      * {@link HTTP#TARGET_HOST} to the the value <HttpConnectionPool{@link #getHost()}:HttpConnectionPool{@link #getPort()}. Sub-types may override this method
      * to change this behavior.
-     * 
+     *
      * @param request {@link HttpRequestBase} to add headers to.
      * @param requestHeaders the List of header tuples which are added to the request
      */
@@ -161,13 +167,16 @@ public class HttpConnectionPool {
             }
         }
         if (this.isForwardHeaders()) { // forward request headers only if specified
-	        if(requestHeaders != null && !requestHeaders.isEmpty()) {
-	            for(Map.Entry<String,String> headerMap : requestHeaders) {
-	                request.addHeader(headerMap.getKey(), headerMap.getValue());
-	            }
-	        }
-	        // replace "Host" header with the that of the real target host
-	        request.setHeader(HTTP.TARGET_HOST, this.getHost() + ":" + this.getPort());
+
+            if(requestHeaders != null && !requestHeaders.isEmpty()) {
+                for(Map.Entry<String,String> headerMap : requestHeaders) {
+                    if (!HttpConnectionPool.REMOVE_HEADERS.contains(headerMap.getKey())) {
+                        request.addHeader(headerMap.getKey(), headerMap.getValue());
+                    }
+                }
+            }
+            // replace "Host" header with the that of the real target host
+            request.setHeader(HTTP.TARGET_HOST, this.getHost() + ":" + this.getPort());
         }
     }
 
@@ -245,12 +254,12 @@ public class HttpConnectionPool {
     public void setHeaders(Map<String,String> headers) {
         this.headers = headers;
     }
-	public boolean isForwardHeaders() {
-		return this.forwardHeaders;
-	}
-	public void setForwardHeaders(boolean forwardHeaders) {
-		this.forwardHeaders = forwardHeaders;
-	}        
+    public boolean isForwardHeaders() {
+        return this.forwardHeaders;
+    }
+    public void setForwardHeaders(boolean forwardHeaders) {
+        this.forwardHeaders = forwardHeaders;
+    }
     /** Getters / Setters */
 
 }
