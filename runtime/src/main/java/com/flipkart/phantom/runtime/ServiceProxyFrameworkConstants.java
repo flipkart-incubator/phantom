@@ -31,5 +31,6 @@ public class ServiceProxyFrameworkConstants {
 	public static final String COMMON_PROXY_SERVER_NATURE_CONFIG = "packaged/common-proxy-server-nature-config.xml"; // its a file picked up from classpath	
 	public static final String SPRING_PROXY_LISTENER_CONFIG = "spring-proxy-listener-config.xml"; // files picked up from config locations
 	public static final String SPRING_PROXY_HANDLER_CONFIG = "spring-proxy-handler-config.xml"; // files picked up from config locations
+	public static final String COMMON_PROXY_HANDLER_CONFIG = "common-proxy-handler-config.xml"; // files picked up from config locations
 
 }
