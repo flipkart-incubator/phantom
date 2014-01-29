@@ -1,3 +1,6 @@
+## 1.2.6 (January 29, 2014)
+- Introduce Common Proxy Handler Config which can be used to load handlers which should be loaded first.
+
 ## 1.2.5 (January 06, 2014)
 - Better fallback handling in Thrift and Http proxies, empty response for timeout Http requests
 
