@@ -10,6 +10,7 @@ of API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.2.6    | January 2014      |    Introduced Option to load some handlers before others
 | Version 1.2.5    | January 2014      |    Better fallback handling in Thrift and Http proxies
 | Version 1.2.3    | December 2013      |    Changed command name published in Thrift Handler.
 | Version 1.2.2    | December 2013      |    Added more details to Published Events and logging.
