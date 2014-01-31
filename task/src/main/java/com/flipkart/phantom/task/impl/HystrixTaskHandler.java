@@ -32,7 +32,7 @@ import java.util.Map;
 public abstract class HystrixTaskHandler extends TaskHandler {
 
 	/** The default executor timeout in millis*/
-	public static final int DEFAULT_EXECUTOR_TIMEOUT = 10000;
+	public static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
 		
     /** 
      * These can be used to limit the maximum concurrent requests at a thread pool level.
