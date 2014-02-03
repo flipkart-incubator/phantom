@@ -1,3 +1,8 @@
+## 1.2.7 (January 31, 2014)
+- Decreased default timeout of Hysterix TaskHandlers to 1 sec from 10 sec.
+- **Bug Fixes:**
+    - Fixes for PUT request when headers are forwarded.
+
 ## 1.2.6 (January 29, 2014)
 - Introduce Common Proxy Handler Config which can be used to load handlers which should be loaded first.
 

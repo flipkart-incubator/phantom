@@ -33,7 +33,7 @@ import java.util.Map;
 public abstract class HystrixThriftProxy extends ThriftProxy {
 
 	/** The default executor timeout in millis*/
-	private static final int DEFAULT_EXECUTOR_TIMEOUT = 2000;
+	private static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
 	
 	/** The overall proxy level execution timeout */
 	private int proxyExecutorTimeout = HystrixThriftProxy.DEFAULT_EXECUTOR_TIMEOUT;
