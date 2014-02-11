@@ -23,7 +23,7 @@
 		<description></description>
 		<display-name>HystrixMetricsStreamServletCommandLocal</display-name>
 		<servlet-name>HystrixMetricsStreamServletCommandLocal</servlet-name>
-		<servlet-class>com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet</servlet-class>
+		<servlet-class>com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsStreamServlet</servlet-class>
 	</servlet>
 	
 	<!--  Servlet for global Dashboard (turbine) -->
@@ -31,7 +31,7 @@
 		<description></description>
 		<display-name>HystrixMetricsStreamServletGlobal</display-name>
 		<servlet-name>HystrixMetricsStreamServletGlobal</servlet-name>
-		<servlet-class>com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet</servlet-class>
+		<servlet-class>com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsStreamServlet</servlet-class>
 	</servlet>
 	
 	<!--  Servlet for local Dashboard (thread pool) -->
@@ -39,7 +39,7 @@
 		<description></description>
 		<display-name>HystrixMetricsStreamServletThreadpoolLocal</display-name>
 		<servlet-name>HystrixMetricsStreamServletThreadpoolLocal</servlet-name>
-		<servlet-class>com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet</servlet-class>
+		<servlet-class>com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsStreamServlet</servlet-class>
 	</servlet>
 	
 	<!--  URL mappings for each servlet -->
