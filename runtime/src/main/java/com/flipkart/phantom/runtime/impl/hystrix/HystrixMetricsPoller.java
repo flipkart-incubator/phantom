@@ -269,7 +269,9 @@ public class HystrixMetricsPoller {
                     json.writeBooleanField("propertyValue_requestLogEnabled", commandProperties.requestLogEnabled().get());
 
                     json.writeNumberField("reportingHosts", 1); // this will get summed across all instances in a cluster
-                    json.writeStringField("reportingHostNames", hostName); // pass the host name from where this metric is being reported
+                    if (circuitBreaker != null && circuitBreaker.isOpen()) {
+                    	json.writeStringField("openCircuitHostNames", hostName); // pass the host name from where open circuit is being reported
+                    }
 
                     json.writeEndObject();
                     json.close();
@@ -305,7 +307,6 @@ public class HystrixMetricsPoller {
                     json.writeNumberField("propertyValue_metricsRollingStatisticalWindowInMilliseconds", threadPoolMetrics.getProperties().metricsRollingStatisticalWindowInMilliseconds().get());
 
                     json.writeNumberField("reportingHosts", 1); // this will get summed across all instances in a cluster
-                    json.writeStringField("reportingHostNames", hostName); // pass the host name from where this metric is being reported                    
                     
                     json.writeEndObject();
                     json.close();
