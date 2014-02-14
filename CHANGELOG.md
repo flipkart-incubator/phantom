@@ -1,3 +1,7 @@
+## 1.2.8-SNAPSHOT (February 14, 2014)
+- Externalized dashboard thread settings to configurations
+- Customized Hystrix Metrics Puller and Stream Servlet to report short-circuited host names
+
 ## 1.2.7 (January 31, 2014)
 - Decreased default timeout of Hysterix TaskHandlers to 1 sec from 10 sec.
 - **Bug Fixes:**
