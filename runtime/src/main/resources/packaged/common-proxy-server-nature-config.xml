@@ -12,15 +12,15 @@
 		<property name="threadPool">  
 		     <bean id="ThreadPool" class="org.eclipse.jetty.util.thread.QueuedThreadPool" destroy-method="stop"> <!-- Specify the destroy-method here to close the thread pool-->
 		     	<property name="name" value="Jetty-Listener"/>
-		        <property name="minThreads" value="6"/>
-		        <property name="maxThreads" value="12"/>
+		        <property name="minThreads" value="${proxy.dashboard.minThreads}"/>
+		        <property name="maxThreads" value="${proxy.dashboard.maxThreads}"/>
 		     </bean>
 		</property>   
         <property name="connectors">
             <list>
                 <bean id="Connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector" destroy-method="stop"> <!-- Specify the destroy-method here to close the server socket -->
                     <property name="port" value="${proxy.core.jetty.admin.port}"/>
-                    <property name="acceptors" value="3"/>
+                    <property name="acceptors" value="${proxy.dashboard.acceptors}"/>
                 </bean>
             </list>
         </property>
