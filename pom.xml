@@ -25,6 +25,14 @@
         </repository>
     </distributionManagement>
 
+    <repositories>
+        <repository>
+            <id>clojars</id>
+            <name>Clojars repository</name>
+            <url>https://clojars.org/repo</url>
+        </repository>
+    </repositories>
+
     <scm>
         <url>https://github.com/Flipkart/phantom</url>
         <connection>https://github.com/Flipkart/phantom.git</connection>
