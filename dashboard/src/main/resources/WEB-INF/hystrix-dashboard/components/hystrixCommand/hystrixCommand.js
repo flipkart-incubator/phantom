@@ -82,13 +82,18 @@
 		};
 
 		/**
-		 * Pre process the data before displying in the UI. 
+		 * Pre process the data before displaying in the UI.
 		 * e.g   Get Averages from sums, do rate calculation etc. 
 		 */
 		function preProcessData(data) {
 			validateData(data);
 			// clean up the 'name' field so it doesn't have invalid characters
 			data.name = data.name.replace(/[.:-]/g,'_');
+
+            //Pretty format open circuit hostnames from json.
+            var openCircuitHostNames = data['openCircuitHostNames'];
+            if (openCircuitHostNames!=null) data['openCircuitHostNames'] = formatHostNames(openCircuitHostNames);
+
 			// do math
 			converAllAvg(data);
 			calcRatePerSecond(data);
@@ -271,10 +276,23 @@
 			}
 			return resultAsString;
 		};
-		
-		
-		
-		
+
+		/*  Get Newline separated Hostnames from openCircuitHostNames json */
+        /* private */ function formatHostNames(hostNames) {
+            //Strip Braces
+            hostNames = hostNames.substr(1, hostNames.length - 1);
+
+            //Tokenize
+            var hosts = hostNames.split(",");
+            var result = "";
+            for (var i = 0; i < hosts.length; i++)
+            {
+                var hostName = hosts[i].substr(0, hosts[i].lastIndexOf(":"));
+                result += hostName + "<br/>";
+            }
+            return  result;
+		};
+
 		/* private */ function updateCircle(variablePrefix, cssTarget, rate, errorPercentage) {
 			var newXaxisForCircle = self[variablePrefix + 'CircleXaxis'](rate);
 			if(parseInt(newXaxisForCircle) > parseInt(maxXaxisForCircle)) {
@@ -533,4 +551,11 @@
 	}
 })(window);
 
+//Register callback function to display host names in case of open circuit.
+$(document).bind('click',function(e){
+    var th=$(e.target);
+    if(th.attr('color')=="orange"){
+        th.closest('.circuitStatus').find('.openCircuitHostNames').toggle();
+    }
+});
 
