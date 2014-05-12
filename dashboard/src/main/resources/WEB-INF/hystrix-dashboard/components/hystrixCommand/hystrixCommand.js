@@ -280,14 +280,16 @@
 		/*  Get Newline separated Hostnames from openCircuitHostNames json */
         /* private */ function formatHostNames(hostNames) {
             //Strip Braces
-            hostNames = hostNames.substr(1, hostNames.length - 1);
+            hostNames = hostNames.trim().substr(1, hostNames.length - 1);
 
             //Tokenize
             var hosts = hostNames.split(",");
             var result = "";
             for (var i = 0; i < hosts.length; i++)
             {
-                var hostName = hosts[i].substr(0, hosts[i].lastIndexOf(":"));
+                var hostName = hosts[i];
+                var splitIndex = hostName.lastIndexOf(":");
+                if (splitIndex != -1) hostName = hostName.substr(0, splitIndex);
                 result += hostName + "<br/>";
             }
             return  result;
