@@ -555,20 +555,16 @@
 
 //Register callback function to display host names in case of open circuit.
 (function(w){
-    w.showHosts=false;
     $(document).bind('click',function(e){
         var th=$(e.target), offset;
         if(th.attr('color')=="orange"){
-            w.showHosts=!w.showHosts;
             $('.showed').remove();
-            if(w.showHosts){
-                $('.openCircuitHostNames').each(function(){
-                    $this = $(this).toggle().addClass('showed');
-                    offset = $this.offset();
-                    $('#dependencyThreadPools').append($this.clone().css('top',offset.top).css('left', offset.left).css('margin-top', 0));
-                })
-            }
-        }else if(!th.hasClass('showed')){
+            $('.openCircuitHostNames').each(function () {
+                $this = $(this).toggle().addClass('showed');
+                offset = $this.offset();
+                $('#dependencyThreadPools').append($this.clone().css('top', offset.top).css('left', offset.left).css('margin-top', 0));
+            })
+        } else if(!th.hasClass('showed')){
             $('.showed').remove();
         }
     });
