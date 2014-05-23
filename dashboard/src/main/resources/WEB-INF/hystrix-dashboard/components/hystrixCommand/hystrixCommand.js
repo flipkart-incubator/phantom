@@ -82,13 +82,18 @@
 		};
 
 		/**
-		 * Pre process the data before displying in the UI. 
+		 * Pre process the data before displaying in the UI.
 		 * e.g   Get Averages from sums, do rate calculation etc. 
 		 */
 		function preProcessData(data) {
 			validateData(data);
 			// clean up the 'name' field so it doesn't have invalid characters
 			data.name = data.name.replace(/[.:-]/g,'_');
+
+            //Pretty format open circuit hostnames from json.
+            var openCircuitHostNames = data['openCircuitHostNames'];
+            if (openCircuitHostNames!=null) data['openCircuitHostNames'] = formatHostNames(data['name'],openCircuitHostNames);
+
 			// do math
 			converAllAvg(data);
 			calcRatePerSecond(data);
@@ -272,10 +277,25 @@
 			}
 			return resultAsString;
 		};
-		
-		
-		
-		
+
+		/*  Get Newline separated Hostnames from openCircuitHostNames json */
+        /* private */ function formatHostNames(commandName,hostNames) {
+            //Strip Braces
+            hostNames = hostNames.trim().substr(1, hostNames.length - 1);
+
+            //Tokenize
+            var hosts = hostNames.split(",");
+            var result = "<b>" +commandName + "</b><br/>";
+            for (var i = 0; i < hosts.length; i++)
+            {
+                var hostName = hosts[i];
+                var splitIndex = hostName.lastIndexOf(":");
+                if (splitIndex != -1) hostName = hostName.substr(0, splitIndex);
+                result += hostName + "<br/>";
+            }
+            return  result;
+		};
+
 		/* private */ function updateCircle(variablePrefix, cssTarget, rate, errorPercentage) {
 			var newXaxisForCircle = self[variablePrefix + 'CircleXaxis'](rate);
 			if(parseInt(newXaxisForCircle) > parseInt(maxXaxisForCircle)) {
@@ -534,4 +554,20 @@
 	}
 })(window);
 
+//Register callback function to display host names in case of open circuit.
+(function(w){
+    $(document).bind('click',function(e){
+        var th=$(e.target), offset;
+        if(th.attr('color')=="orange"){
+            $('.showed').remove();
+            $('.openCircuitHostNames').each(function () {
+                $this = $(this).toggle().addClass('showed');
+                offset = $this.offset();
+                $('#dependencyThreadPools').append($this.clone().css('top', offset.top).css('left', offset.left).css('margin-top', 0));
+            })
+        } else if(!th.hasClass('showed')){
+            $('.showed').remove();
+        }
+    });
+})(window);
 
