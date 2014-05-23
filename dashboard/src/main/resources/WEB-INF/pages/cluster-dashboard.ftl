@@ -15,7 +15,7 @@
 	<script type="text/javascript" src="../hystrix-dashboard/js/tmpl.js"></script>
 	
 	<!-- HystrixCommand -->
-	<script type="text/javascript" src="../hystrix-dashboard/components/hystrixCommand/hystrixCommand.js"></script>
+	<script type="text/javascript" src="../hystrix-dashboard/components/hystrixCommand/hystrixCommand.js?v=2"></script>
 	<link rel="stylesheet" type="text/css" href="../hystrix-dashboard/components/hystrixCommand/hystrixCommand.css" />
 	
 	<!-- HystrixThreadPool -->

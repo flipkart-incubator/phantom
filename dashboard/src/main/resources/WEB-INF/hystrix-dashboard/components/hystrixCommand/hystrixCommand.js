@@ -263,6 +263,7 @@
 		
 		/* round a number to X digits: num => the number to round, dec => the number of decimals */
 		/* private */ function roundNumber(num) {
+			if (isNaN(num)) return "0.0";
 			var dec=1;
 			var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
 			var resultAsString = result.toString();
