@@ -1,3 +1,6 @@
+## 1.2.8 (June 05, 2014)
+- Upgrade to Hystrix 1.4.0-RC4
+
 ## 1.2.8-SNAPSHOT (February 14, 2014)
 - Externalized dashboard thread settings to configurations
 - Customized Hystrix Metrics Puller and Stream Servlet to report short-circuited host names
