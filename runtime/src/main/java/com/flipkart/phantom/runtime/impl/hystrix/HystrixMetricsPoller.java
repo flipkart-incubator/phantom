@@ -48,7 +48,7 @@ import com.netflix.hystrix.util.HystrixRollingNumberEvent;
 
 /**
  * The <code>HystrixMetricsPoller</code> class is a clone of the Hystrix {@link com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller} that additionally
- * includes the host name in metrics data. This code is based on the release version 1.2.12
+ * includes the host name in metrics data. This code is based on the release version 1.4.0-RC4
  * 
  * Class summary copied from original source:
  * 
@@ -404,5 +404,5 @@ public class HystrixMetricsPoller {
             }
         }
     }
-	
+
 }
