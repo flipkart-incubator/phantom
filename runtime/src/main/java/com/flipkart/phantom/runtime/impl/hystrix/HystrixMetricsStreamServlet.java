@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.concurrent.ThreadSafe;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -36,7 +35,7 @@ import com.netflix.config.DynamicPropertyFactory;
 /**
  * The <code>HystrixMetricsStreamServlet</code> class is a clone of the Hystrix  {@link com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet}.
  * that uses the Phantom clone {@link HystrixMetricsPoller} instead of the Hystrix {@link com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller}.
- * This code is based on the release version 1.2.12
+ * This code is based on the release version 1.4.0-RC4
  * 
  * Class summary from original source, modified suitably for package name changes:
  * 
@@ -74,12 +73,24 @@ public class HystrixMetricsStreamServlet extends HttpServlet {
     private static AtomicInteger concurrentConnections = new AtomicInteger(0);
     private static DynamicIntProperty maxConcurrentConnections = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.stream.maxConcurrentConnections", 5);
 
+    private volatile boolean isDestroyed = false;
+    
     /**
      * Handle incoming GETs
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         handleRequest(request, response);
+    }
+    
+    /**
+     * Handle servlet being undeployed by gracefully releasing connections so poller threads stop.
+     */
+    @Override
+    public void destroy() {
+        /* set marker so the loops can break out */
+        isDestroyed = true;
+        super.destroy();
     }
 
     /**
@@ -125,7 +136,7 @@ public class HystrixMetricsStreamServlet extends HttpServlet {
                 // we will use a "single-writer" approach where the Servlet thread does all the writing
                 // by fetching JSON messages from the MetricJsonListener to write them to the output
                 try {
-                    while (poller.isRunning()) {
+                    while (poller.isRunning() && !isDestroyed) {
                         List<String> jsonMessages = jsonListener.getJsonMetrics();
                         if (jsonMessages.isEmpty()) {
                             // https://github.com/Netflix/Hystrix/issues/85 hystrix.stream holds connection open if no metrics
@@ -136,8 +147,15 @@ public class HystrixMetricsStreamServlet extends HttpServlet {
                                 response.getWriter().println("data: " + json + "\n");
                             }
                         }
+                        
+                        /* shortcut breaking out of loop if we have been destroyed */
+                        if(isDestroyed) {
+                            break;
+                        }
+                        
                         // after outputting all the messages we will flush the stream
                         response.flushBuffer();
+                        
                         // now wait the 'delay' time
                         Thread.sleep(delay);
                     }
@@ -167,8 +185,8 @@ public class HystrixMetricsStreamServlet extends HttpServlet {
 
     /**
      * This will be called from another thread so needs to be thread-safe.
+     * @ThreadSafe
      */
-    @ThreadSafe
     private static class MetricJsonListener implements HystrixMetricsPoller.MetricsAsJsonPollerListener {
 
         /**
