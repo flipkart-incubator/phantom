@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.event;
 
+import com.flipkart.phantom.task.spi.Executor;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixEventType;
 import org.trpr.platform.model.event.PlatformEvent;
@@ -195,10 +196,11 @@ public class ServiceProxyEvent extends PlatformEvent {
         /**
          * Copies various parameters like execution events,time and any exception after command execution.<br/><br/>
          * <b>Should be called only after execution of command completes</b>
-         * @param command Executor used to execute this request.
+         * @param executor Executor used to execute this request.
          * @return
          */
-        public Builder withCommandData(HystrixCommand command) {
+        public Builder withCommandData(Executor executor) {
+            HystrixCommand command = (HystrixCommand) executor;
             withEventList(command.getExecutionEvents())
                     .withExecutionTime(command.getExecutionTimeInMilliseconds())
                     .withException((Exception) command.getFailedExecutionException());

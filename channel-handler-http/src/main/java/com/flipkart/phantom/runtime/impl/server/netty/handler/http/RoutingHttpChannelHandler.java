@@ -19,7 +19,6 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.http.impl.HttpProxy;
-import com.flipkart.phantom.http.impl.HttpProxyExecutor;
 import com.flipkart.phantom.http.impl.HttpRequestWrapper;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
@@ -156,8 +155,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
                 if (executor == null)
                     eventBuilder = new ServiceProxyEvent.Builder(null, HTTP_HANDLER).withEventSource(getClass().getName());
                 else {
-                    final HttpProxyExecutor httpProxyExecutor = (HttpProxyExecutor) executor;
-                    eventBuilder = httpProxyExecutor.getEventBuilder().withCommandData(httpProxyExecutor).withEventSource(executor.getClass().getName());
+                    eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                 }
                 eventBuilder.withRequestReceiveTime(receiveTime);
                 eventProducer.publishEvent(eventBuilder.build());
