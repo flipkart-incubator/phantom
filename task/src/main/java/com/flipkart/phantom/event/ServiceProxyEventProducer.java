@@ -16,7 +16,6 @@
 
 package com.flipkart.phantom.event;
 
-import com.flipkart.phantom.task.spi.Executor;
 import org.trpr.platform.core.spi.event.EndpointEventProducer;
 
 /**
@@ -42,18 +41,6 @@ public class ServiceProxyEventProducer {
     public void publishEvent(ServiceProxyEvent event) {
         final String endpointURI = EVENT_PUBLISHING_URI + event.getEventType();
         eventProducer.publishEvent(event, endpointURI);
-    }
-
-    /**
-     * @param executor    executor object which serviced the request of event being published.
-     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
-     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
-     * @param eventSource Refers to the class of the executor which executed the request.
-     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
-     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
-     *                      is skipped before publishing the event.
-     */
-    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
     }
 
     /** Getter/Setter methods */
