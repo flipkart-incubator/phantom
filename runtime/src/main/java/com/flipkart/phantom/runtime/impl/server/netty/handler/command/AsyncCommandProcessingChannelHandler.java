@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
@@ -65,21 +66,22 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 	 * Discards commands that do not have a {@link com.flipkart.phantom.task.impl.TaskHandler} mapping.
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
 	 */
-	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {    
-		if (MessageEvent.class.isAssignableFrom(event.getClass())) {			
-			CommandInterpreter commandInterpreter = new CommandInterpreter();
-			CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent)event);	
-			LOGGER.debug("Read Command : " + readCommand);
-			String pool = readCommand.getCommandParams().get("pool");
+	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {
+        long receiveTime = System.currentTimeMillis();
+        if (MessageEvent.class.isAssignableFrom(event.getClass())) {
+            CommandInterpreter commandInterpreter = new CommandInterpreter();
+            CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent) event);
+            LOGGER.debug("Read Command : " + readCommand);
+            String pool = readCommand.getCommandParams().get("pool");
             String commandName = readCommand.getCommand();
             String poolName;
-            if(pool!=null) {
+            if (pool != null) {
                 poolName = pool;
             } else {
                 poolName = commandName;
             }
 
-             /** Prepare the request Wrapper */
+            /** Prepare the request Wrapper */
             TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
@@ -87,24 +89,27 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 
             /** Execute */
             try {
-                this.repository.executeAsyncCommand(commandName,poolName,taskRequestWrapper);
-                LOGGER.debug("Successfully started execution for async command "+commandName);
-            } catch(Exception e) {
+                this.repository.executeAsyncCommand(commandName, poolName, taskRequestWrapper);
+                LOGGER.debug("Successfully started execution for async command " + commandName);
+            } catch (Exception e) {
                 LOGGER.error("Error asynchronously executing the command", e);
-            }
-            finally {
-                // Publishes event both in case of success and failure.
-                Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-                commandName = (readCommand == null) ? null : readCommand.getCommand();
-                final String requestID = readCommand.getCommandParams().get("requestID");
-                if (eventProducer != null)
-                    eventProducer.publishEvent(executor, commandName, eventSource, ASYNC_COMMAND_HANDLER, requestID);
-                else
+            } finally {
+                if (eventProducer != null) {
+                    // Publishes event both in case of success and failure.
+                    final String requestID = readCommand.getCommandParams().get("requestID");
+                    ServiceProxyEvent.Builder eventBuilder;
+                    if (executor == null)
+                        eventBuilder = new ServiceProxyEvent.Builder(null, ASYNC_COMMAND_HANDLER).withEventSource(getClass().getName());
+                    else
+                        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                    eventBuilder.withRequestId(requestID).withRequestReceiveTime(receiveTime);
+                    eventProducer.publishEvent(eventBuilder.build());
+                } else
                     LOGGER.debug("eventProducer not set, not publishing event");
             }
         }
-		super.handleUpstream(ctx, event);
-	}	
+        super.handleUpstream(ctx, event);
+    }
 
 	/**
 	 * Interface method implementation. Closes the underlying channel after logging a warning message

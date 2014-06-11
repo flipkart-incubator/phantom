@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.task.impl;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
@@ -65,6 +66,12 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     /** Data which is utilized by the task for execution */
     protected byte[] data;
 
+    /** Event which records various paramenters of this request execution & published later */
+    protected ServiceProxyEvent.Builder eventBuilder;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
+
     /**
      * Basic constructor for {@link TaskHandler}. The Hystrix command name is commandName. The group name is the Handler Name
      * (HystrixTaskHandler#getName)
@@ -89,6 +96,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.command = commandName;
         this.data = taskRequestWrapper.getData();
         this.params = taskRequestWrapper.getParams();
+        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
     }
 
     /**
@@ -131,12 +139,13 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      */
     @Override
     protected TaskResult run() throws Exception {
+        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
         TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
-        if(result==null) {
-            return new TaskResult(true,TaskHandlerExecutor.NO_RESULT);
+        if (result == null) {
+            return new TaskResult(true, TaskHandlerExecutor.NO_RESULT);
         }
-        if(result.isSuccess()==false) {
-            throw new RuntimeException("Command returned FALSE: "+(result==null?"":result.getMessage()));
+        if (result.isSuccess() == false) {
+            throw new RuntimeException("Command returned FALSE: " + (result == null ? "" : result.getMessage()));
         }
         return result;
     }
@@ -168,5 +177,10 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         }
         return this.taskHandler.getCallInvocationType();
     }
+
+    public ServiceProxyEvent.Builder getEventBuilder() {
+        return eventBuilder;
+    }
+
     /** End Getter/Setter methods */
 }
