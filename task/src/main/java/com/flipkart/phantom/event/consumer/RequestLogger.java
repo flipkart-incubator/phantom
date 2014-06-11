@@ -23,6 +23,7 @@ import org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl;
 import org.trpr.platform.model.event.PlatformEvent;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ import java.util.List;
  * - Open Circuit
  * - Main execution failed and fallback also failed. Failure reasons are similar.
  * This does not log if main execution succeeds.
- *
+ * <p/>
  * To enable this request logger, declare it in application context with
  * events to log as subscriptions.
  *
@@ -48,7 +49,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
 
     /** Logger for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestLogger.class);
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss");
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss.SSS");
 
     /** Implementation of {@link org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl#handlePlatformEvent(org.trpr.platform.model.event.PlatformEvent)} */
     @Override
@@ -76,16 +77,25 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
         List<HystrixEventType> events = event.getHystrixEventList();
         if (events.size() > 1 || !events.contains(HystrixEventType.SUCCESS)) {
             LOGGER.error(
-                            "ClientRequestId=" + event.getRequestId() + " " +
+                    "ClientRequestId=" + event.getRequestId() + " " +
                             "Command=" + event.getCommandName() + " " +
                             (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
-                            "TimeStamp=" + dateFormatter.format(event.getCreatedDate().getTime()) + " " +
+                            "ReceivedTime=" + getFormattedTimeStamp(event.getRequestReceiveTime()) + " " +
+                            "ExecutionStartTime=" + getFormattedTimeStamp(event.getRequestExecutionStartTime()) + " " +
+                            "ExecutionEndTime=" + dateFormatter.format(event.getCreatedDate().getTime()) + " " +
                             "EventType=" + event.getEventType() + " " +
                             "EventSource=" + event.getEventSource() + " " +
                             "TimeTaken=" + event.getExecutionTime()
                     , event.getException()
             );
         }
+    }
+
+    private String getFormattedTimeStamp(final long requestReceiveTime) {
+        if (requestReceiveTime < 0)
+            return String.valueOf(requestReceiveTime);
+        else
+            return dateFormatter.format(new Date(requestReceiveTime));
     }
 
     /**

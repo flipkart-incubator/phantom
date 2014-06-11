@@ -119,6 +119,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.command = commandName;
         this.data = taskRequestWrapper.getData();
         this.params = taskRequestWrapper.getParams();
+        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
     }
 
     /**

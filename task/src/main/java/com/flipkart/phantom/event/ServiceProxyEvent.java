@@ -111,6 +111,14 @@ public class ServiceProxyEvent extends PlatformEvent {
         return requestId;
     }
 
+    public long getRequestReceiveTime() {
+        return requestReceiveTime;
+    }
+
+    public long getRequestExecutionStartTime() {
+        return requestExecutionStartTime;
+    }
+
     /** End Getter methods */
 
     public static class Builder {
