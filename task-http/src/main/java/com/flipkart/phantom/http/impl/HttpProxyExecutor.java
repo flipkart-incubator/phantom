@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.http.impl;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
@@ -41,6 +42,12 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     /** current task context */
     private TaskContext taskContext;
 
+    /** Event which records various paramenters of this request execution & published later */
+    protected ServiceProxyEvent.Builder eventBuilder;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String HTTP_HANDLER = "HTTP_HANDLER";
+
     /** only constructor uses the proxy client, task context and the http requestWrapper */
     public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, RequestWrapper requestWrapper) {
         super(
@@ -57,6 +64,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
 
         /** Get the Http Request */
         this.httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
+        this.eventBuilder = new ServiceProxyEvent.Builder(this.httpRequestWrapper.getUri(), HTTP_HANDLER);
     }
 
     /**
@@ -66,6 +74,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
      */
     @Override
     protected HttpResponse run() throws Exception {
+        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
         return proxy.doRequest(this.httpRequestWrapper);
     }
 
@@ -77,5 +86,9 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     @Override
     protected HttpResponse getFallback() {
         return proxy.fallbackRequest(this.httpRequestWrapper);
+    }
+
+    public ServiceProxyEvent.Builder getEventBuilder() {
+        return eventBuilder;
     }
 }

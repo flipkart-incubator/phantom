@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.task.spi;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
+
 /**
  * <code>Executor</code> is an interface which executes any task submitted of Type T.
  * This interface provides a way of decoupling task submission from the mechanics
@@ -27,4 +29,6 @@ package com.flipkart.phantom.task.spi;
  */
 public interface Executor<T>{
     public T execute() ;
+
+    public ServiceProxyEvent.Builder getEventBuilder();
 }

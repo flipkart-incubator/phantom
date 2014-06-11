@@ -16,8 +16,6 @@
 
 package com.flipkart.phantom.event;
 
-import com.flipkart.phantom.task.spi.Executor;
-import com.netflix.hystrix.HystrixCommand;
 import org.trpr.platform.core.spi.event.EndpointEventProducer;
 
 /**
@@ -37,58 +35,12 @@ public class ServiceProxyEventProducer {
     private EndpointEventProducer eventProducer;
 
     /**
-     * @param executor    executor object which serviced the request of event being published.
-     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
-     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
-     * @param eventSource Refers to the class of the executor which executed the request.
-     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
-     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
-     *                      is skipped before publishing the event.
-     * @param requestID   Id of request for which this event is generated.
+     * Publishes service proxy event to appropriate end point based on event type.
+     * @param event Service Proxy event to be published.
      */
-    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType, String requestID) {
-        ServiceProxyEvent.Builder eventBuilder = new ServiceProxyEvent.Builder(commandName, eventType);
-        eventBuilder.withEventSource(eventSource.getName()).withRequestId(requestID);
-        /** Executor would be null in case there is a problem finding proper executor for the request. */
-        if (executor != null) {
-            HystrixCommand command = (HystrixCommand) executor;
-
-            /**
-             *  For ASYNC executors {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
-             *  would be false at the time of scheduling. Thus we publish all scheduled events in case of
-             *  ASYNC executors.
-             */
-            /** TODO://Improve way Async Publishing is Handled */
-            if (!eventType.startsWith("ASYNC")) {
-                /**
-                 * Some Handlers produce events multiple times for a single request. We log event once per request
-                 * hence we wait until executor marked request as complete.
-                 * @see com.netflix.hystrix.HystrixCommand#isExecutionComplete()
-                 */
-                if (!command.isExecutionComplete())
-                    return;
-            }
-
-            eventBuilder.withEventList(command.getExecutionEvents())
-                    .withExecutionTime(command.getExecutionTimeInMilliseconds())
-                    .withException((Exception) command.getFailedExecutionException());
-        }
-
-        final String endpointURI = EVENT_PUBLISHING_URI + eventType;
-        eventProducer.publishEvent(eventBuilder.build(), endpointURI);
-    }
-
-    /**
-     * @param executor    executor object which serviced the request of event being published.
-     * @param commandName Command which executor executed. This corresponds to command name, uri, proxy
-     *                    in case of Task Handler,HTTP Handler & Thrift Handler Respectively.
-     * @param eventSource Refers to the class of the executor which executed the request.
-     * @param eventType   String value which identifies originating Handler of the Event. If this parameter
-     *                    starts with "ASYNC" check of {@link com.netflix.hystrix.HystrixCommand#isExecutionComplete()}
-     *                      is skipped before publishing the event.
-     */
-    public void publishEvent(Executor executor, String commandName, Class eventSource, String eventType) {
-        publishEvent(executor,commandName,eventSource,eventType,null);
+    public void publishEvent(ServiceProxyEvent event) {
+        final String endpointURI = EVENT_PUBLISHING_URI + event.getEventType();
+        eventProducer.publishEvent(event, endpointURI);
     }
 
     /** Getter/Setter methods */

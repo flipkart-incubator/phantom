@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.event;
 
+import com.flipkart.phantom.task.spi.Executor;
+import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixEventType;
 import org.trpr.platform.model.event.PlatformEvent;
 
@@ -54,6 +56,12 @@ public class ServiceProxyEvent extends PlatformEvent {
     /** Time it took to execute the command. In case command is not found value is -1. */
     private final int executionTime;
 
+    /** Time at which request is received */
+    private final long requestReceiveTime;
+
+    /** Time at which request starts executing */
+    private final long requestExecutionStartTime;
+
     /** Request Id corresponding to which this event is generated. */
     private final String requestId;
 
@@ -73,6 +81,8 @@ public class ServiceProxyEvent extends PlatformEvent {
         this.commandName = builder.commandName;
         this.exception = builder.exception;
         this.executionTime = builder.executionTime;
+        this.requestReceiveTime = builder.requestReceiveTime;
+        this.requestExecutionStartTime = builder.requestExecutionStartTime;
 
         /** EventStatus is SUCCESS in case of request TimeOuts see class description for more detail */
         this.eventStatus = exception == null ? EventStatus.SUCCESS.name() : EventStatus.FAILURE.name();
@@ -101,6 +111,14 @@ public class ServiceProxyEvent extends PlatformEvent {
         return requestId;
     }
 
+    public long getRequestReceiveTime() {
+        return requestReceiveTime;
+    }
+
+    public long getRequestExecutionStartTime() {
+        return requestExecutionStartTime;
+    }
+
     /** End Getter methods */
 
     public static class Builder {
@@ -111,13 +129,15 @@ public class ServiceProxyEvent extends PlatformEvent {
         /** Optional Fields */
         private String requestId = null;
         private int executionTime = -1;
+        private long requestReceiveTime = -1;
+        private long requestExecutionStartTime = -1;
         private Exception exception = null;
         private String eventSource = "unspecified";
         private List<HystrixEventType> hystrixEventList = Collections.EMPTY_LIST;
 
         /**
          * @param commandName Command which executor executed from which this event was generated.
-         * @param eventType Refer to {@link org.trpr.platform.model.event.PlatformEvent#eventType}
+         * @param eventType   Refer to {@link org.trpr.platform.model.event.PlatformEvent#eventType}
          */
         public Builder(String commandName, String eventType) {
             this.commandName = commandName;
@@ -162,6 +182,36 @@ public class ServiceProxyEvent extends PlatformEvent {
          */
         public Builder withRequestId(String requestId) {
             this.requestId = requestId;
+            return this;
+        }
+
+        /**
+         * @param receiveTime Time at which request is received.
+         */
+        public Builder withRequestReceiveTime(long receiveTime) {
+            this.requestReceiveTime = receiveTime;
+            return this;
+        }
+
+        /**
+         * @param executionStartTime Time at which actual processing starts for the request.
+         */
+        public Builder withRequestExecutionStartTime(long executionStartTime) {
+            this.requestExecutionStartTime = executionStartTime;
+            return this;
+        }
+
+        /**
+         * Copies various parameters like execution events,time and any exception after command execution.<br/><br/>
+         * <b>Should be called only after execution of command completes</b>
+         * @param executor Executor used to execute this request.
+         * @return
+         */
+        public Builder withCommandData(Executor executor) {
+            HystrixCommand command = (HystrixCommand) executor;
+            withEventList(command.getExecutionEvents())
+                    .withExecutionTime(command.getExecutionTimeInMilliseconds())
+                    .withException((Exception) command.getFailedExecutionException());
             return this;
         }
 
