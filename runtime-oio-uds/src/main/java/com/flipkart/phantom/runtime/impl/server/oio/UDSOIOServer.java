@@ -35,6 +35,7 @@ import org.trpr.platform.runtime.impl.config.FileLocator;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,7 +89,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
     /** The TaskRepository to lookup TaskHandlerExecutors from */
     private ExecutorRepository repository;
-    
+
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
 	private ServiceProxyEventProducer eventProducer;
 
@@ -248,13 +249,16 @@ public class UDSOIOServer extends AbstractNetworkServer {
             } finally {
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
-                    final String requestID = readCommand.getCommandParams().get("requestID");
+                    final Map<String, String> params = readCommand.getCommandParams();
                     ServiceProxyEvent.Builder eventBuilder;
                     if(executor==null)
                         eventBuilder = new ServiceProxyEvent.Builder(null, COMMAND_HANDLER).withEventSource(getClass().getName());
                     else
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
-                    eventBuilder.withRequestId(requestID).withRequestReceiveTime(receiveTime);
+                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+                    if(params.containsKey("requestSentTime"))
+                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+
                     eventProducer.publishEvent(eventBuilder.build());
                 } else
                     LOGGER.debug("eventProducer not set, not publishing event");

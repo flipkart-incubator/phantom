@@ -56,6 +56,9 @@ public class ServiceProxyEvent extends PlatformEvent {
     /** Time it took to execute the command. In case command is not found value is -1. */
     private final int executionTime;
 
+    /** Time at which request is sent */
+    private final long requestSentTime;
+
     /** Time at which request is received */
     private final long requestReceiveTime;
 
@@ -81,6 +84,7 @@ public class ServiceProxyEvent extends PlatformEvent {
         this.commandName = builder.commandName;
         this.exception = builder.exception;
         this.executionTime = builder.executionTime;
+        this.requestSentTime = builder.requestSentTime;
         this.requestReceiveTime = builder.requestReceiveTime;
         this.requestExecutionStartTime = builder.requestExecutionStartTime;
 
@@ -115,6 +119,10 @@ public class ServiceProxyEvent extends PlatformEvent {
         return requestReceiveTime;
     }
 
+    public long getRequestSentTime() {
+        return requestSentTime;
+    }
+
     public long getRequestExecutionStartTime() {
         return requestExecutionStartTime;
     }
@@ -129,6 +137,7 @@ public class ServiceProxyEvent extends PlatformEvent {
         /** Optional Fields */
         private String requestId = null;
         private int executionTime = -1;
+        private long requestSentTime = -1;
         private long requestReceiveTime = -1;
         private long requestExecutionStartTime = -1;
         private Exception exception = null;
@@ -182,6 +191,14 @@ public class ServiceProxyEvent extends PlatformEvent {
          */
         public Builder withRequestId(String requestId) {
             this.requestId = requestId;
+            return this;
+        }
+
+        /**
+         * @param sentTime Time at which request is sent.
+         */
+        public Builder withRequestSentTime(long sentTime) {
+            this.requestSentTime = sentTime;
             return this;
         }
 

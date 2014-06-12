@@ -80,6 +80,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
                     "ClientRequestId=" + event.getRequestId() + " " +
                             "Command=" + event.getCommandName() + " " +
                             (events.size() > 0 ? "Events=" + eventsToString(events) + " " : "") +
+                            "SentTime=" + getFormattedTimeStamp(event.getRequestSentTime()) + " " +
                             "ReceivedTime=" + getFormattedTimeStamp(event.getRequestReceiveTime()) + " " +
                             "ExecutionStartTime=" + getFormattedTimeStamp(event.getRequestExecutionStartTime()) + " " +
                             "ExecutionEndTime=" + dateFormatter.format(event.getCreatedDate().getTime()) + " " +
