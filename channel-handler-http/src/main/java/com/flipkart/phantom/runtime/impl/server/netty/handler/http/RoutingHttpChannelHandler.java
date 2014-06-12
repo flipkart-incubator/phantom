@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.http.impl.HttpProxy;
 import com.flipkart.phantom.http.impl.HttpRequestWrapper;
@@ -113,12 +114,12 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
      */
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent messageEvent) throws Exception {
-
+        long receiveTime = System.currentTimeMillis();
         HttpRequest request = (HttpRequest) messageEvent.getMessage();
         LOGGER.debug("Request is: " + request.getMethod() + " " + request.getUri());
 
         this.processRequestHeaders(request);
-        
+
         ChannelBuffer inputBuffer = request.getContent();
         byte[] requestData = new byte[inputBuffer.readableBytes()];
         inputBuffer.readBytes(requestData, 0, requestData.length);
@@ -148,17 +149,22 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         } catch (Exception e) {
             throw new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
         } finally {
-
-	        // Publishes event both in case of success and failure.
-	        Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-            if (eventProducer != null)
-                eventProducer.publishEvent(executor, request.getUri(), eventSource, HTTP_HANDLER);
-            else
+            if (eventProducer != null) {
+                // Publishes event both in case of success and failure.
+                ServiceProxyEvent.Builder eventBuilder;
+                if (executor == null)
+                    eventBuilder = new ServiceProxyEvent.Builder(null, HTTP_HANDLER).withEventSource(getClass().getName());
+                else {
+                    eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                }
+                eventBuilder.withRequestReceiveTime(receiveTime);
+                eventProducer.publishEvent(eventBuilder.build());
+            } else
                 LOGGER.debug("eventProducer not set, not publishing event");
         }
 
         // send response
-        writeCommandExecutionResponse(ctx,messageEvent,response);
+        writeCommandExecutionResponse(ctx, messageEvent, response);
     }
 
     /**
