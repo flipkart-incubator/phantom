@@ -252,7 +252,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                     final Map<String, String> params = readCommand.getCommandParams();
                     ServiceProxyEvent.Builder eventBuilder;
                     if(executor==null)
-                        eventBuilder = new ServiceProxyEvent.Builder(null, COMMAND_HANDLER).withEventSource(getClass().getName());
+                        eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
                     else
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);

@@ -109,7 +109,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
                     // Publishes event both in case of success and failure.
                     ServiceProxyEvent.Builder eventBuilder;
                     if (executor == null)
-                        eventBuilder = new ServiceProxyEvent.Builder(null, THRIFT_HANDLER).withEventSource(getClass().getName());
+                        eventBuilder = new ServiceProxyEvent.Builder(thriftProxy + ":" + message.name, THRIFT_HANDLER).withEventSource(getClass().getName());
                     else
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     eventBuilder.withRequestReceiveTime(receiveTime);

@@ -153,7 +153,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
                 // Publishes event both in case of success and failure.
                 ServiceProxyEvent.Builder eventBuilder;
                 if (executor == null)
-                    eventBuilder = new ServiceProxyEvent.Builder(null, HTTP_HANDLER).withEventSource(getClass().getName());
+                    eventBuilder = new ServiceProxyEvent.Builder(request.getUri(), HTTP_HANDLER).withEventSource(getClass().getName());
                 else {
                     eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                 }

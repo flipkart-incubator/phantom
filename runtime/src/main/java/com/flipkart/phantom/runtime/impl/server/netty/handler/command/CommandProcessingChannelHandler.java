@@ -108,7 +108,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
                     final String requestID = readCommand.getCommandParams().get("requestID");
                     ServiceProxyEvent.Builder eventBuilder;
                     if (executor == null)
-                        eventBuilder = new ServiceProxyEvent.Builder(null, COMMAND_HANDLER).withEventSource(getClass().getName());
+                        eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
                     else
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     eventBuilder.withRequestId(requestID).withRequestReceiveTime(receiveTime);

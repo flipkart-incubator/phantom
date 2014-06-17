@@ -99,7 +99,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
                     final String requestID = readCommand.getCommandParams().get("requestID");
                     ServiceProxyEvent.Builder eventBuilder;
                     if (executor == null)
-                        eventBuilder = new ServiceProxyEvent.Builder(null, ASYNC_COMMAND_HANDLER).withEventSource(getClass().getName());
+                        eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), ASYNC_COMMAND_HANDLER).withEventSource(getClass().getName());
                     else
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     eventBuilder.withRequestId(requestID).withRequestReceiveTime(receiveTime);
