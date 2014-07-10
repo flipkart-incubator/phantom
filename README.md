@@ -47,7 +47,7 @@ Phantom is licensed under : The Apache Software License, Version 2.0. Here is a 
 ## Core contributors
 * Regunath B ([@regunathb](http://twitter.com/RegunathB))
 * Devashish Shankar ([@devashishshankar](https://github.com/devashishshankar))
-* Kartik B Ukhalkar ([@kartikbu](https://github.com/kartikbu))
+* Kartik B Ukhalkar ([@kartikbu](https://github.com/kartikssj))
 * Arya Ketan ([@aryaKetan](https://github.com/aryaKetan))
 * Amanpreet Singh ([@aman_high](https://github.com/aman_high))
 
