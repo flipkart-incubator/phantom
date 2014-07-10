@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.oio;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
@@ -34,6 +35,7 @@ import org.trpr.platform.runtime.impl.config.FileLocator;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -87,7 +89,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
     /** The TaskRepository to lookup TaskHandlerExecutors from */
     private ExecutorRepository repository;
-    
+
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
 	private ServiceProxyEventProducer eventProducer;
 
@@ -209,6 +211,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
             this.client = client;
         }
         public void run() {
+            long receiveTime = System.currentTimeMillis();
             TaskHandlerExecutor executor = null;
             CommandInterpreter.ProxyCommand readCommand = null;
             try {
@@ -223,40 +226,44 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 taskRequestWrapper.setParams(readCommand.getCommandParams());
 
                 /*Try to execute command using ThreadPool, if "pool" is found in the command, else the command name */
-                if(pool!=null) {
+                if (pool != null) {
                     executor = (TaskHandlerExecutor) repository.getExecutor(readCommand.getCommand(), pool, taskRequestWrapper);
                 } else {
                     executor = (TaskHandlerExecutor) repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(), taskRequestWrapper);
                 }
                 TaskResult result;
                 /* execute */
-                if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL)
-                {
+                if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
                     result = executor.execute();
-                }
-                else
-                {
+                } else {
                     /* dont wait for the result. send back a response that the call has been dispatched for async execution */
                     executor.queue();
-                    result = new TaskResult(true,TaskHandlerExecutor.ASYNC_QUEUED);
+                    result = new TaskResult(true, TaskHandlerExecutor.ASYNC_QUEUED);
                 }
-                LOGGER.debug("The output is: "+ result);
+                LOGGER.debug("The output is: " + result);
 
                 // write the results to the socket output
                 commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
             } finally {
-                // Publishes event both in case of success and failure.
-                final String requestID = readCommand.getCommandParams().get("requestID");
-                Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-                String commandName = (readCommand == null) ? null : readCommand.getCommand();
-                if (eventProducer !=null) 
-                    eventProducer.publishEvent(executor, commandName, eventSource, COMMAND_HANDLER, requestID);
-                else
+                if (eventProducer != null) {
+                    // Publishes event both in case of success and failure.
+                    final Map<String, String> params = readCommand.getCommandParams();
+                    ServiceProxyEvent.Builder eventBuilder;
+                    if(executor==null)
+                        eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
+                    else
+                        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+                    if(params.containsKey("requestSentTime"))
+                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+
+                    eventProducer.publishEvent(eventBuilder.build());
+                } else
                     LOGGER.debug("eventProducer not set, not publishing event");
 
-                if (client !=null) {
+                if (client != null) {
                     try {
                         client.close();
                     } catch (IOException e) {

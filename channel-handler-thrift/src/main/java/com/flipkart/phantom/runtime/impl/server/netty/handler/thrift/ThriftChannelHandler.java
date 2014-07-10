@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.thrift;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
 import com.flipkart.phantom.task.spi.Executor;
@@ -78,15 +79,16 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
      */
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {
+        long receiveTime = System.currentTimeMillis();
         if (MessageEvent.class.isAssignableFrom(event.getClass())) {
 
             // Prepare input and output
             ChannelBuffer input = (ChannelBuffer) ((MessageEvent) event).getMessage();
-			ChannelBuffer output = ChannelBuffers.dynamicBuffer(responseSize);
-			TTransport clientTransport = new ThriftNettyChannelBuffer(input, output);
+            ChannelBuffer output = ChannelBuffers.dynamicBuffer(responseSize);
+            TTransport clientTransport = new ThriftNettyChannelBuffer(input, output);
 
             //Get command name
-            ThriftNettyChannelBuffer ttransport = new ThriftNettyChannelBuffer(input,null);
+            ThriftNettyChannelBuffer ttransport = new ThriftNettyChannelBuffer(input, null);
             TProtocol iprot = this.protocolFactory.getProtocol(ttransport);
             input.markReaderIndex();
             TMessage message = iprot.readMessageBegin();
@@ -103,15 +105,20 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             } catch (Exception e) {
                 throw new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
             } finally {
-	            // Publishes event both in case of success and failure.
-	            Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-                if (eventProducer != null)
-                    eventProducer.publishEvent(executor, message.name, eventSource, THRIFT_HANDLER);
-                else
+                if (eventProducer != null) {
+                    // Publishes event both in case of success and failure.
+                    ServiceProxyEvent.Builder eventBuilder;
+                    if (executor == null)
+                        eventBuilder = new ServiceProxyEvent.Builder(thriftProxy + ":" + message.name, THRIFT_HANDLER).withEventSource(getClass().getName());
+                    else
+                        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                    eventBuilder.withRequestReceiveTime(receiveTime);
+                    eventProducer.publishEvent(eventBuilder.build());
+                } else
                     LOGGER.debug("eventProducer not set, not publishing event");
             }
             // write the result to the output channel buffer
-			Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer)clientTransport).getOutputBuffer());
+            Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer) clientTransport).getOutputBuffer());
         }
         super.handleUpstream(ctx, event);
     }

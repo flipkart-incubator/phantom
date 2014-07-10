@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
@@ -49,6 +50,12 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     /** The client's TTransport*/
     protected TTransport clientTransport;
 
+    /** Event which records various paramenters of this request execution & published later */
+    protected ServiceProxyEvent.Builder eventBuilder;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
+
     /**
      * Constructor for this class.
      * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
@@ -62,6 +69,7 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
 
         ThriftRequestWrapper thriftRequestWrapper = (ThriftRequestWrapper)requestWrapper;
         this.clientTransport = thriftRequestWrapper.getClientSocket();
+        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, THRIFT_HANDLER);
     }
 
     /**
@@ -70,7 +78,8 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     @SuppressWarnings("rawtypes")
     @Override
     protected TTransport run() {
-          return thriftProxy.doRequest(this.clientTransport);
+        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        return thriftProxy.doRequest(this.clientTransport);
     }
 
     /**
@@ -121,6 +130,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     }
     public void setClientTransport(TTransport clientTransport) {
         this.clientTransport = clientTransport;
+    }
+    public ServiceProxyEvent.Builder getEventBuilder() {
+        return eventBuilder;
     }
     /** End Getter/Setter methods */
 

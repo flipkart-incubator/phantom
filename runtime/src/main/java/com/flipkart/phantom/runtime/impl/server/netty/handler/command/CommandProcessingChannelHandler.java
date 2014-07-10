@@ -15,6 +15,7 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
@@ -68,52 +69,56 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 	 * Discards commands that do not have a {@link TaskHandler} mapping. 
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
 	 */
-	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {    
-		if (MessageEvent.class.isAssignableFrom(event.getClass())) {			
-			CommandInterpreter commandInterpreter = new CommandInterpreter();
-			CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent)event);
-			LOGGER.debug("Read Command : " + readCommand);
-			String pool = readCommand.getCommandParams().get("pool");
-			TaskHandlerExecutor executor;
+	public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {
+        long receiveTime = System.currentTimeMillis();
+        if (MessageEvent.class.isAssignableFrom(event.getClass())) {
+            CommandInterpreter commandInterpreter = new CommandInterpreter();
+            CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent) event);
+            LOGGER.debug("Read Command : " + readCommand);
+            String pool = readCommand.getCommandParams().get("pool");
+            TaskHandlerExecutor executor;
 
             // Prepare the request Wrapper
             TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
 
-			// Get the Executor :: Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
-			if(pool!=null) {
-				executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), pool,taskRequestWrapper);
-			} else {
-				executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(),taskRequestWrapper);
-			}
-			try {
-				TaskResult result = null;
-				if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
-					result = executor.execute();
-				} else {
-					executor.queue(); // dont wait for the result. send back a response that the call has been dispatched for async execution
-					result = new TaskResult(true,TaskHandlerExecutor.ASYNC_QUEUED);
-				}
-				LOGGER.debug("The output is: "+ result);
-				// write the results to the channel output
-				commandInterpreter.writeCommandExecutionResponse(ctx, event, result);
-			} catch(Exception e) {
-				throw new RuntimeException("Error in executing command : " + readCommand, e);
-			}
-            finally {
-                // Publishes event both in case of success and failure.
-                Class eventSource = (executor == null) ? this.getClass() : executor.getClass();
-                String commandName = (readCommand == null) ? null : readCommand.getCommand();
-                final String requestID = readCommand.getCommandParams().get("requestID");
-                if (eventProducer != null)
-                    eventProducer.publishEvent(executor, commandName, eventSource, COMMAND_HANDLER, requestID);
-                else
+            // Get the Executor :: Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
+            if (pool != null) {
+                executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), pool, taskRequestWrapper);
+            } else {
+                executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(), taskRequestWrapper);
+            }
+            try {
+                TaskResult result = null;
+                if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
+                    result = executor.execute();
+                } else {
+                    executor.queue(); // dont wait for the result. send back a response that the call has been dispatched for async execution
+                    result = new TaskResult(true, TaskHandlerExecutor.ASYNC_QUEUED);
+                }
+                LOGGER.debug("The output is: " + result);
+                // write the results to the channel output
+                commandInterpreter.writeCommandExecutionResponse(ctx, event, result);
+            } catch (Exception e) {
+                throw new RuntimeException("Error in executing command : " + readCommand, e);
+            } finally {
+                if (eventProducer != null) {
+                    // Publishes event both in case of success and failure.
+                    final String requestID = readCommand.getCommandParams().get("requestID");
+                    ServiceProxyEvent.Builder eventBuilder;
+                    if (executor == null)
+                        eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
+                    else
+                        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                    eventBuilder.withRequestId(requestID).withRequestReceiveTime(receiveTime);
+                    eventProducer.publishEvent(eventBuilder.build());
+                } else
                     LOGGER.debug("eventProducer not set, not publishing event");
             }
         }
-		super.handleUpstream(ctx, event);
-	}	
+        super.handleUpstream(ctx, event);
+    }
 
 	/**
 	 * Interface method implementation. Closes the underlying channel after logging a warning message
