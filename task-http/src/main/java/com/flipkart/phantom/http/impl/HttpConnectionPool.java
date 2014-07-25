@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests
@@ -77,6 +78,9 @@ public class HttpConnectionPool {
     /** socket timeout in milis */
     private int operationTimeout = 1000;
 
+    /** socket connection timeToLive in seconds */
+    private int timeToLiveInSecs = -1;
+
     /** max number of connections allowed */
     private int maxConnections = 20;
 
@@ -106,8 +110,13 @@ public class HttpConnectionPool {
         schemeRegistry.register(new Scheme("http", port, PlainSocketFactory.getSocketFactory()));
         schemeRegistry.register(new Scheme("https", port, PlainSocketFactory.getSocketFactory()));
 
+        PoolingClientConnectionManager cm;
         // create connection manager
-        PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+        if ( getTimeToLiveInSecs() > 0 ) {
+            cm = new PoolingClientConnectionManager(schemeRegistry, getTimeToLiveInSecs(), TimeUnit.SECONDS);
+        } else {
+            cm = new PoolingClientConnectionManager(schemeRegistry);
+        }
 
         // Max pool size
         cm.setMaxTotal(maxConnections);
@@ -259,6 +268,14 @@ public class HttpConnectionPool {
     }
     public void setForwardHeaders(boolean forwardHeaders) {
         this.forwardHeaders = forwardHeaders;
+    }
+
+    public int getTimeToLiveInSecs() {
+        return timeToLiveInSecs;
+    }
+
+    public void setTimeToLiveInSecs(int timeToLiveInSecs) {
+        this.timeToLiveInSecs = timeToLiveInSecs;
     }
     /** Getters / Setters */
 
