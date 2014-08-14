@@ -271,6 +271,8 @@ public class HystrixMetricsPoller {
                     json.writeNumberField("reportingHosts", 1); // this will get summed across all instances in a cluster
                     if (circuitBreaker != null && circuitBreaker.isOpen()) {
                     	json.writeStringField("openCircuitHostNames", hostName); // pass the host name from where open circuit is being reported
+                    } else {
+                    	json.writeStringField("openCircuitHostNames",""); // add an empty string
                     }
 
                     json.writeEndObject();
