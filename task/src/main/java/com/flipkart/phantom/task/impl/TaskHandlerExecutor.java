@@ -107,12 +107,15 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
      * @param commandName name of the command
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
+     * @param concurrentRequestSize no of Max Concurrent requests which can be served
      */
-    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,TaskRequestWrapper taskRequestWrapper ) {
+    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,
+                                  TaskRequestWrapper taskRequestWrapper , int concurrentRequestSize ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
-                        .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE)))
+                        .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE).
+                                withExecutionIsolationSemaphoreMaxConcurrentRequests(concurrentRequestSize)))
         ;
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;

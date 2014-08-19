@@ -51,7 +51,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
     private static final int DEFAULT_THREAD_POOL_SIZE = 10;
 
     /** The registry holding the names of the TaskHandler */
-	private TaskHandlerRegistry registry;
+    private TaskHandlerRegistry registry;
 
     /** The taskContext being passed to the Handlers, providing a way for communication to the Container */
     private TaskContext taskContext;
@@ -89,7 +89,12 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                 HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
                 LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
                 if(hystrixTaskHandler.getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper);
+                    int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
+                    if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
+                         LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
+                        maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
+                    }
+                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper , maxConcurrentSize);
                 }
                 if(getTaskHandlerRegistry().getPoolSize(proxyName)==null) {
                     LOGGER.debug("Did not find a predefined pool size for "+proxyName+". Falling back to default value of "+DEFAULT_THREAD_POOL_SIZE);
