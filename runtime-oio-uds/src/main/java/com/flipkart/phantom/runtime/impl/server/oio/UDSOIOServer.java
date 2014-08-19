@@ -36,8 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * <code>UDSOIOServer</code> is a concrete implementation of the {@link AbstractNetworkServer}
@@ -90,8 +89,8 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /** The TaskRepository to lookup TaskHandlerExecutors from */
     private ExecutorRepository repository;
 
-	/** The publisher used to broadcast events to Service Proxy Subscribers */
-	private ServiceProxyEventProducer eventProducer;
+    /** The publisher used to broadcast events to Service Proxy Subscribers */
+    private ServiceProxyEventProducer eventProducer;
 
     /** Event Type for publishing all events which are generated here */
     private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
@@ -132,9 +131,24 @@ public class UDSOIOServer extends AbstractNetworkServer {
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
             if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has been set. create and use a fixed thread pool
-                this.setWorkerExecutors(Executors.newFixedThreadPool(this.getWorkerPoolSize(), new NamedThreadFactory("UDSOIOServer-Worker")));
-            }else { // default behavior of creating and using a cached thread pool
-                this.setWorkerExecutors(Executors.newCachedThreadPool(new NamedThreadFactory("UDSOIOServer-Worker")));
+                ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(this.getWorkerPoolSize(),
+                        this.getWorkerPoolSize() * 4,
+                        30,
+                        TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(this.getWorkerPoolSize() * 12),
+                        new NamedThreadFactory("UDSOIOServer-Worker"),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
+                this.setWorkerExecutors(threadPoolExecutor);
+            }else {
+                // default behavior of creating and using a cached thread pool
+                ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
+                        Runtime.getRuntime().availableProcessors() * 4,
+                        30,
+                        TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(Runtime.getRuntime().availableProcessors() * 12),
+                        new NamedThreadFactory("UDSOIOServer-Worker"),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
+                this.setWorkerExecutors(threadPoolExecutor);
             }
         }
         super.afterPropertiesSet();
@@ -194,7 +208,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 try {
                     client = socket.accept();
                     client.setSoTimeout(getClientSocketTimeoutMillis()); // set this timeout to protect server from clients that become inactive
-                    workerExecutors.execute(new CommandProcessor(client));
+                    workerExecutors.submit(new CommandProcessor(client));
                 } catch (IOException e) {
                     throw new RuntimeException("Error accepting client socket connections : " + e.getMessage(), e);
                 }
@@ -205,12 +219,12 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /**
      * Helper class that reads and processes Commands from a client Socket. This runs inside a Worker thread.
      */
-    class CommandProcessor implements Runnable {
+    class CommandProcessor implements Callable<Void> {
         Socket client;
         CommandProcessor(Socket client) {
             this.client = client;
         }
-        public void run() {
+        public Void call() {
             long receiveTime = System.currentTimeMillis();
             TaskHandlerExecutor executor = null;
             CommandInterpreter.ProxyCommand readCommand = null;
@@ -271,6 +285,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                     }
                 }
             }
+            return null;
         }
     }
 
