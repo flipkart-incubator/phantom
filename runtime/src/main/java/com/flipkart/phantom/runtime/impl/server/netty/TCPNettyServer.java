@@ -37,6 +37,7 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
     /** The server and worker thread pool sizes*/
     private int serverPoolSize = INVALID_POOL_SIZE;
     private int workerPoolSize = INVALID_POOL_SIZE;
+    private int executorQueueSize = Runtime.getRuntime().availableProcessors() * 12;
 
     /** The server and worker ExecutorService instances*/
     private ExecutorService serverExecutors;
@@ -60,26 +61,26 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
      */
     public void afterPropertiesSet() throws Exception {
         if (this.getServerExecutors() == null) { // no executors have been set for server listener
-            if (this.getServerPoolSize() == TCPNettyServer.INVALID_POOL_SIZE) { // thread pool size has been set. create and use a fixed thread pool
+            if (this.getServerPoolSize() == TCPNettyServer.INVALID_POOL_SIZE) { // thread pool size has ot been set.
                 this.setServerPoolSize(Runtime.getRuntime().availableProcessors());
             }
             this.setServerExecutors(new ThreadPoolExecutor(this.getServerPoolSize(),
                     this.getServerPoolSize() * 4,
                     30,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<Runnable>(this.getServerPoolSize() * 12),
+                    new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
                     new NamedThreadFactory("TCPServer-Listener"),
                     new ThreadPoolExecutor.CallerRunsPolicy()));
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
-            if (this.getWorkerPoolSize() == TCPNettyServer.INVALID_POOL_SIZE) { // thread pool size has been set. create and use a fixed thread pool
+            if (this.getWorkerPoolSize() == TCPNettyServer.INVALID_POOL_SIZE) { // thread pool size has not been set.
                 this.setWorkerPoolSize(Runtime.getRuntime().availableProcessors());
             }
             this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
                     this.getWorkerPoolSize() * 4,
                     30,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<Runnable>(this.getWorkerPoolSize() * 12),
+                    new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
                     new NamedThreadFactory("TCPServer-Worker"),
                     new ThreadPoolExecutor.CallerRunsPolicy()));
         }
@@ -157,6 +158,11 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
     public void setWorkerExecutors(ExecutorService workerExecutors) {
         this.workerExecutors = workerExecutors;
     }
-    /** End Getter/Setter methods */
-
+    public int getExecutorQueueSize() {
+        return executorQueueSize;
+    }
+    public void setExecutorQueueSize(int executorQueueSize) {
+        this.executorQueueSize = executorQueueSize;
+    }
+     /** End Getter/Setter methods */
 }

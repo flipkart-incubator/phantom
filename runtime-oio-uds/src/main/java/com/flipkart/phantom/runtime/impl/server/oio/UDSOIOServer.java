@@ -65,6 +65,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /** The worker thread pool sizes*/
     private int workerPoolSize = INVALID_POOL_SIZE;
 
+    /** The worker thread pool executor queue size*/
+    private int executorQueueSize = Runtime.getRuntime().availableProcessors() * 12;
+
     /** The client socket inactivity timeout in millis*/
     private int clientSocketTimeoutMillis = DEFAULT_CLIENT_TIMEOUT_MILLIS;
 
@@ -130,26 +133,16 @@ public class UDSOIOServer extends AbstractNetworkServer {
             throw new RuntimeException("Error creating Socket Address. ",e);
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
-            if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has been set. create and use a fixed thread pool
-                ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(this.getWorkerPoolSize(),
-                        this.getWorkerPoolSize() * 4,
-                        30,
-                        TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(this.getWorkerPoolSize() * 12),
-                        new NamedThreadFactory("UDSOIOServer-Worker"),
-                        new ThreadPoolExecutor.CallerRunsPolicy());
-                this.setWorkerExecutors(threadPoolExecutor);
-            }else {
-                // default behavior of creating and using a cached thread pool
-                ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
-                        Runtime.getRuntime().availableProcessors() * 4,
-                        30,
-                        TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(Runtime.getRuntime().availableProcessors() * 12),
-                        new NamedThreadFactory("UDSOIOServer-Worker"),
-                        new ThreadPoolExecutor.CallerRunsPolicy());
-                this.setWorkerExecutors(threadPoolExecutor);
+            if (this.getWorkerPoolSize() == UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has not been set
+                this.setWorkerPoolSize(Runtime.getRuntime().availableProcessors());
             }
+            this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
+                    this.getWorkerPoolSize() * 4,
+                    30,
+                    TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
+                    new NamedThreadFactory("UDSOIOServer-Worker"),
+                    new ThreadPoolExecutor.CallerRunsPolicy()));
         }
         super.afterPropertiesSet();
         LOGGER.info("UDS Server startup complete");
@@ -332,9 +325,14 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public void setRepository(ExecutorRepository repository) {
         this.repository = repository;
     }
-
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;
+    }
+    public int getExecutorQueueSize() {
+        return executorQueueSize;
+    }
+    public void setExecutorQueueSize(int executorQueueSize) {
+        this.executorQueueSize = executorQueueSize;
     }
     /** End Getter/Setter methods */
 
