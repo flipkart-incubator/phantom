@@ -38,6 +38,8 @@ public abstract class HystrixTaskHandler extends TaskHandler {
      * These can be used to limit the maximum concurrent requests for a Proxy or a command
      * The key will be the Proxy name optionally overridden by a command name
      * The value will be the concurrent pool size.
+     * If isolation strategy is @ExecutionIsolationStrategy#Thread then this param is used as a thread-concurrency pool
+     * as otherwise if the isolation strategy is @ExecutionIsolationStrategy#Semaphore , then this param is used for semaphore-concurrency pool
      * (If no. of concurrent requests for this concurrent pool exceed this value, they will be rejected by Hystrix)
      * Note: the incoming request should have a "pool" param for it to be routed to the correct Thread Pool. If it doesn't,
      * the default command level thread pool will be used. (It's core size is 10 by default)
