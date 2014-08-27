@@ -1,3 +1,12 @@
+## 1.2.9-SNAPSHOT (Aug 28, 2014)
+- Adding support for setting Max concurrency for semaphore isolated requests
+- exposing timeToLive for socket in HttpConnectionPool
+- Adding empty "openCircuitHostNames" if circuit is closed
+- adding snapshot servlet for service proxy instrumentation
+-  **Bug Fixes:**
+    - Incorrect Logging of failed events in RequestLogged for async commands.
+
+
 ## 1.2.8 (June 05, 2014)
 - Upgrade to Hystrix 1.4.0-RC4
 
