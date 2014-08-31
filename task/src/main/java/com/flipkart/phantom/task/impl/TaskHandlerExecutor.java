@@ -167,6 +167,24 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     }
 
     /**
+     * This method returns a valid {@link com.netflix.hystrix.HystrixCommand} cache key
+     * from the underlying {@link HystrixTaskHandler} that is used to cache futures of requests,
+     * thereby eliminating redundant requests in the context of a single {@link com.netflix.hystrix.strategy.concurrency.HystrixRequestContext}
+     * If the task handler is not a {@link HystrixTaskHandler} then it returns null, which bypasses the request
+     * caching mechanism in hystrix
+     *
+     * @return String cache key
+     */
+    @Override
+    protected String getCacheKey(){
+        if (this.taskHandler instanceof HystrixTaskHandler){
+            HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;
+            return hystrixTaskHandler.getCacheKey();
+        }
+        return null;
+    }
+
+    /**
      * First It checks the call invocation type has been overridden for the command,
      * if not, it defaults to task handler call invocation type.
      *

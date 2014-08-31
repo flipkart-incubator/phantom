@@ -88,6 +88,11 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         return proxy.fallbackRequest(this.httpRequestWrapper);
     }
 
+    @Override
+    protected String getCacheKey() {
+        return this.httpRequestWrapper.getMethod()+this.httpRequestWrapper.getUri();
+    }
+
     public ServiceProxyEvent.Builder getEventBuilder() {
         return eventBuilder;
     }

@@ -22,6 +22,7 @@ import com.flipkart.phantom.http.impl.HttpProxy;
 import com.flipkart.phantom.http.impl.HttpRequestWrapper;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -144,6 +145,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
         // execute
         HttpResponse response = null;
+        HystrixRequestContext hystrixRequestContext = HystrixRequestContext.initializeContext();
         try {
             response = (HttpResponse) executor.execute();
         } catch (Exception e) {
@@ -161,6 +163,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
                 eventProducer.publishEvent(eventBuilder.build());
             } else
                 LOGGER.debug("eventProducer not set, not publishing event");
+
+            hystrixRequestContext.shutdown();
         }
 
         // send response
