@@ -57,7 +57,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
     private TaskContext taskContext;
 
     /**
-     * Gets the TaskHandlerExecutor for a commandName
+     * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
      * @param commandName the command name/String for which the Executor is needed
      * @param proxyName the threadPool using which command has to be processed
      * @return The executor corresponding to the commandName.
@@ -94,18 +94,40 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                          LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
                         maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
                     }
-                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper , maxConcurrentSize);
+
+                    if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
+                        return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
+                                (TaskRequestWrapper)requestWrapper , maxConcurrentSize);
+                    }
+                    else {
+                        return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper , maxConcurrentSize);
+                    }
                 }
                 if(getTaskHandlerRegistry().getPoolSize(proxyName)==null) {
                     LOGGER.debug("Did not find a predefined pool size for "+proxyName+". Falling back to default value of "+DEFAULT_THREAD_POOL_SIZE);
-                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
+                    if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
+                        return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
+                                refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName), refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+                    } else {
+                        return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
                             refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+                    }
                 }
-                return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
+                if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
+                    return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
+                            hystrixTaskHandler.getExecutorTimeout(commandName),refinedProxyName,getTaskHandlerRegistry().getPoolSize(proxyName),(TaskRequestWrapper)requestWrapper);
+                } else {
+                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
                         refinedProxyName,getTaskHandlerRegistry().getPoolSize(proxyName),(TaskRequestWrapper)requestWrapper);
+                }
             } else { //Run everything with defaults
-                return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT,
+                if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
+                    return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
+                            HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+                } else {
+                    return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT,
                         refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+                }
             }
         } else {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
