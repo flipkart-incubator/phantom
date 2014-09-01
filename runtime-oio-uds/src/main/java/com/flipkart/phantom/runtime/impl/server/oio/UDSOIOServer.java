@@ -133,16 +133,18 @@ public class UDSOIOServer extends AbstractNetworkServer {
             throw new RuntimeException("Error creating Socket Address. ",e);
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
-            if (this.getWorkerPoolSize() == UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has not been set
+            if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has  been set
                 this.setWorkerPoolSize(Runtime.getRuntime().availableProcessors());
+                this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
+                        this.getWorkerPoolSize(),
+                        60,
+                        TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
+                        new NamedThreadFactory("UDSOIOServer-Worker"),
+                        new ThreadPoolExecutor.CallerRunsPolicy()));
+            }else { //
+                this.setWorkerExecutors(Executors.newCachedThreadPool(new NamedThreadFactory("UDSOIOServer-Worker")));
             }
-            this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
-                    this.getWorkerPoolSize() * 4,
-                    30,
-                    TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
-                    new NamedThreadFactory("UDSOIOServer-Worker"),
-                    new ThreadPoolExecutor.CallerRunsPolicy()));
         }
         super.afterPropertiesSet();
         LOGGER.info("UDS Server startup complete");
@@ -212,12 +214,12 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /**
      * Helper class that reads and processes Commands from a client Socket. This runs inside a Worker thread.
      */
-    class CommandProcessor implements Callable<Void> {
+    class CommandProcessor implements Runnable {
         Socket client;
         CommandProcessor(Socket client) {
             this.client = client;
         }
-        public Void call() {
+        public void run() {
             long receiveTime = System.currentTimeMillis();
             TaskHandlerExecutor executor = null;
             CommandInterpreter.ProxyCommand readCommand = null;
@@ -278,7 +280,6 @@ public class UDSOIOServer extends AbstractNetworkServer {
                     }
                 }
             }
-            return null;
         }
     }
 
