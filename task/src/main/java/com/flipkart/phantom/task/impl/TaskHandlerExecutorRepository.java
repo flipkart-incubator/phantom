@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
  * @author devashishshankar
  * @version 1.0, 20th March, 2013
  */
-public class TaskHandlerExecutorRepository implements ExecutorRepository{
+public class TaskHandlerExecutorRepository implements ExecutorRepository {
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);
@@ -63,7 +63,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
      * @return The executor corresponding to the commandName.
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
-    public Executor getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper) {
+    public Executor<TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper) {
         //Regex matching of threadPoolName and commandName
         //(Hystrix dashboard requires names to be alphanumeric)
         String refinedCommandName = commandName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
@@ -94,7 +94,6 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                          LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
                         maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
                     }
-
                     return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize);
                 }
                 if(getTaskHandlerRegistry().getPoolSize(proxyName)==null) {
@@ -120,7 +119,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
      * @return The executor corresponding to the commandName.
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
-    public Executor getExecutor(String commandName, RequestWrapper requestWrapper) {
+    public Executor<TaskResult> getExecutor(String commandName, RequestWrapper requestWrapper) {
         return this.getExecutor(commandName, commandName, requestWrapper);
     }
 
@@ -154,7 +153,6 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
-            TaskRequestWrapper taskRequestWrapper = (TaskRequestWrapper) requestWrapper;
             try {
                 return command.execute();
             } catch (Exception e) {
@@ -222,7 +220,10 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
     }
     /** End Getter/Setter methods */
 
-    private Executor getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, TaskHandler taskHandler, int maxConcurrentSize) {
+    /**
+     * Helper methods to create and return the appropriate TaskHandlerExecutor instance
+     */
+    private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, TaskHandler taskHandler, int maxConcurrentSize) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     (TaskRequestWrapper)requestWrapper , maxConcurrentSize);
@@ -231,8 +232,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper , maxConcurrentSize);
         }
     }
-
-    private Executor getTaskHandlerExecutor(String commandName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
+    private Executor<TaskResult> getTaskHandlerExecutor(String commandName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
                     refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName), refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
@@ -241,8 +241,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                     refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
         }
     }
-
-    private Executor getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler) {
+    private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
@@ -251,8 +250,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository{
                     refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
         }
     }
-
-    private Executor getTaskHandlerExecutor(String commandName, String proxyName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
+    private Executor<TaskResult> getTaskHandlerExecutor(String commandName, String proxyName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     hystrixTaskHandler.getExecutorTimeout(commandName),refinedProxyName,getTaskHandlerRegistry().getPoolSize(proxyName),(TaskRequestWrapper)requestWrapper);

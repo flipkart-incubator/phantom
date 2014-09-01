@@ -15,15 +15,18 @@
  */
 package com.flipkart.phantom.task.impl;
 
+import java.util.Map;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.*;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
@@ -33,14 +36,11 @@ import java.util.Map;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
-public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor{
+public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor <TaskResult> {
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
     public static final String ASYNC_QUEUED = "The command dispatched for async execution";
-
-    /** Logger for this class*/
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
     /** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
     public static final String DEFAULT_HYSTRIX_GROUP = "DEFAULT_GROUP";

@@ -19,7 +19,7 @@ package com.flipkart.phantom.task.spi;
 import com.flipkart.phantom.event.ServiceProxyEvent;
 
 /**
- * <code>Executor</code> is an interface which executes any task submitted of Type T.
+ * <code>Executor</code> is an interface which executes any task and returns the result of Type T.
  * This interface provides a way of decoupling task submission from the mechanics
  * of how each task will be run
  *
@@ -28,7 +28,16 @@ import com.flipkart.phantom.event.ServiceProxyEvent;
  * @date : 28/10/13
  */
 public interface Executor<T>{
+	
+	/**
+	 * Executes a given task and returns the result
+	 * @return task execution result
+	 */
     public T execute() ;
 
+    /**
+     * Gets the ServiceProxyEvent builder implementation
+     * @return the ServiceProxyEvent builder implementation
+     */
     public ServiceProxyEvent.Builder getEventBuilder();
 }
