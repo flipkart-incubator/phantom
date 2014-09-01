@@ -1,4 +1,4 @@
-## 1.2.9-SNAPSHOT (Aug 28, 2014)
+## 1.2.9-SNAPSHOT (Sep 01, 2014)
 - Added Request caching support to TaskHandlers
 - Adding support for setting Max concurrency for semaphore isolated requests
 - exposing timeToLive for socket in HttpConnectionPool
