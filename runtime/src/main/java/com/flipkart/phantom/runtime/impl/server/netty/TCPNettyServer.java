@@ -76,7 +76,6 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
             if (this.getWorkerPoolSize() != TCPNettyServer.INVALID_POOL_SIZE) { // thread pool size has not been set.
-                this.setWorkerPoolSize(Runtime.getRuntime().availableProcessors());
                 this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
                         this.getWorkerPoolSize(),
                         60,

@@ -134,7 +134,6 @@ public class UDSOIOServer extends AbstractNetworkServer {
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
             if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has  been set
-                this.setWorkerPoolSize(Runtime.getRuntime().availableProcessors());
                 this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
                         this.getWorkerPoolSize(),
                         60,
