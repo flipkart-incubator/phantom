@@ -38,7 +38,7 @@ import java.util.Map;
  *
  * @author devashishshankar
  * @author regunath.balasubramanian
- * 
+ *
  * @version 1.0, 19 March, 2013
  * @version 2.0, 11 July, 2013
  */
@@ -46,11 +46,11 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
 
     /** Log instance for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandler.class);
-	
-	/** Identifier for threadPool size in initPoolParams */
-	public static String PARAM_COMMAND_NAME = "commandName";
-	
-    /** 
+
+    /** Identifier for threadPool size in initPoolParams */
+    public static String PARAM_COMMAND_NAME = "commandName";
+
+    /**
      * The initialization commands can be passed as a list of map.
      * Each map should have a key "commandName" (The name of the command to be executed)
      * The rest of the map should contain command parameters.
@@ -80,57 +80,58 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
         return "No commands registered";
     }
 
-	/**
-	 * Initialize this handler. The default implementation executes "initializationCommands" to initialize the TaskHandler (if found)
-	 * @param taskContext the TaskContext that manages this TaskHandler
-	 */
-	public void init(TaskContext taskContext) throws Exception {
+    /**
+     * Initialize this handler. The default implementation executes "initializationCommands" to initialize the TaskHandler (if found)
+     * @param taskContext the TaskContext that manages this TaskHandler
+     */
+    public void init(TaskContext taskContext) throws Exception {
         if (this.initializationCommands == null || this.initializationCommands.size() == 0) {
-			LOGGER.warn("No initialization commands specified for the TaskHandler: " + this.getName());
-		} else {
+            LOGGER.warn("No initialization commands specified for the TaskHandler: " + this.getName());
+        } else {
             for (Map<String,String> initParam : this.initializationCommands) {
                 String commandName = initParam.get(PARAM_COMMAND_NAME);
                 if (commandName == null) {
                     LOGGER.error("Fatal error. commandName not specified in initializationCommands for TaskHandler: " + this.getName());
                     throw new UnsupportedOperationException("Fatal error. commandName not specified in initializationCommands of TaskHandler: "+this.getName());
                 }
-                TaskResult result = this.execute(taskContext, commandName, new HashMap<String, String>(initParam), null);
+                TaskRequestWrapper requestWrapper = new TaskRequestWrapper();
+                requestWrapper.setParams(new HashMap<String, String>(initParam));
+                TaskResult result = this.execute(taskContext, commandName,requestWrapper);
                 if (result != null && result.isSuccess() == false) {
                     throw new PlatformException("Initialization command: "+commandName+" failed for TaskHandler: "+this.getName()+" The params were: "+initParam);
                 }
             }
         }
-	}
+    }
 
-	/**
-	 * Execute this thrift, using the specified parameters
-	 * @param command the command used
-	 * @param params thrift parameters
-	 * @param data extra data if any
-	 * @return response the TaskResult from thrift execution
-	 */
-	public abstract TaskResult execute(TaskContext taskContext, String command, Map<String,String> params, byte[] data) throws RuntimeException;
+    /**
+     * Execute this thrift, using the specified parameters
+     * @param command the command used
+     * @param requestWrapper requestWrapper
+     * @return response the TaskResult from thrift execution
+     */
+    public abstract TaskResult execute(TaskContext taskContext, String command, TaskRequestWrapper requestWrapper) throws RuntimeException;
 
-	/**
-	 * Returns the command names which this handler will handle.
-	 * @return commands
-	 */
-	public abstract String[] getCommands();
-	
-	/**
-	 * Shuts Down TaskHandler when bean is destroyed
-	 * @see org.springframework.beans.factory.DisposableBean#destroy()
-	 */
-	public void destroy() throws Exception {
-		this.shutdown(null);
-	}
-	
-	/** Getter/Setter methods */
-	public List<Map<String, String>> getInitializationCommands() {
-		return initializationCommands;
-	}
-	public void setInitializationCommands(List<Map<String, String>> initializationCommands) {
-		this.initializationCommands = initializationCommands;
-	}
-	/** End Getter/Setter methods */
+    /**
+     * Returns the command names which this handler will handle.
+     * @return commands
+     */
+    public abstract String[] getCommands();
+
+    /**
+     * Shuts Down TaskHandler when bean is destroyed
+     * @see org.springframework.beans.factory.DisposableBean#destroy()
+     */
+    public void destroy() throws Exception {
+        this.shutdown(null);
+    }
+
+    /** Getter/Setter methods */
+    public List<Map<String, String>> getInitializationCommands() {
+        return initializationCommands;
+    }
+    public void setInitializationCommands(List<Map<String, String>> initializationCommands) {
+        this.initializationCommands = initializationCommands;
+    }
+    /** End Getter/Setter methods */
 }

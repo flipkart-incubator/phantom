@@ -15,8 +15,8 @@
  */
 package com.flipkart.phantom.task.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.phantom.task.spi.TaskContext;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

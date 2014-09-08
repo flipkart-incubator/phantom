@@ -28,13 +28,15 @@ import java.util.Map;
  * @version : 1.0
  * @date : 28/10/13
  */
-public class TaskRequestWrapper implements RequestWrapper {
+public class TaskRequestWrapper<T> implements RequestWrapper {
 
     /** Data bytes */
     private byte[] data;
 
     /** Map of parameters */
     private Map<String,String> params;
+
+    private T requestType;
 
     /**Start Getter/Setter methods */
 
@@ -54,5 +56,14 @@ public class TaskRequestWrapper implements RequestWrapper {
         this.params = params;
     }
 
+    public T getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(T requestType) {
+        this.requestType = requestType;
+    }
+
     /**End Getter/Setter methods */
+
 }

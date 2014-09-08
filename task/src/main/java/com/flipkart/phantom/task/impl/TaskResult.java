@@ -25,37 +25,37 @@ import java.util.List;
  * @author devashishshankar
  * @version 1.0, 19 March, 2013
  */
-public class TaskResult {
-	
-	/** The default length in case the Object isn't a data array */
-	private static final int DEFAULT_LENGTH = 0;
-	
-	private final boolean success;
-	private final String message;
-	private final Object data;
+public class TaskResult<T> {
+
+    /** The default length in case the Object isn't a data array */
+    private static final int DEFAULT_LENGTH = 0;
+
+    private final boolean success;
+    private final String message;
+    private final T data;
     private final List<Object> dataList;
     private final int length;
     private boolean profilingDone = false;
-    
-    /** Various constructors for this class*/    
-	public TaskResult(boolean success, String message) {
-		this(success, message, (byte[])null);
-	}
 
-	public TaskResult(boolean success, String message, Object data) {
-		this.success = success;
-		this.message = message;
-		this.data = data;
+    /** Various constructors for this class*/
+    public TaskResult(boolean success, String message) {
+        this(success, message, null);
+    }
+
+    public TaskResult(boolean success, String message, T data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
         this.dataList = null;
         if(data instanceof byte[]) {
-        	byte[] dataBytes = (byte[]) data;
-        	this.length= (dataBytes == null ? 0 : dataBytes.length);
+            byte[] dataBytes = (byte[]) data;
+            this.length= (dataBytes == null ? 0 : dataBytes.length);
         } else {
-        	this.length = TaskResult.DEFAULT_LENGTH;
+            this.length = TaskResult.DEFAULT_LENGTH;
         }
-	}
+    }
 
-    public TaskResult(boolean success, String message, List<Object> dataArray,int length) {
+    public TaskResult(boolean success, String message, List<T> dataArray,int length) {
         this.success = success;
         this.message = message;
         this.data = null;
@@ -63,12 +63,17 @@ public class TaskResult {
         this.length=length;
     }
 
-    public TaskResult(boolean success, String message, byte[] data, boolean profilingDone) {
+    public TaskResult(boolean success, String message, T data, boolean profilingDone) {
         this.success = success;
         this.message = message;
         this.data = data;
         this.dataList = null;
-        this.length= (data == null ? 0 : data.length);
+        if(data instanceof byte[]) {
+            byte[] dataBytes = (byte[]) data;
+            this.length= (dataBytes == null ? TaskResult.DEFAULT_LENGTH : dataBytes.length);
+        } else {
+            this.length = TaskResult.DEFAULT_LENGTH;
+        }
         this.profilingDone = profilingDone;
     }
 
@@ -77,7 +82,7 @@ public class TaskResult {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-    	return String.format("TaskResult[success:%s, message:%s,datalength:%d]", this.success, this.message, this.length);
+        return String.format("TaskResult[success:%s, message:%s,datalength:%d]", this.success, this.message, this.length);
     }
 
     /** Getter/Setter methods*/
@@ -87,15 +92,15 @@ public class TaskResult {
     public boolean isDataArray() {
         return dataList != null;
     }
-	public boolean isSuccess() {
-		return success;
-	}
-	public String getMessage() {
-		return message;
-	}
-	public Object getData() {
-		return data;
-	}
+    public boolean isSuccess() {
+        return success;
+    }
+    public String getMessage() {
+        return message;
+    }
+    public Object getData() {
+        return data;
+    }
     public List<Object> getDataArray() {
         return dataList;
     }

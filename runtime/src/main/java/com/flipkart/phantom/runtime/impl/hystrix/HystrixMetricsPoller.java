@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,7 +173,7 @@ public class HystrixMetricsPoller {
                     HystrixCircuitBreaker circuitBreaker = HystrixCircuitBreaker.Factory.getInstance(key);
 
                     StringWriter jsonString = new StringWriter();
-                    JsonGenerator json = jsonFactory.createJsonGenerator(jsonString);
+                    JsonGenerator json = jsonFactory.createGenerator(jsonString);
 
                     json.writeStartObject();
                     json.writeStringField("type", "HystrixCommand");
