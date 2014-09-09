@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.http.impl;
 
+import org.apache.http.HttpResponse;
+
 import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
@@ -30,7 +32,7 @@ import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public class HttpProxyExecutorRepository implements ExecutorRepository{
+public class HttpProxyExecutorRepository implements ExecutorRepository<HttpResponse>{
 
     /** repository */
     private HttpProxyRegistry registry;
@@ -45,7 +47,7 @@ public class HttpProxyExecutorRepository implements ExecutorRepository{
      * @param requestWrapper requestWrapper Object containing requestWrapper Data
      * @return  an {@link HttpProxyExecutor} instance
      */
-    public Executor getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
+    public Executor<HttpResponse> getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
             return new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);

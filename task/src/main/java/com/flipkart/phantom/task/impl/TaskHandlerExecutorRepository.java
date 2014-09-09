@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
  * @author devashishshankar
  * @version 1.0, 20th March, 2013
  */
-public class TaskHandlerExecutorRepository implements ExecutorRepository {
+public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskResult> {
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);

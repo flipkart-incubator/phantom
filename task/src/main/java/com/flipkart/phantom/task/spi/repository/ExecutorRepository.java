@@ -32,7 +32,7 @@ import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
  * @version : 1.0
  * @date : 28/10/13
  */
-public interface ExecutorRepository{
+public interface ExecutorRepository<T>{
 
     /**
      *  Getter for the registry holding the names of the Handlers
@@ -71,6 +71,6 @@ public interface ExecutorRepository{
      * @param requestWrapper  the requestWrapper passed to the executor which process it to get the response
      * @return  {@link Executor}
      */
-    public Executor getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper);
+    public Executor<T> getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper);
 
 }

@@ -15,6 +15,8 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
+import org.apache.thrift.transport.TTransport;
+
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
@@ -30,7 +32,7 @@ import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutorRepository implements ExecutorRepository{
+public class ThriftProxyExecutorRepository implements ExecutorRepository<TTransport> {
 
     /** The TaskContext instance */
     private TaskContext taskContext;
@@ -47,7 +49,7 @@ public class ThriftProxyExecutorRepository implements ExecutorRepository{
      * @return  a ThriftProxyExecutor instance
      */
      @Override
-    public Executor getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper)
+    public Executor<TTransport> getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper)
     {
         HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) { // check if the ThriftProxy is indeed active

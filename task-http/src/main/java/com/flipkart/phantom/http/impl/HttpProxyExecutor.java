@@ -31,7 +31,7 @@ import org.apache.http.HttpResponse;
  * @version 1.0
  * @created 16/7/13 1:54 AM
  */
-public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor{
+public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor<HttpResponse> {
 
     /** Http Request Wrapper */
     HttpRequestWrapper httpRequestWrapper;
@@ -39,10 +39,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     /** the proxy client */
     private HttpProxy proxy;
 
-    /** current task context */
-    private TaskContext taskContext;
-
-    /** Event which records various paramenters of this request execution & published later */
+    /** Event which records various parameters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
 
     /** Event Type for publishing all events which are generated here */
@@ -58,10 +55,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
                         .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds
                                 (proxy.getPool().getOperationTimeout()))
         );
-
         this.proxy = proxy;
-        this.taskContext = taskContext;
-
         /** Get the Http Request */
         this.httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(this.httpRequestWrapper.getUri(), HTTP_HANDLER);

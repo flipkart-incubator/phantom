@@ -49,7 +49,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThriftChannelHandler.class);
 
     /** The Thrift TaskRepository to lookup ThriftServiceProxyClient from */
-    private ExecutorRepository repository;
+    private ExecutorRepository<TTransport> repository;
 
     /** The ThriftHandler of this channel  */
     private String thriftProxy;
@@ -99,7 +99,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             thriftRequestWrapper.setClientSocket(clientTransport);
 
             //Execute
-            Executor executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
+            Executor<TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
             try {
                 executor.execute();
             } catch (Exception e) {
@@ -132,10 +132,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
         event.getChannel().close();
         super.exceptionCaught(ctx, event);
     }
-    public ExecutorRepository getRepository() {
+    public ExecutorRepository<TTransport> getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository repository) {
+    public void setRepository(ExecutorRepository<TTransport> repository) {
         this.repository = repository;
     }
     public int getResponseSize() {

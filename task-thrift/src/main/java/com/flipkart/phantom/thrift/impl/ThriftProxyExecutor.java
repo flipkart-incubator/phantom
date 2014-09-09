@@ -30,7 +30,7 @@ import org.apache.thrift.transport.TTransport;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor{
+public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor<TTransport> {
 
     /** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
     public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
@@ -75,7 +75,6 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     /**
      * Interface method implementation. @see HystrixCommand#run()
      */
-    @SuppressWarnings("rawtypes")
     @Override
     protected TTransport run() {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
