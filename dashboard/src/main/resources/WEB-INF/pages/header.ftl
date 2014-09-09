@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/resources/styles/print.css" type="text/css" media="print"></link>
 <script src="/resources/js/jquery-1.4.2.min.js" type="text/javascript"></script>
 <script src="/resources/js/jquery.validate-1.7.0.min.js" type="text/javascript"></script>
+<script src="/resources/js/picoModal.js" type="text/javascript"></script>
 
 <!-- 
 Some icons from Silk icon set 1.3 by Mark James, http://www.famfamfam.com/lab/icons/silk/

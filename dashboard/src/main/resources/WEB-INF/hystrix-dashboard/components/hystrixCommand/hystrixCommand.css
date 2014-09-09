@@ -196,20 +196,6 @@
 	fill: none;
 }
 
-.openCircuitHostNames {
-    display:none;
-    width: 235px;
-    height: 30px;
-    word-wrap: break-word;
-    white-space: normal;
-    line-height:1.3;
-    overflow-y: scroll;
-    overflow-x:hidden;
-    left: 0;
-    position: absolute;
-    text-align: left;
-    margin-top: 17px;
-    padding: 5px;
-    background: #ffff99;
-    border:#ccc solid 1px;
+.hidden {
+	display: none;
 }

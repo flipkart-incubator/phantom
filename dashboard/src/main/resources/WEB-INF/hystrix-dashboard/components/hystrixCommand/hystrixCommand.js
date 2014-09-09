@@ -1,4 +1,3 @@
-
 (function(window) {
 
 	// cache the templates we use on this page as global variables (asynchronously)
@@ -554,20 +553,11 @@
 	}
 })(window);
 
-//Register callback function to display host names in case of open circuit.
-(function(w){
-    $(document).bind('click',function(e){
-        var th=$(e.target), offset;
-        if(th.attr('color')=="orange"){
-            $('.showed').remove();
-            $('.openCircuitHostNames').each(function () {
-                $this = $(this).toggle().addClass('showed');
-                offset = $this.offset();
-                $('#dependencyThreadPools').append($this.clone().css('top', offset.top).css('left', offset.left).css('margin-top', 0));
-            })
-        } else if(!th.hasClass('showed')){
-            $('.showed').remove();
-        }
-    });
-})(window);
+$(document).ready(function(){
+	$(document).on("click", ".modalClick", function(){
+		var content =  $(this).parent().find(".modalContent").html();
+		picoModal(content).show();
+		return false;
+	} )
 
+})

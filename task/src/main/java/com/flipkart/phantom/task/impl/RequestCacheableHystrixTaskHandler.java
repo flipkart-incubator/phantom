@@ -1,6 +1,8 @@
 package com.flipkart.phantom.task.impl;
 
 
+import java.util.Map;
+
 public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHandler{
 
     /**
@@ -12,7 +14,7 @@ public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHand
      *
      * @return String cache key
      */
-    public String getCacheKey(){
+    public String getCacheKey(Map<String,String> params){
         return null;
     }
 
