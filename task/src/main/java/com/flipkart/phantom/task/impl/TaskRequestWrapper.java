@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.task.impl;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 
 import java.util.Map;
@@ -36,7 +37,7 @@ public class TaskRequestWrapper<T> implements RequestWrapper {
     /** Map of parameters */
     private Map<String,String> params;
 
-    private T requestType;
+    private JavaType javaType;
 
     /**Start Getter/Setter methods */
 
@@ -56,12 +57,12 @@ public class TaskRequestWrapper<T> implements RequestWrapper {
         this.params = params;
     }
 
-    public T getRequestType() {
-        return requestType;
+    public JavaType getJavaType() {
+        return javaType;
     }
 
-    public void setRequestType(T requestType) {
-        this.requestType = requestType;
+    public void setJavaType(JavaType javaType) {
+        this.javaType = javaType;
     }
 
     /**End Getter/Setter methods */
