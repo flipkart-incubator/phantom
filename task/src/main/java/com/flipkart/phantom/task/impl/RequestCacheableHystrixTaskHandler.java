@@ -1,6 +1,8 @@
 package com.flipkart.phantom.task.impl;
 
 
+import java.util.Map;
+
 public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHandler{
 
     /**
@@ -9,10 +11,10 @@ public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHand
      * in the context of a single {@link com.netflix.hystrix.strategy.concurrency.HystrixRequestContext}
      * If it is not Overriden in the derived class, it returns null, which bypasses the request
      * caching mechanism in hystrix
-     *
+     * @param params
      * @return String cache key
      */
-    public String getCacheKey(TaskRequestWrapper taskRequestWrapper){
+    public String getCacheKey(Map<String,String> params){
         return null;
     }
 

@@ -11,8 +11,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * This is a ByteArrayDecoder which is the default implementation provided by phantom to decode
- * response of task handler execution
+ * This is a ByteArrayDecoder which is the default implementation for  {@link ByteArrayDecoder}
+ * provided by phantom to decode response of task handler execution
  */
 public class ByteArrayDecoder implements Decoder<byte[]>
 {

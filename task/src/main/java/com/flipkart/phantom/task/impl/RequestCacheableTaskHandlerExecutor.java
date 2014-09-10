@@ -1,6 +1,7 @@
 package com.flipkart.phantom.task.impl;
 
 
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.TaskContext;
 
 
@@ -17,16 +18,28 @@ import com.flipkart.phantom.task.spi.TaskContext;
  */
 public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
 
-    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout, String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper) {
+    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+                                                  String commandName, int timeout, String threadPoolName, int threadPoolSize,
+                                                  TaskRequestWrapper taskRequestWrapper) {
         super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper);
     }
 
-    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext, String commandName, TaskRequestWrapper taskRequestWrapper, int concurrentRequestSize) {
+    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+                                                  String commandName, int timeout, String threadPoolName, int threadPoolSize,
+                                                  TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
+        super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper, decoder);
+    }
+
+    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+                                                  String commandName, TaskRequestWrapper taskRequestWrapper,
+                                                  int concurrentRequestSize) {
         super(taskHandler, taskContext, commandName, taskRequestWrapper, concurrentRequestSize);
     }
 
-    public RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout, TaskRequestWrapper taskRequestWrapper) {
-        super(taskHandler, taskContext, commandName, executorTimeout, taskRequestWrapper);
+    protected  RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+                                                  String commandName, TaskRequestWrapper taskRequestWrapper,
+                                                  int concurrentRequestSize,Decoder decoder) {
+        super(taskHandler, taskContext, commandName, taskRequestWrapper, concurrentRequestSize, decoder);
     }
 
     /**
@@ -42,9 +55,8 @@ public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
     protected String getCacheKey(){
         if (this.taskHandler instanceof RequestCacheableHystrixTaskHandler){
             RequestCacheableHystrixTaskHandler requestCacheableHystrixTaskHandler = (RequestCacheableHystrixTaskHandler) this.taskHandler;
-            return requestCacheableHystrixTaskHandler.getCacheKey(taskRequestWrapper);
+            return requestCacheableHystrixTaskHandler.getCacheKey(params);
         }
         return null;
     }
-
 }

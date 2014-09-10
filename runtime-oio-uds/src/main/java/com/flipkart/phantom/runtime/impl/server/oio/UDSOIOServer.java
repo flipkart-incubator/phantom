@@ -20,8 +20,10 @@ import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
 import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
 import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
-import com.flipkart.phantom.task.impl.*;
-import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
+import com.flipkart.phantom.task.impl.TaskRequestWrapper;
+import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
@@ -227,10 +229,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 String pool = readCommand.getCommandParams().get("pool");
 
                 // Prepare the request Wrapper
-                TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
+                TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
                 taskRequestWrapper.setData(readCommand.getCommandData());
                 taskRequestWrapper.setParams(readCommand.getCommandParams());
-                taskRequestWrapper.setDecoder(new ByteArrayDecoder());
 
                 /*Try to execute command using ThreadPool, if "pool" is found in the command, else the command name */
                 if (pool != null) {

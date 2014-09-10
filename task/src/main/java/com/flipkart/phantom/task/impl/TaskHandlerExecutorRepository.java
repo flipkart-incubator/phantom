@@ -17,6 +17,7 @@
 package com.flipkart.phantom.task.impl;
 
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
@@ -88,29 +89,77 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
             if(taskHandler instanceof HystrixTaskHandler) {
                 HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
                 LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
+                int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
+                if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
+                    LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
+                    maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
+                }
                 if(hystrixTaskHandler.getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-                    int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
-                    if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
-                         LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
-                        maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
-                    }
-                    return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize);
+                    return getTaskHandlerExecutorWithSemaphoreIsolation((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize);
                 }
-                if(getTaskHandlerRegistry().getPoolSize(proxyName)==null) {
-                    LOGGER.debug("Did not find a predefined pool size for "+proxyName+". Falling back to default value of "+DEFAULT_THREAD_POOL_SIZE);
-                    return getTaskHandlerExecutor(commandName, (TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName, taskHandler, hystrixTaskHandler);
-                }
-                return getTaskHandlerExecutor(commandName, proxyName, (TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName, taskHandler, hystrixTaskHandler);
+                return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName,
+                        refinedProxyName, maxConcurrentSize,hystrixTaskHandler.getExecutorTimeout(commandName), taskHandler);
 
             } else { //Run everything with defaults
-                return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName, taskHandler);
+                return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+                        HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, DEFAULT_THREAD_POOL_SIZE,taskHandler);
             }
         } else {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         }
     }
 
-
+    /**
+     * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
+     * @param commandName the command name/String for which the Executor is needed
+     * @param proxyName the threadPool using which command has to be processed
+     * @param requestWrapper requestWrapper
+     * @param decoder decoder passed by the client
+     * @return The executor corresponding to the commandName.
+     * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
+     */
+    public Executor<TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper, Decoder decoder) {
+        //Regex matching of threadPoolName and commandName
+        //(Hystrix dashboard requires names to be alphanumeric)
+        String refinedCommandName = commandName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
+        String refinedProxyName = proxyName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
+        if(!commandName.equals(refinedCommandName)) {
+            LOGGER.debug("Command names are not allowed to have Special characters/ whitespaces. Replacing: "+commandName+" with "+refinedCommandName);
+        }
+        if(!proxyName.equals(refinedProxyName)) {
+            LOGGER.debug("Thread pool names are not allowed to have Special characters/ whitespaces. Replacing: "+proxyName+" with "+refinedProxyName);
+        }
+        if(proxyName.isEmpty()) {
+            proxyName=commandName;
+            LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
+        }
+        TaskHandler taskHandler = getTaskHandlerRegistry().getTaskHandlerByCommand(commandName);
+        if(taskHandler!=null) {
+            if (!taskHandler.isActive()) {
+                LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
+                return null;
+            }
+            if(taskHandler instanceof HystrixTaskHandler) {
+                HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
+                LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
+                int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
+                if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
+                    LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
+                    maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
+                }
+                if(hystrixTaskHandler.getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
+                    return getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize, decoder);
+                }
+                return getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName,
+                        refinedProxyName, maxConcurrentSize, hystrixTaskHandler.getExecutorTimeout(commandName), taskHandler, decoder);
+            } else { //Run everything with defaults
+                return getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+                        HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, DEFAULT_THREAD_POOL_SIZE, taskHandler, decoder);
+            }
+        } else {
+            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
+        }
+    }
 
     /**
      * Gets the TaskHandlerExecutor for a commandName
@@ -154,7 +203,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
             try {
-                return command.execute();
+                return  command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
             }
@@ -170,6 +219,26 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      */
     public TaskResult executeCommand(String commandName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
         return this.executeCommand(commandName,commandName, requestWrapper);
+    }
+
+    /**
+     * Executes a command
+     * @param commandName name of the command (also the thread pool name)
+     * @param requestWrapper requestWrapper having data,hashmap of parameters
+     * @return thrift result
+     * @throws UnsupportedOperationException if no handler found for command
+     */
+    public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
+        if(command==null) {
+            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
+        } else {
+            try {
+                return  command.execute();
+            } catch (Exception e) {
+                throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -223,40 +292,49 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
     /**
      * Helper methods to create and return the appropriate TaskHandlerExecutor instance
      */
-    private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, TaskHandler taskHandler, int maxConcurrentSize) {
+    private Executor<TaskResult> getTaskHandlerExecutorWithSemaphoreIsolation(TaskRequestWrapper requestWrapper, String refinedCommandName,
+                                                                                     TaskHandler taskHandler, int maxConcurrentSize) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
-                    (TaskRequestWrapper)requestWrapper , maxConcurrentSize);
+                    requestWrapper , maxConcurrentSize);
         }
         else {
-            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,(TaskRequestWrapper)requestWrapper , maxConcurrentSize);
+            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,requestWrapper , maxConcurrentSize);
         }
     }
-    private Executor<TaskResult> getTaskHandlerExecutor(String commandName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
+    private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName,
+                                                                String refinedProxyName, int maxConcurrentSize, int executorTimeOut, TaskHandler taskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
-                    refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName), refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+                    refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper);
         } else {
-            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
-                    refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, executorTimeOut,
+                    refinedProxyName,maxConcurrentSize,requestWrapper);
         }
     }
-    private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler) {
-        if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
-            return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
-                    HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
-        } else {
-            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT,
-                    refinedProxyName,DEFAULT_THREAD_POOL_SIZE,(TaskRequestWrapper)requestWrapper);
+
+    /**
+     * Helper methods to create and return the appropriate TaskHandlerExecutor instance
+     */
+    private  Executor<TaskResult> getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder(TaskRequestWrapper requestWrapper, String refinedCommandName,
+                                                                                               TaskHandler taskHandler, int maxConcurrentSize, Decoder decoder) {
+        if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
+            return  new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
+                    requestWrapper , maxConcurrentSize,decoder);
+        }
+        else {
+            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,requestWrapper , maxConcurrentSize, decoder);
         }
     }
-    private Executor<TaskResult> getTaskHandlerExecutor(String commandName, String proxyName, TaskRequestWrapper requestWrapper, String refinedCommandName, String refinedProxyName, TaskHandler taskHandler, HystrixTaskHandler hystrixTaskHandler) {
+    private Executor<TaskResult> getTaskHandlerExecutorWithDecoder(TaskRequestWrapper requestWrapper, String refinedCommandName,
+                                                                          String refinedProxyName, int maxConcurrentSize, int executorTimeOut,
+                                                                          TaskHandler taskHandler, Decoder decoder) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
-            return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
-                    hystrixTaskHandler.getExecutorTimeout(commandName),refinedProxyName,getTaskHandlerRegistry().getPoolSize(proxyName),(TaskRequestWrapper)requestWrapper);
+            return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
+                    refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
         } else {
-            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, hystrixTaskHandler.getExecutorTimeout(commandName),
-                    refinedProxyName,getTaskHandlerRegistry().getPoolSize(proxyName),(TaskRequestWrapper)requestWrapper);
+            return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, executorTimeOut,
+                    refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
         }
     }
 }

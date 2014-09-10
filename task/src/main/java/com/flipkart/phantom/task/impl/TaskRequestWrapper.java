@@ -16,7 +16,6 @@
 
 package com.flipkart.phantom.task.impl;
 
-import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 
 import java.util.Map;
@@ -29,7 +28,7 @@ import java.util.Map;
  * @version : 1.0
  * @date : 28/10/13
  */
-public class TaskRequestWrapper<T> implements RequestWrapper {
+public class TaskRequestWrapper implements RequestWrapper {
 
     /** Data bytes */
     private byte[] data;
@@ -37,11 +36,7 @@ public class TaskRequestWrapper<T> implements RequestWrapper {
     /** Map of parameters */
     private Map<String,String> params;
 
-    /* Decoder to decode the response */
-    private Decoder<T> decoder;
-
     /**Start Getter/Setter methods */
-
     public byte[] getData(){
         return data;
     }
@@ -57,15 +52,6 @@ public class TaskRequestWrapper<T> implements RequestWrapper {
     public void setParams(Map<String, String> params){
         this.params = params;
     }
-
-    public Decoder<T> getDecoder() {
-        return decoder;
-    }
-
-    public void setDecoder(Decoder<T> decoder) {
-        this.decoder = decoder;
-    }
-
     /**End Getter/Setter methods */
 
 }
