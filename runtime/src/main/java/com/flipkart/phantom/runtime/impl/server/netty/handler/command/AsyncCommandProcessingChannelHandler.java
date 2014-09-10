@@ -17,7 +17,6 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.task.impl.ByteArrayDecoder;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository;
 import com.flipkart.phantom.task.impl.TaskRequestWrapper;
@@ -83,10 +82,9 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             }
 
             /** Prepare the request Wrapper */
-            TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
+            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
-            taskRequestWrapper.setDecoder(new ByteArrayDecoder());
             TaskHandlerExecutor executor = (TaskHandlerExecutor) this.repository.getExecutor(commandName, poolName, taskRequestWrapper);
 
             /** Execute */

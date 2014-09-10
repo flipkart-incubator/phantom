@@ -76,10 +76,9 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             TaskHandlerExecutor executor;
 
             // Prepare the request Wrapper
-            TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
+            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
-            taskRequestWrapper.setDecoder(new ByteArrayDecoder());
 
             // Get the Executor :: Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
             if (pool != null) {

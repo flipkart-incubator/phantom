@@ -19,7 +19,7 @@ package com.flipkart.phantom.task.impl;
 import java.util.List;
 
 /**
- * Result of a thrift handler invocation.
+ * Result of a task handler invocation.
  *
  * @author devashishshankar
  * @version 1.0, 19 March, 2013

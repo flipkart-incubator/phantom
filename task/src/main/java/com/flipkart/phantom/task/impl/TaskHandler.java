@@ -17,17 +17,15 @@
 package com.flipkart.phantom.task.impl;
 
 import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.util.StringUtils;
 import org.trpr.platform.core.PlatformException;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <code>TaskHandler</code> executes a unit of work i.e thrift. Provides lifecycle methods to initialize the thrift processing infrastructure. Life cycle methods
@@ -75,7 +73,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
     public String getDetails() {
         String[] commands = getCommands();
         if (commands != null && commands.length > 0) {
-            return "Commands: " + StringUtils.join(commands,", ");
+            return "Commands: " + StringUtils.collectionToDelimitedString(Arrays.asList(commands), ", ");
         }
         return "No commands registered";
     }
@@ -94,10 +92,8 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
                     LOGGER.error("Fatal error. commandName not specified in initializationCommands for TaskHandler: " + this.getName());
                     throw new UnsupportedOperationException("Fatal error. commandName not specified in initializationCommands of TaskHandler: "+this.getName());
                 }
-                TaskRequestWrapper requestWrapper = new TaskRequestWrapper();
-                requestWrapper.setParams(new HashMap<String, String>(initParam));
-                TaskResult result = this.execute(taskContext, commandName,requestWrapper);
-                if (result != null && result.isSuccess() == false) {
+                TaskResult result = this.execute(taskContext, commandName, new HashMap<String, String>(initParam), null);
+                if (result != null && !result.isSuccess()) {
                     throw new PlatformException("Initialization command: "+commandName+" failed for TaskHandler: "+this.getName()+" The params were: "+initParam);
                 }
             }
@@ -105,12 +101,33 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
     }
 
     /**
-     * Execute this thrift, using the specified parameters
+     * Execute this task, using the specified parameters
+     * @param  taskContext taskContextInstance
      * @param command the command used
-     * @param requestWrapper requestWrapper
+     * @param params thrift parameters
+     * @param data extra data if any
      * @return response the TaskResult from thrift execution
+     * @throws RuntimeException runTimeException
      */
-    public abstract <T> TaskResult<T> execute(TaskContext taskContext, String command, TaskRequestWrapper<T> requestWrapper) throws RuntimeException;
+    public abstract TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String,String> params, byte[] data) throws RuntimeException;
+
+    /**
+     * This is a over-loaded method that needs to be implemented by sub-classes. The default implementation
+     * is not supported.
+     * This method is to be called by those clients who want to have control over the response being sent on
+     * the task handler execution.
+     * @param  taskContext taskContextInstance
+     * @param command the command used
+     * @param taskRequestWrapper taskRequestWrapper
+     * @param decoder extra data if any
+     * @return response the TaskResult from thrift execution
+     * @throws RuntimeException runTimeException
+     */
+    public <T> TaskResult<T> execute(TaskContext taskContext, String command,
+                                     TaskRequestWrapper taskRequestWrapper,Decoder<T> decoder) throws RuntimeException {
+        throw new UnsupportedOperationException("Not Supported. It has to be implemented by sub-classes");
+    }
+
 
     /**
      * Returns the command names which this handler will handle.

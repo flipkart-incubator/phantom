@@ -16,10 +16,13 @@
 package com.flipkart.phantom.task.impl;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
+
+import java.util.Map;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
@@ -54,7 +57,16 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected String command;
 
     /** The parameters which are utilized by the task for execution */
+    protected Map<String,String> params;
+
+    /** Data which is utilized by the task for execution */
+    protected byte[] data;
+
+    /* Task Request Wrapper */
     protected TaskRequestWrapper taskRequestWrapper;
+
+    /* Decoder to decode requests */
+    protected Decoder decoder;
 
     /** Event which records various paramenters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
@@ -84,8 +96,40 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
         this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
+    }
+
+    /**
+     * Basic constructor for {@link TaskHandler}. The Hystrix command name is commandName. The group name is the Handler Name
+     * (HystrixTaskHandler#getName)
+     *
+     * @param taskHandler The taskHandler to be wrapped
+     * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
+     * @param commandName name of the command
+     * @param timeout the timeout for the Hystrix thread
+     * @param threadPoolName Name of the thread pool
+     * @param threadPoolSize core size of the thread pool
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
+     * @param decoder Decoder sent by the Client
+     */
+    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
+                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper , Decoder decoder ) {
+        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
+                .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+                .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
+                .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
+        this.taskHandler = taskHandler;
+        this.taskContext = taskContext;
+        this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
+        this.taskRequestWrapper = taskRequestWrapper;
+        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
+        this.decoder = decoder;
     }
 
     /**
@@ -109,7 +153,38 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
         this.taskRequestWrapper = taskRequestWrapper;
+        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
+    }
+
+    /**
+     * Constructor for {@link TaskHandler} using Semaphore isolation. The Hystrix command name is commandName. The group name is the Handler Name
+     * (HystrixTaskHandler#getName)
+     *
+     * @param taskHandler The taskHandler to be wrapped
+     * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
+     * @param commandName name of the command
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
+     * @param decoder Decoder sent by the Client
+     * @param concurrentRequestSize no of Max Concurrent requests which can be served
+     */
+    protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,
+                                  TaskRequestWrapper taskRequestWrapper , int concurrentRequestSize, Decoder decoder ) {
+        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
+                .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
+                .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
+                        .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE).
+                                withExecutionIsolationSemaphoreMaxConcurrentRequests(concurrentRequestSize)))
+        ;
+        this.taskHandler = taskHandler;
+        this.taskContext = taskContext;
+        this.command = commandName;
+        this.data = taskRequestWrapper.getData();
+        this.params = taskRequestWrapper.getParams();
+        this.taskRequestWrapper = taskRequestWrapper;
+        this.decoder = decoder;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
     }
 
@@ -121,25 +196,55 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param executorTimeout the timeout for the Hystrix thread
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
-    public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,TaskRequestWrapper taskRequestWrapper) {
+    public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
+                               TaskRequestWrapper taskRequestWrapper) {
         this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper);
     }
 
     /**
+     * Constructor for TaskHandlerExecutor run through Default Hystrix Thread Pool ({@link TaskHandlerExecutor#DEFAULT_HYSTRIX_THREAD_POOL})
+     * @param taskHandler The taskHandler to be wrapped
+     * @param taskContext The context (Unique context required by Handlers to communicate with the container.)
+     * @param commandName name of the command
+     * @param executorTimeout the timeout for the Hystrix thread
+     * @param decoder Decoder sent by the Client
+     * @param taskRequestWrapper requestWrapper containing the data and the parameters
+     */
+    public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
+                               TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
+        this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,
+                DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper, decoder);
+    }
+
+    /**
      * Interface method implementation. @see HystrixCommand#run()
+     * If Decoder has not been set by the Client, it goes into the default Implementation, otherwise
+     * It calls the execute Method which handles decoder.
      * @throws Exception
      */
     @Override
-    protected TaskResult run() throws Exception {
+    protected  TaskResult run() throws Exception {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
-        TaskResult result = this.taskHandler.execute(taskContext, command ,taskRequestWrapper);
-        if (result == null) {
-            return new TaskResult(true, TaskHandlerExecutor.NO_RESULT);
+        if(decoder == null) {
+            TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
+            if (result == null) {
+                return new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
+            }
+            if (!result.isSuccess()) {
+                throw new RuntimeException("Command returned FALSE: " + result.getMessage());
+            }
+            return result;
         }
-        if (result.isSuccess() == false) {
-            throw new RuntimeException("Command returned FALSE: " + (result == null ? "" : result.getMessage()));
+        else {
+            TaskResult result = this.taskHandler.execute(taskContext, command, taskRequestWrapper,decoder);
+            if (result == null) {
+                return new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT, null);
+            }
+            if (!result.isSuccess()) {
+                throw new RuntimeException("Command returned FALSE: " + result.getMessage());
+            }
+            return result;
         }
-        return result;
     }
 
     /**
@@ -149,7 +254,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected TaskResult getFallback() {
         if(this.taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;
-            return hystrixTaskHandler.getFallBack(taskContext, command, taskRequestWrapper);
+            return hystrixTaskHandler.getFallBack(taskContext, command, params, data);
         }
         return null;
     }

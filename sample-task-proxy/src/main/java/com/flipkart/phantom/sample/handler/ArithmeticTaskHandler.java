@@ -16,7 +16,6 @@
 package com.flipkart.phantom.sample.handler;
 
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
-import com.flipkart.phantom.task.impl.TaskRequestWrapper;
 import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.TaskContext;
 
@@ -38,6 +37,30 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
+     * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
+     */
+    @Override
+    public TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String, String> params, byte[] data) throws RuntimeException {
+
+        float num1 = Float.parseFloat(params.get("num1"));
+        float num2 = Float.parseFloat(params.get("num2"));
+
+        if (CMD_ADD.equals(command)) {
+            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+        } else if (CMD_SUB.equals(command)) {
+            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+        } else if (CMD_MUL.equals(command)) {
+            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+        } else if (CMD_DIV.equals(command)) {
+            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+        } else {
+            return null;
+        }
+
+    }
+
+    /**
+     * Abstract method implementations.
      * @see com.flipkart.phantom.task.impl.TaskHandler#getName()
      */
     @Override
@@ -56,30 +79,6 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, com.flipkart.phantom.task.impl.TaskRequestWrapper)
-     */
-    @Override
-    public TaskResult execute(TaskContext taskContext, String command, TaskRequestWrapper requestWrapper) throws RuntimeException
-    {
-        Map<String,String> params = requestWrapper.getParams();
-        float num1 = Float.parseFloat(params.get("num1"));
-        float num2 = Float.parseFloat(params.get("num2"));
-
-        if (CMD_ADD.equals(command)) {
-            return new TaskResult(true, new Float(num1+num2).toString());
-        } else if (CMD_SUB.equals(command)) {
-            return new TaskResult(true, new Float(num1-num2).toString());
-        } else if (CMD_MUL.equals(command)) {
-            return new TaskResult(true, new Float(num1*num2).toString());
-        } else if (CMD_DIV.equals(command)) {
-            return new TaskResult(true, new Float(num1/num2).toString());
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Abstract method implementations.
      * @see com.flipkart.phantom.task.impl.TaskHandler#getCommands()
      */
     @Override
@@ -89,11 +88,11 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, com.flipkart.phantom.task.impl.TaskRequestWrapper)
+     * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
      */
     @Override
-    public TaskResult getFallBack(TaskContext taskContext, String command, TaskRequestWrapper taskRequestWrapper)
-    {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String, String> params, byte[] data) {
+        return null;
     }
+
 }

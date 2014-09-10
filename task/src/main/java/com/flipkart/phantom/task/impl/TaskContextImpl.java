@@ -17,6 +17,7 @@
 package com.flipkart.phantom.task.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.TaskContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +72,7 @@ public class TaskContextImpl implements TaskContext {
         params.put("group", group);
         params.put("key", key);
         params.put("count", Integer.toString(count));
-        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
-        taskRequestWrapper.setParams(params);
-        TaskResult result = this.executeCommand(GET_CONFIG_COMMAND, taskRequestWrapper);
+        TaskResult result = this.executeCommand(GET_CONFIG_COMMAND, null, params);
         if (result == null)
             return "";
         return new String((byte[])result.getData());
@@ -82,15 +81,27 @@ public class TaskContextImpl implements TaskContext {
     /**
      * Executes a command
      */
-    public TaskResult executeCommand(String commandName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
-        return this.executorRepository.executeCommand(commandName, requestWrapper);
+    public TaskResult executeCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setData(data);
+        taskRequestWrapper.setParams(params);
+        return this.executorRepository.executeCommand(commandName, taskRequestWrapper);
+    }
+
+    @Override
+    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException
+    {
+        return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
     }
 
     /**
      * Executes a command asynchronously
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
-        return this.executorRepository.executeAsyncCommand(commandName, requestWrapper);
+    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setData(data);
+        taskRequestWrapper.setParams(params);
+        return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper);
     }
 
     /** Getter/Setter methods */
