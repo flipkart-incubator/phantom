@@ -16,11 +16,10 @@
 
 package com.flipkart.phantom.task.spi;
 
-import com.flipkart.phantom.task.impl.TaskHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.phantom.task.impl.TaskRequestWrapper;
 import com.flipkart.phantom.task.impl.TaskResult;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -46,27 +45,17 @@ public interface TaskContext {
 	/**
 	 * Executes a thrift identified by the specified command name. This command executes synchronously
 	 * @param commandName the command to execute
-	 * @param data the command processing data
-	 * @param params data parameters
+	 * @param taskRequestWrapper taskRequestWrapper for executing the request
 	 * @return a TaskResult instance with the execution outcome
 	 * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
 	 */
-	public TaskResult executeCommand(String commandName, byte[] data, Map<String,String> params) throws UnsupportedOperationException;
+	public TaskResult executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper) throws UnsupportedOperationException;
 
 	/**
 	 * Executes a command asynchronously and returns a {@link Future} to get the {@link TaskResult} from
-	 * @see TaskContext#executeCommand(String, byte[], Map)
+	 * @see TaskContext#executeCommand(String, TaskRequestWrapper)
 	 */
-	public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException;
-
-	/**
-	 * Profiles the thrift command. (For logging/metrics calculation)
-	 * @param handler The thrift Handler which executed the command
-	 * @param command The command name
-	 * @param diff Time taken to execute the command
-	 * @param tags Optional info
-	 */
-	public void profileCommand(TaskHandler handler, String command, Long diff, String tags);
+	public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper taskRequestWrapper) throws UnsupportedOperationException;
 
 	/** Gets the ObjectMapper instance for result serialization to JSON*/
 	public ObjectMapper getObjectMapper();

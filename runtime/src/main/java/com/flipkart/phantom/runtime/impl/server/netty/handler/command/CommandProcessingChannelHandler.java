@@ -17,10 +17,7 @@ package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.task.impl.TaskHandler;
-import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
-import com.flipkart.phantom.task.impl.TaskRequestWrapper;
-import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.impl.*;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -79,9 +76,10 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             TaskHandlerExecutor executor;
 
             // Prepare the request Wrapper
-            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+            TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
+            taskRequestWrapper.setDecoder(new ByteArrayDecoder());
 
             // Get the Executor :: Try to execute command using ThreadPool, if "pool" is found in the command, else the command name
             if (pool != null) {

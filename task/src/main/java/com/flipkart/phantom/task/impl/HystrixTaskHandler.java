@@ -65,11 +65,10 @@ public abstract class HystrixTaskHandler extends TaskHandler {
     /**
      * This method will be executed if execute() fails.
      * @param command the command used
-     * @param params thrift parameters
-     * @param data extra data if any
+     * @param taskRequestWrapper taskRequestWrapper for the fallbackRequest
      * @return response
      */
-    public abstract TaskResult getFallBack(TaskContext taskContext, String command, Map<String,String> params, byte[] data);
+    public abstract TaskResult getFallBack(TaskContext taskContext, String command, TaskRequestWrapper taskRequestWrapper);
 
     /**
      * Return the ExecutionIsolationStrategy. Thread is the default.

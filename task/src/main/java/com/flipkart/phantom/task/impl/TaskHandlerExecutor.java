@@ -15,18 +15,11 @@
  */
 package com.flipkart.phantom.task.impl;
 
-import java.util.Map;
-
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-import com.netflix.hystrix.HystrixThreadPoolKey;
-import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
@@ -61,10 +54,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected String command;
 
     /** The parameters which are utilized by the task for execution */
-    protected Map<String,String> params;
-
-    /** Data which is utilized by the task for execution */
-    protected byte[] data;
+    protected TaskRequestWrapper taskRequestWrapper;
 
     /** Event which records various paramenters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
@@ -94,8 +84,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
-        this.data = taskRequestWrapper.getData();
-        this.params = taskRequestWrapper.getParams();
+        this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
     }
 
@@ -120,8 +109,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
-        this.data = taskRequestWrapper.getData();
-        this.params = taskRequestWrapper.getParams();
+        this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
     }
 
@@ -144,7 +132,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     @Override
     protected TaskResult run() throws Exception {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
-        TaskResult result = this.taskHandler.execute(taskContext, command, params, data);
+        TaskResult result = this.taskHandler.execute(taskContext, command ,taskRequestWrapper);
         if (result == null) {
             return new TaskResult(true, TaskHandlerExecutor.NO_RESULT);
         }
@@ -161,7 +149,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected TaskResult getFallback() {
         if(this.taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;
-            return hystrixTaskHandler.getFallBack(taskContext, command, params, data);
+            return hystrixTaskHandler.getFallBack(taskContext, command, taskRequestWrapper);
         }
         return null;
     }
