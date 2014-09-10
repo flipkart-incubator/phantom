@@ -16,7 +16,7 @@
 
 package com.flipkart.phantom.task.impl;
 
-import java.util.Arrays;
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -33,36 +33,64 @@ public class TaskResult<T> {
     private final boolean success;
     private final String message;
     private final T data;
-    private final List<Object> dataList;
-    private final int length;
+    private final List<T> dataList;
+    private int length = DEFAULT_LENGTH;
     private boolean profilingDone = false;
 
     /** Various constructors for this class*/
+
+    /**
+     *
+     * @param success Flag for the task execution
+     * @param message Response Message
+     */
     public TaskResult(boolean success, String message) {
         this(success, message, null);
     }
 
-    public TaskResult(boolean success, String message, T data) {
+    /**
+     *
+     * @param success Flag for the task execution
+     * @param message Response Message
+     * @param data Response Data
+     */
+    public TaskResult(boolean success, String message, @Nullable T data) {
         this.success = success;
         this.message = message;
         this.data = data;
         this.dataList = null;
-        if(data instanceof byte[]) {
-            byte[] dataBytes = (byte[]) data;
-            this.length= (dataBytes == null ? 0 : dataBytes.length);
-        } else {
-            this.length = TaskResult.DEFAULT_LENGTH;
+        if(data != null) {
+            if(data instanceof byte[]) {
+                byte[] dataBytes = (byte[]) data;
+                this.length= dataBytes.length;
+            } else {
+                this.length = TaskResult.DEFAULT_LENGTH;
+            }
         }
     }
 
+    /**
+     *
+     * @param success Flag for the task execution
+     * @param message Response Message
+     * @param dataArray Response Data Array
+     * @param length Data ArrayLength
+     */
     public TaskResult(boolean success, String message, List<T> dataArray,int length) {
         this.success = success;
         this.message = message;
         this.data = null;
-        this.dataList = Arrays.asList(dataArray.toArray());
+        this.dataList = dataArray;
         this.length=length;
     }
 
+        /**
+     *
+     * @param success Flag for the task execution
+     * @param message Response Message
+     * @param data Response Data
+     * @param profilingDone whether Profiling has been done for the task execution
+     */
     public TaskResult(boolean success, String message, T data, boolean profilingDone) {
         this.success = success;
         this.message = message;
@@ -70,7 +98,7 @@ public class TaskResult<T> {
         this.dataList = null;
         if(data instanceof byte[]) {
             byte[] dataBytes = (byte[]) data;
-            this.length= (dataBytes == null ? TaskResult.DEFAULT_LENGTH : dataBytes.length);
+            this.length=dataBytes.length;
         } else {
             this.length = TaskResult.DEFAULT_LENGTH;
         }
@@ -85,7 +113,8 @@ public class TaskResult<T> {
         return String.format("TaskResult[success:%s, message:%s,datalength:%d]", this.success, this.message, this.length);
     }
 
-    /** Getter/Setter methods*/
+    /** Getter/Setter methods */
+
     public int getLength() {
         return length;
     }
@@ -101,7 +130,7 @@ public class TaskResult<T> {
     public Object getData() {
         return data;
     }
-    public List<Object> getDataArray() {
+    public List<T> getDataArray() {
         return dataList;
     }
     public boolean isProfilingDone() {

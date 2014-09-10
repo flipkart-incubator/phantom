@@ -110,7 +110,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * @param requestWrapper requestWrapper
      * @return response the TaskResult from thrift execution
      */
-    public abstract TaskResult execute(TaskContext taskContext, String command, TaskRequestWrapper requestWrapper) throws RuntimeException;
+    public abstract <T> TaskResult<T> execute(TaskContext taskContext, String command, TaskRequestWrapper<T> requestWrapper) throws RuntimeException;
 
     /**
      * Returns the command names which this handler will handle.
