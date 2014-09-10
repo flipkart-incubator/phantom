@@ -10,13 +10,12 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.3.0-SNAPSHOT    | Sept 2014      |    Feature enhancement and code clean up
 | Version 1.2.9-SNAPSHOT    | Aug 2014      |    Feature enhancement and bug fix release
 | Version 1.2.8    | June 2014      |    Upgrade to Hystrix 1.4.0-RC4
 | Version 1.2.8-SNAPSHOT    | February 2014      |    Feature enhancement and bug fix release
 | Version 1.2.7    | January 2014      |    Reduced default timeout of Hysterix Task Handlers.
 | Version 1.2.6    | January 2014      |    Introduced Option to load some handlers before others
-| Version 1.2.5    | January 2014      |    Better fallback handling in Thrift and Http proxies
-| Version 1.2.3    | December 2013      |    Changed command name published in Thrift Handler.
 
 ## Changelog
 

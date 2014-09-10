@@ -1,5 +1,11 @@
-## 1.2.9-SNAPSHOT (Sep 01, 2014)
+## 1.3.0-SNAPSHOT (Sep 10, 2014)
 - Added Request caching support to TaskHandlers
+- Added Decoder for clients to be able to decode the response with default implementation as ByteArrayDecoder
+- Templatized TaskResult
+- Cleanup stupid shitty code of SystemUtils and StringUtils
+- Moved to jackson mapper 2.x
+
+## 1.2.9-SNAPSHOT (Sep 01, 2014)
 - Adding support for setting Max concurrency for semaphore isolated requests
 - exposing timeToLive for socket in HttpConnectionPool
 - Adding empty "openCircuitHostNames" if circuit is closed
