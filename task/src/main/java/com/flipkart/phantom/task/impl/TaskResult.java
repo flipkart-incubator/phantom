@@ -16,7 +16,6 @@
 
 package com.flipkart.phantom.task.impl;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class TaskResult<T> {
      * @param message Response Message
      * @param data Response Data
      */
-    public TaskResult(boolean success, String message, @Nullable T data) {
+    public TaskResult(boolean success, String message,T data) {
         this.success = success;
         this.message = message;
         this.data = data;
