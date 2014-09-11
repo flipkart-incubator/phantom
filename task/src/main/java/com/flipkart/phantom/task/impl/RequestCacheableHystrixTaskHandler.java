@@ -12,9 +12,10 @@ public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHand
      * If it is not Overriden in the derived class, it returns null, which bypasses the request
      * caching mechanism in hystrix
      * @param params
+     * @param data
      * @return String cache key
      */
-    public String getCacheKey(Map<String,String> params){
+    public String getCacheKey(Map<String,String> params, byte[] data){
         return null;
     }
 

@@ -55,7 +55,7 @@ public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
     protected String getCacheKey(){
         if (this.taskHandler instanceof RequestCacheableHystrixTaskHandler){
             RequestCacheableHystrixTaskHandler requestCacheableHystrixTaskHandler = (RequestCacheableHystrixTaskHandler) this.taskHandler;
-            return requestCacheableHystrixTaskHandler.getCacheKey(params);
+            return requestCacheableHystrixTaskHandler.getCacheKey(params, data);
         }
         return null;
     }
