@@ -1,3 +1,6 @@
+## 1.3.1-SNAPSHOT (Sep 10, 2014)
+- RequestCacheableHystrixTaskHandler.getCacheKey() also receives data
+
 ## 1.3.0-SNAPSHOT (Sep 10, 2014)
 - Added Request caching support to TaskHandlers
 - Added Decoder for clients to be able to decode the response with default implementation as ByteArrayDecoder
