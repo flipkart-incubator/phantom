@@ -89,7 +89,7 @@ public interface TaskContext {
      * @return a TaskResult instance with the execution outcome
      * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
      */
-    public <T> Future<TaskResult<T>> executeAsyncCommand(String commandName, byte[] data, Map<String,String> params, Decoder<T> decoder) throws UnsupportedOperationException;
+    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String,String> params, Decoder decoder) throws UnsupportedOperationException;
 
     /**
      * Executes a command asynchronously and returns a {@link Future} to get the {@link TaskResult} from

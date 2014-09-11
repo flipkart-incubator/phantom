@@ -104,7 +104,7 @@ public class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public <T> Future<TaskResult<T>> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException
+    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException
     {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
         taskRequestWrapper.setData(data);
