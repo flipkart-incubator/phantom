@@ -94,6 +94,24 @@ public class TaskContextImpl implements TaskContext {
         return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
     }
 
+    @Override
+    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException
+    {
+        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setData(data);
+        taskRequestWrapper.setParams(params);
+        return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
+    }
+
+    @Override
+    public <T> Future<TaskResult<T>> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException
+    {
+        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setData(data);
+        taskRequestWrapper.setParams(params);
+        return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper,decoder);
+    }
+
     /**
      * Executes a command asynchronously
      */

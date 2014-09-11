@@ -12,20 +12,23 @@ public interface Decoder<T>
     /**
      * @param s a String to Decode to Type T
      * @return T the type of Object to be decoded to
+     * @throws  Exception exception that occurs
      */
-    public T decode(String s);
+    public T decode(String s) throws Exception;
 
     /**
      *
      * @param b a byte[] to Decode to Type T
-     * @return T the type of Object to be decoded to
+     * @return T the type of Object to be decoded
+     * @throws Exception exception that occurs
      */
-    public T decode(byte[] b);
+    public T decode(byte[] b) throws Exception;
 
     /**
      * @param is inputStream to Decode to Type T
      * @return T the type of Object to be decoded to
+     * @throws Exception exception that occurs
      */
-    public T decode(InputStream is);
+    public T decode(InputStream is) throws Exception;
 
 }

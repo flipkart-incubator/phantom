@@ -66,6 +66,32 @@ public interface TaskContext {
     public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException;
 
     /**
+     * Executes a task identified by the specified command name. This command executes synchronously.
+     * This execute Command is to be called by clients who wish to have control over the response decode process.
+     * The TaskResult thus formed will contain the instance of data T as decoded by the Decoder.
+     * @param commandName the command to execute
+     * @param data the command processing data
+     * @param params data parameters
+     * @param decoder Decoder to be Implemented by clients to process the response
+     * @return a TaskResult instance with the execution outcome
+     * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
+     */
+    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String,String> params, Decoder<T> decoder) throws UnsupportedOperationException;
+
+    /**
+     * Executes a task asynchronously identified by the specified command name.
+     * This execute Command is to be called by clients who wish to have control over the response decode process.
+     * The TaskResult thus formed will contain the instance of data T as decoded by the Decoder.
+     * @param commandName the command to execute
+     * @param data the command processing data
+     * @param params data parameters
+     * @param decoder Decoder to be Implemented by clients to process the response
+     * @return a TaskResult instance with the execution outcome
+     * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
+     */
+    public <T> Future<TaskResult<T>> executeAsyncCommand(String commandName, byte[] data, Map<String,String> params, Decoder<T> decoder) throws UnsupportedOperationException;
+
+    /**
      * Executes a command asynchronously and returns a {@link Future} to get the {@link TaskResult} from
      * @see TaskContext#executeCommand(String, byte[], java.util.Map)
      */

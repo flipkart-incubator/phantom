@@ -241,6 +241,22 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
         }
     }
 
+        /**
+     * Executes a command asynchronously. (Returns a future promise)
+     * @param commandName name of the command
+     * @param requestWrapper requestWrapper having data,hashmap of parameters
+     * @return thrift result
+     * @throws UnsupportedOperationException if no handler found for command
+     */
+    public <T> Future<TaskResult<T>> executeAsyncCommand(String commandName, RequestWrapper requestWrapper, Decoder<T> decoder) throws UnsupportedOperationException {
+        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
+        if(command==null) {
+            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
+        } else {
+            return (Future<TaskResult<T>>) command.queue();
+        }
+    }
+
     /**
      * Executes a command asynchronously
      * @param commandName name of the command (also the thread pool name)
