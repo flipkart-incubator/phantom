@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.task.impl;
 
+import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
@@ -70,6 +71,20 @@ public abstract class HystrixTaskHandler extends TaskHandler {
      * @return response
      */
     public abstract TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String,String> params, byte[] data);
+
+    /**
+     * Returns null. Sub-Classes should override it, if they need fallback functionality.
+     * @param taskContext
+     * @param command
+     * @param taskRequestWrapper
+     * @param decoder
+     * @param <T>
+     * @return
+     * @throws RuntimeException
+     */
+    public <T> TaskResult<T> getFallBack(TaskContext taskContext, String command, TaskRequestWrapper taskRequestWrapper,Decoder<T> decoder) throws RuntimeException {
+        return null;
+    }
 
     /**
      * Return the ExecutionIsolationStrategy. Thread is the default.

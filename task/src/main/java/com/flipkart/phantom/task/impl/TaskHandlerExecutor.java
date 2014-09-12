@@ -254,8 +254,14 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected TaskResult getFallback() {
         if(this.taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;
-            return hystrixTaskHandler.getFallBack(taskContext, command, params, data);
+            if(decoder == null) {
+                return hystrixTaskHandler.getFallBack(taskContext, command, params, data);
+            }
+            else {
+                return hystrixTaskHandler.getFallBack(taskContext, command, taskRequestWrapper, decoder);
+            }
         }
+
         return null;
     }
 
