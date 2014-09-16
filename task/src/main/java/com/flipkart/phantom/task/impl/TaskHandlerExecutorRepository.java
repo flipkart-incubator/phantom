@@ -37,7 +37,8 @@ import java.util.concurrent.Future;
  * @author devashishshankar
  * @version 1.0, 20th March, 2013
  */
-public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskResult> {
+@SuppressWarnings("rawtypes")
+public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskResult, TaskHandler> {
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);
@@ -228,13 +229,14 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+    @SuppressWarnings("unchecked")
+	public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
             try {
-                return  command.execute();
+                return command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
             }
@@ -271,12 +273,12 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
     /** Getter/Setter methods */
 
     @Override
-    public AbstractHandlerRegistry getRegistry() {
+    public AbstractHandlerRegistry<TaskHandler> getRegistry() {
         return this.registry;
     }
 
     @Override
-    public void setRegistry(AbstractHandlerRegistry taskHandlerRegistry) {
+    public void setRegistry(AbstractHandlerRegistry<TaskHandler> taskHandlerRegistry) {
         this.registry = (TaskHandlerRegistry)taskHandlerRegistry;
     }
 
@@ -295,7 +297,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * @return
      */
     public TaskHandlerRegistry getTaskHandlerRegistry() {
-        AbstractHandlerRegistry registry = getRegistry();
+        AbstractHandlerRegistry<TaskHandler> registry = getRegistry();
         if(registry instanceof TaskHandlerRegistry){
             return (TaskHandlerRegistry)registry;
         }

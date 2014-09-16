@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.task.spi.repository;
 
+import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
@@ -32,19 +33,19 @@ import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
  * @version : 1.0
  * @date : 28/10/13
  */
-public interface ExecutorRepository<T>{
+public interface ExecutorRepository<T, S extends AbstractHandler>{
 
     /**
      *  Getter for the registry holding the names of the Handlers
      * @return   {@link com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry}
      */
-    public AbstractHandlerRegistry getRegistry();
+    public AbstractHandlerRegistry<S> getRegistry();
 
     /**
      *  Setter for the  registry holding the names of the TaskHandler
      * @param  registry
      */
-    public void setRegistry(AbstractHandlerRegistry registry);
+    public void setRegistry(AbstractHandlerRegistry<S> registry);
 
     /**
      *  Getter for the <code>TaskContext</code>, that provides methods

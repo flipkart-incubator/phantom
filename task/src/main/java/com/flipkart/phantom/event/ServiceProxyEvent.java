@@ -41,7 +41,11 @@ import java.util.List;
  */
 
 public class ServiceProxyEvent extends PlatformEvent {
-    /** Sequential list of events which executor executed to serve the request. */
+	
+    /** */
+	private static final long serialVersionUID = 1L;
+
+	/** Sequential list of events which executor executed to serve the request. */
     private final List<HystrixEventType> hystrixEventList;
 
     /** In case of failure this field holds the exception which caused the failure otherwise it is {@code null} */
@@ -142,7 +146,7 @@ public class ServiceProxyEvent extends PlatformEvent {
         private long requestExecutionStartTime = -1;
         private Exception exception = null;
         private String eventSource = "unspecified";
-        private List<HystrixEventType> hystrixEventList = Collections.EMPTY_LIST;
+        private List<HystrixEventType> hystrixEventList = Collections.emptyList();
 
         /**
          * @param commandName Command which executor executed from which this event was generated.
@@ -224,7 +228,8 @@ public class ServiceProxyEvent extends PlatformEvent {
          * @param executor Executor used to execute this request.
          * @return
          */
-        public Builder withCommandData(Executor executor) {
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+		public Builder withCommandData(Executor executor) {
             HystrixCommand command = (HystrixCommand) executor;
             withEventList(command.getExecutionEvents())
                     .withExecutionTime(command.getExecutionTimeInMilliseconds())

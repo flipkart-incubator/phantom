@@ -290,7 +290,8 @@ public abstract class ThriftProxy extends AbstractHandler implements Initializin
     public String getThriftServiceClass() {
         return thriftServiceClass;
     }
-    public Map<String, ProcessFunction> getProcessMap() {
+    @SuppressWarnings("rawtypes")
+	public Map<String, ProcessFunction> getProcessMap() {
         return processMap;
     }
     public int getPoolSize() {

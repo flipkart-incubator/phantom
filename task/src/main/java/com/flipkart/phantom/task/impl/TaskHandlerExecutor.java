@@ -32,6 +32,7 @@ import java.util.Map;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
+@SuppressWarnings("rawtypes")
 public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor <TaskResult> {
 
     /** TaskResult message constants */
@@ -222,7 +223,8 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * It calls the execute Method which handles decoder.
      * @throws Exception
      */
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected  TaskResult run() throws Exception {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
         if(decoder == null) {
@@ -250,7 +252,8 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     /**
      * Interface method implementation. @see HystrixCommand#getFallback()
      */
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected TaskResult getFallback() {
         if(this.taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;

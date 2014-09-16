@@ -7,12 +7,13 @@ import org.apache.thrift.transport.TTransportException;
 
 public class Server {
  
-    private void start(int port) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void start(int port) {
         try {
 
             TServerSocket serverTransport = new TServerSocket(port);
  
-            ArithmeticService.Processor processor = new ArithmeticService.Processor(new ArithmeticServiceImpl());
+			ArithmeticService.Processor processor = new ArithmeticService.Processor(new ArithmeticServiceImpl());
  
             TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 

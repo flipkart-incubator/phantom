@@ -32,7 +32,7 @@ import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public class HttpProxyExecutorRepository implements ExecutorRepository<HttpResponse>{
+public class HttpProxyExecutorRepository implements ExecutorRepository<HttpResponse, HttpProxy>{
 
     /** repository */
     private HttpProxyRegistry registry;
@@ -58,12 +58,12 @@ public class HttpProxyExecutorRepository implements ExecutorRepository<HttpRespo
     /** Getter/Setter methods */
 
     @Override
-    public AbstractHandlerRegistry getRegistry() {
+    public AbstractHandlerRegistry<HttpProxy> getRegistry() {
         return registry;
     }
 
     @Override
-    public void setRegistry(AbstractHandlerRegistry registry) {
+    public void setRegistry(AbstractHandlerRegistry<HttpProxy> registry) {
         this.registry = (HttpProxyRegistry)registry;
     }
 

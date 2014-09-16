@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * @author Regunath B
  * @version 1.0, 18 Mar 2013
  */
+@SuppressWarnings("rawtypes")
 public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandler {
 
 	/** Logger for this class*/
@@ -44,7 +45,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 	private ChannelGroup defaultChannelGroup;
 
 	/** The TaskRepository to lookup TaskHandlerExecutors from */
-	private ExecutorRepository repository;
+	private ExecutorRepository<TaskResult, TaskHandler> repository;
 
     /** The publisher used to broadcast events to Service Proxy Subscribers */
     private ServiceProxyEventProducer eventProducer;
@@ -133,10 +134,10 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
 	public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
 		this.defaultChannelGroup = defaultChannelGroup;
 	}
-	public ExecutorRepository getRepository() {
+	public ExecutorRepository<TaskResult, TaskHandler> getRepository() {
 		return this.repository;
 	}
-	public void setRepository(ExecutorRepository repository) {
+	public void setRepository(ExecutorRepository<TaskResult, TaskHandler> repository) {
 		this.repository = repository;
 	}
     public void setEventProducer(final ServiceProxyEventProducer eventProducer) {

@@ -45,6 +45,7 @@ import java.util.concurrent.*;
  * @author Regunath B
  * @version 1.0, 25 Jun 2013
  */
+@SuppressWarnings("rawtypes")
 public class UDSOIOServer extends AbstractNetworkServer {
 
     /** Logger for this class*/
@@ -90,7 +91,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public AFUNIXServerSocket socket;
 
     /** The TaskRepository to lookup TaskHandlerExecutors from */
-    private ExecutorRepository repository;
+	private ExecutorRepository repository;
 
     /** The publisher used to broadcast events to Service Proxy Subscribers */
     private ServiceProxyEventProducer eventProducer;

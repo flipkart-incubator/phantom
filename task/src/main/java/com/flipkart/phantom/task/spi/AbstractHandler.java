@@ -31,6 +31,12 @@ abstract public class AbstractHandler {
     /** Constants to denote command invocation types*/
     public static final int SYNC_CALL = 0;
     public static final int ASYNC_CALL = 1;
+    
+	/**
+	 * Constants that influence continued handler init activity based on the outcome of execution of init on a handler 
+	 */
+	public static final int CONTINUE_INIT = 0;
+	public static final int VETO_INIT = 999999;    
 
     /** The status showing the TaskHandler is inited and ready to use */
     public static int ACTIVE = 1;
@@ -43,6 +49,8 @@ abstract public class AbstractHandler {
 
     /** This provides the invocation type for each command in a Task Handler. */
     private Map<String,Integer> callInvocationTypePerCommand = new HashMap<String, Integer>();
+    
+    private int initOutcomeStatus = AbstractHandler.VETO_INIT;
 
     /** The status of this ThriftProxy (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
@@ -132,4 +140,13 @@ abstract public class AbstractHandler {
     public void setCallInvocationTypePerCommand(Map<String, Integer> callInvocationTypePerCommand) {
         this.callInvocationTypePerCommand = callInvocationTypePerCommand;
     }
+
+    /** Getter/Setter methods*/
+	public int getInitOutcomeStatus() {
+		return initOutcomeStatus;
+	}
+	public void setInitOutcomeStatus(int initOutcomeStatus) {
+		this.initOutcomeStatus = initOutcomeStatus;
+	}    
+    
 }

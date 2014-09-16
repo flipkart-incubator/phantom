@@ -24,7 +24,8 @@ public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
         super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper);
     }
 
-    protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+    @SuppressWarnings("rawtypes")
+	protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
                                                   String commandName, int timeout, String threadPoolName, int threadPoolSize,
                                                   TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
         super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper, decoder);
@@ -36,7 +37,8 @@ public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
         super(taskHandler, taskContext, commandName, taskRequestWrapper, concurrentRequestSize);
     }
 
-    protected  RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
+    @SuppressWarnings("rawtypes")
+	protected  RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
                                                   String commandName, TaskRequestWrapper taskRequestWrapper,
                                                   int concurrentRequestSize,Decoder decoder) {
         super(taskHandler, taskContext, commandName, taskRequestWrapper, concurrentRequestSize, decoder);

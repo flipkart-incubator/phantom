@@ -16,12 +16,11 @@
 
 package com.flipkart.phantom.runtime.impl.server.netty.handler.http;
 
-import com.flipkart.phantom.event.ServiceProxyEvent;
-import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.http.impl.HttpProxy;
-import com.flipkart.phantom.http.impl.HttpRequestWrapper;
-import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -29,7 +28,14 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -40,10 +46,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.flipkart.phantom.http.impl.HttpProxy;
+import com.flipkart.phantom.http.impl.HttpRequestWrapper;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 
 /**
  * <code>RoutingHttpChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that routes Http requests to one or more {@link HttpProxy} instances.
@@ -77,7 +85,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     private ChannelGroup defaultChannelGroup;
 
     /** The HttpProxyRepository to lookup HttpProxy from */
-    private ExecutorRepository repository;
+    private ExecutorRepository<HttpResponse, HttpProxy> repository;
 
     /** The HTTP proxy handler map*/
     private Map<String, String> proxyMap = new HashMap<String, String>();
@@ -140,7 +148,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
             proxy = this.proxyMap.get(RoutingHttpChannelHandler.ALL_ROUTES);
             LOGGER.info("Routing key for : " + request.getUri() + " returned null. Using default proxy instead.");
         }
-        Executor executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
+        Executor<HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
 
         // execute
         HttpResponse response = null;
@@ -231,10 +239,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
         this.defaultChannelGroup = defaultChannelGroup;
     }
-    public ExecutorRepository getRepository() {
+    public ExecutorRepository<HttpResponse, HttpProxy> getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository repository) {
+    public void setRepository(ExecutorRepository<HttpResponse, HttpProxy> repository) {
         this.repository = repository;
     }
     public Map<String, String> getProxyMap() {

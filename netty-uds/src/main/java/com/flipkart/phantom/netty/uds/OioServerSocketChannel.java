@@ -16,20 +16,23 @@
 
 package com.flipkart.phantom.netty.uds;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.socket.DefaultServerSocketChannelConfig;
-import org.jboss.netty.channel.socket.ServerSocketChannel;
-import org.jboss.netty.channel.socket.ServerSocketChannelConfig;
-import org.newsclub.net.unix.AFUNIXServerSocket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.jboss.netty.channel.Channels.fireChannelOpen;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jboss.netty.channel.Channels.fireChannelOpen;
+import org.jboss.netty.channel.AbstractServerChannel;
+import org.jboss.netty.channel.ChannelException;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelSink;
+import org.jboss.netty.channel.socket.DefaultServerSocketChannelConfig;
+import org.jboss.netty.channel.socket.ServerSocketChannel;
+import org.jboss.netty.channel.socket.ServerSocketChannelConfig;
+import org.newsclub.net.unix.AFUNIXServerSocket;
 
 /**
  * <code>OioServerSocketChannel</code> is based on org.jboss.netty.channel.socket.oio.OioServerSocketChannel,
@@ -39,9 +42,6 @@ import static org.jboss.netty.channel.Channels.fireChannelOpen;
  * @version 1.0, 19th April, 2013
  */
 public class OioServerSocketChannel extends AbstractServerChannel implements ServerSocketChannel {
-
-	/** Logger for this class*/
-	private static final Logger LOGGER = LoggerFactory.getLogger(OioServerSocketChannel.class);
 
 	/** Lock to prevent shutting down this channel until Boss Thread exists */
     final Lock shutdownLock = new ReentrantLock();

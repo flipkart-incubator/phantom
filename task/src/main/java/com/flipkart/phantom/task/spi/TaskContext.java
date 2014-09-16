@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
  * @version 1.0, 19th March, 2013
  * @version 2.0, 11th July, 2013
  */
+@SuppressWarnings("rawtypes")
 public interface TaskContext {
 
     /**
@@ -51,7 +52,7 @@ public interface TaskContext {
      * @return a TaskResult instance with the execution outcome
      * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
      */
-    public TaskResult executeCommand(String commandName, byte[] data, Map<String,String> params) throws UnsupportedOperationException;
+	public TaskResult executeCommand(String commandName, byte[] data, Map<String,String> params) throws UnsupportedOperationException;
 
     /**
      * Executes a task identified by the specified command name. This command executes synchronously.

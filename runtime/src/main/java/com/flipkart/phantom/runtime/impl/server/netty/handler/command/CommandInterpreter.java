@@ -75,6 +75,7 @@ import java.util.Map;
  * @version 1.0, 22 Mar 2013
  */
 
+@SuppressWarnings("rawtypes")
 public class CommandInterpreter {
 
 	/** Constant for max command input size*/

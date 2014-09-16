@@ -15,13 +15,6 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.thrift;
 
-import com.flipkart.phantom.event.ServiceProxyEvent;
-import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
-import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.thrift.impl.ThriftProxyExecutor;
-import com.flipkart.phantom.thrift.impl.ThriftRequestWrapper;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TProtocol;
@@ -29,9 +22,25 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.flipkart.phantom.thrift.impl.ThriftProxy;
+import com.flipkart.phantom.thrift.impl.ThriftProxyExecutor;
+import com.flipkart.phantom.thrift.impl.ThriftRequestWrapper;
 
 /**
  * <code>ThriftChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that acts as a proxy for Apache Thrift calls using the binary protocol.
@@ -49,7 +58,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThriftChannelHandler.class);
 
     /** The Thrift TaskRepository to lookup ThriftServiceProxyClient from */
-    private ExecutorRepository<TTransport> repository;
+    private ExecutorRepository<TTransport, ThriftProxy> repository;
 
     /** The ThriftHandler of this channel  */
     private String thriftProxy;
@@ -132,10 +141,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
         event.getChannel().close();
         super.exceptionCaught(ctx, event);
     }
-    public ExecutorRepository<TTransport> getRepository() {
+    public ExecutorRepository<TTransport, ThriftProxy> getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository<TTransport> repository) {
+    public void setRepository(ExecutorRepository<TTransport, ThriftProxy> repository) {
         this.repository = repository;
     }
     public int getResponseSize() {

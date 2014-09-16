@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
  * @author devashishshankar
  * @version 1.0, 20th March, 2013
  */
+@SuppressWarnings("rawtypes")
 public class TaskContextImpl implements TaskContext {
 
     /** Logger for this class */
@@ -67,7 +68,7 @@ public class TaskContextImpl implements TaskContext {
      * @param key the primary key
      * @return the config as string, empty string if not found/error
      */
-    public String getConfig(String group, String key, int count) {
+	public String getConfig(String group, String key, int count) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("group", group);
         params.put("key", key);

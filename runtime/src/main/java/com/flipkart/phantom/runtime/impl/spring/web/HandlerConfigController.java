@@ -18,6 +18,8 @@ package com.flipkart.phantom.runtime.impl.spring.web;
 
 import com.flipkart.phantom.runtime.impl.spring.utils.ConfigFileUtils;
 import com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
@@ -42,13 +44,13 @@ import java.io.StringWriter;
  * @version 1.0, 18 March 2013 
  */
 @Controller
-public class HandlerConfigController {
+public class HandlerConfigController<T extends AbstractHandler> {
 
     /** Logger instance for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(HandlerConfigController.class);
 
     /** Config service for fetching/modifying configuration files of Handlers */
-	private SPConfigService configService;
+	private SPConfigService<T> configService;
 	
 	/**
 	 * Finds the jobname from the request URL
@@ -161,10 +163,10 @@ public class HandlerConfigController {
 	}
 
     /** getter / setter */
-    public SPConfigService getConfigService() {
+    public SPConfigService<T> getConfigService() {
         return configService;
     }
-    public void setConfigService(SPConfigService configService) {
+    public void setConfigService(SPConfigService<T> configService) {
         this.configService = configService;
     }
     /** end getter / setter */

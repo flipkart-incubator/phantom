@@ -65,7 +65,7 @@ import com.netflix.hystrix.strategy.HystrixPlugins;
  * @author Regunath B
  * @version 1.0, 14 Mar 2013
  */
-public class ServiceProxyComponentContainer implements ComponentContainer {
+public class ServiceProxyComponentContainer<T extends AbstractHandler> implements ComponentContainer {
 
     /**
      * The default Event producer bean name
@@ -95,10 +95,10 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
     private ClassLoader tccl;
 
     /** The list of registered registries */
-    private List<AbstractHandlerRegistry> registries = new ArrayList<AbstractHandlerRegistry>();
+    private List<AbstractHandlerRegistry<T>> registries = new ArrayList<AbstractHandlerRegistry<T>>();
 
     /** The configService instance */
-    private SPConfigService configService;
+    private SPConfigService<T> configService;
 
     /** The TaskContext bean instance */
     private TaskContext taskContext;
@@ -132,7 +132,8 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
      * Interface method implementation. Locates and loads all configured proxy handlers.
      * @see ComponentContainer#init()
      */
-    public void init() throws PlatformException {
+    @SuppressWarnings("unchecked")
+	public void init() throws PlatformException {
         //Register HystrixEventNotifier
         if (HystrixPlugins.getInstance().getEventNotifier() == null) {
             HystrixPlugins.getInstance().registerEventNotifier(new HystrixEventReceiver());
@@ -155,8 +156,8 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
         this.handlerConfigInfoList.add(new HandlerConfigInfo(new File(ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG), null, ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
 
         // Get the Config Service Bean
-        this.configService = (SPConfigServiceImpl) ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.CONFIG_SERVICE_BEAN);
-        ((SPConfigServiceImpl) this.configService).setComponentContainer(this);
+        this.configService = (SPConfigServiceImpl<T>) ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.CONFIG_SERVICE_BEAN);
+        ((SPConfigServiceImpl<T>) this.configService).setComponentContainer(this);
 
         // Load additional if runtime nature is "server". This context is the new common beans context
         if (RuntimeVariables.getRuntimeNature().equalsIgnoreCase(RuntimeConstants.SERVER)) {
@@ -181,7 +182,10 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
             if (commonProxyHandlerConfigFiles.length == 1) {
                 File commonProxyHandlerConfigFile = commonProxyHandlerConfigFiles[0];
                 // load the common proxy handler
-                this.loadProxyHandlerContext(new HandlerConfigInfo(commonProxyHandlerConfigFile));
+                HandlerConfigInfo commonHandlersConfigInfo = new HandlerConfigInfo(commonProxyHandlerConfigFile);
+                // set the load order to first order i.e. load before others
+                commonHandlersConfigInfo.setLoadOrder(HandlerConfigInfo.FIRST_ORDER);
+                this.loadProxyHandlerContext(commonHandlersConfigInfo);
                 LOGGER.info("Loaded Common Proxy Handler Config: " + commonProxyHandlerConfigFile);
             } else {
                 final String errorMessage = "Found multiple common-proxy-handler-configs, only one is allowed";
@@ -218,15 +222,15 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
             // handler registries
             String[] registryBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
             for (String registryBean : registryBeans) {
-                AbstractHandlerRegistry registry = (AbstractHandlerRegistry) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
+                AbstractHandlerRegistry<T> registry = (AbstractHandlerRegistry<T>) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
                 LOGGER.info("Found handler registry: " + registry.getClass().getName());
                 // init the Registry
                 try {
                     this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
-                    AbstractHandlerRegistry.InitedHandlerInfo[] initedHandlerInfos = registry.init(this.handlerConfigInfoList, this.taskContext);
+                    AbstractHandlerRegistry.InitedHandlerInfo<T>[] initedHandlerInfos = registry.init(this.handlerConfigInfoList, this.taskContext);
                     LOGGER.info("Initialized handler registry: " + registry.getClass().getName());
                     //Add the file path of each inited handler to SPConfigService (for configuration console)
-                    for (AbstractHandlerRegistry.InitedHandlerInfo initedHandlerInfo : initedHandlerInfos) {
+                    for (AbstractHandlerRegistry.InitedHandlerInfo<T> initedHandlerInfo : initedHandlerInfos) {
                         this.configService.addHandlerConfigPath(initedHandlerInfo.getHandlerConfigInfo().getXmlConfigFile(), initedHandlerInfo.getInitedHandler());
                     }
                 } catch (Exception e) {
@@ -264,7 +268,7 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
         // reset the Hystrix instance
         Hystrix.reset();
         // now shutdown all task handlers
-        for (AbstractHandlerRegistry registry : registries) {
+        for (AbstractHandlerRegistry<T> registry : registries) {
             try {
                 registry.shutdown(taskContext);
             } catch (Exception e) {
@@ -301,8 +305,8 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
      * @param handler  the AbstractHandler to be de-registered
      * @param resource the location to load the new definition of the handler from
      */
-    public void reloadHandler(AbstractHandler handler, Resource resource) {
-        AbstractHandlerRegistry registry = this.getRegistry(handler.getName());
+	public void reloadHandler(T handler, Resource resource) {
+        AbstractHandlerRegistry<T> registry = this.getRegistry(handler.getName());
         registry.unregisterTaskHandler(handler);
         LOGGER.debug("Unregistered TaskHandler: " + handler.getName());
         this.loadComponent(resource);
@@ -341,8 +345,8 @@ public class ServiceProxyComponentContainer implements ComponentContainer {
      * @return AbstractHandlerRegistry where the handler is registered
      * @throws UnsupportedOperationException if a registry is not found
      */
-    public AbstractHandlerRegistry getRegistry(String handlerName) {
-        for (AbstractHandlerRegistry registry : this.registries) {
+    public AbstractHandlerRegistry<T> getRegistry(String handlerName) {
+        for (AbstractHandlerRegistry<T> registry : this.registries) {
             if (registry.getHandler(handlerName) != null) {
                 return registry;
             }

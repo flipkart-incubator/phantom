@@ -82,7 +82,8 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * Initialize this handler. The default implementation executes "initializationCommands" to initialize the TaskHandler (if found)
      * @param taskContext the TaskContext that manages this TaskHandler
      */
-    public void init(TaskContext taskContext) throws Exception {
+    @SuppressWarnings("rawtypes")
+	public void init(TaskContext taskContext) throws Exception {
         if (this.initializationCommands == null || this.initializationCommands.size() == 0) {
             LOGGER.warn("No initialization commands specified for the TaskHandler: " + this.getName());
         } else {
