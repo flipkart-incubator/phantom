@@ -42,7 +42,12 @@
 				Circuit <div class="openCircuitHostNames">
                         <div class="modalContent hidden"><%= openCircuitHostNames %></div>
                         <a class="modalClick">
-                            <font color="orange"><%= isCircuitBreakerOpen.replace("true", "Open").replace("false", "Closed") %>)</font>
+                            <font color="orange">
+                                <%= isCircuitBreakerOpen
+                                    .replace("true", "Open").replace("false", "Closed")
+                                    .replace("{", "").replace("}", "")
+                                %>
+                            </font>
                         </a>
                     </div>
 			<% }  %>
