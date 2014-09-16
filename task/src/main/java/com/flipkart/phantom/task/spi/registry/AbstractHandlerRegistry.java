@@ -242,10 +242,12 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 				initedHandler = handlerInitTask.get();				
 			} catch (Exception e) {
                 LOGGER.error("Error initializing handlers of type : " + getHandlerType().getName() + ".Error is: " + e.getMessage(), e);
+                pool.shutdownNow();
 	            throw new PlatformException("Error initializing handlers of type : " + getHandlerType().getName() + ".Error is: " + e.getMessage(), e);
 			}
             if (!initedHandler.isActive()) {
             	if (initedHandler.getInitOutcomeStatus() == AbstractHandler.VETO_INIT) {        	            	
+                    pool.shutdownNow();
                     throw new PlatformException("Error initializing vetoing handler " + getHandlerType().getName() + " : " + initedHandler.getName());
             	} else {
             		LOGGER.warn("Continuing after init failed for non-vetoing handler " + getHandlerType().getName() + " : " + initedHandler.getName());
