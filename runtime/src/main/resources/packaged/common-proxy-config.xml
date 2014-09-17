@@ -22,21 +22,21 @@
         </property>
     </bean>
 
-
 	<bean id="configService" class="com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl">
 	</bean>
 
-	<bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
+    <bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
         <property name="executorRepository" ref="taskHandlerRepository" />
     </bean>
-
+    
     <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
         <property name="taskContext" ref="taskContext" />
         <property name="registry" ref="taskHandlerRegistry" />
     </bean>
 
-    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry"/>
-
+    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry">
+    </bean>
+		
 	<!-- Netty common beans -->
 	<bean id="defaultChannelGroup" class="org.jboss.netty.channel.group.DefaultChannelGroup">
 		<constructor-arg><value>"NETWORK-SERVER-CHANNELS"</value></constructor-arg>

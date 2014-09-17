@@ -223,7 +223,7 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             String[] registryBeans = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(AbstractHandlerRegistry.class);
             for (String registryBean : registryBeans) {
                 AbstractHandlerRegistry<T> registry = (AbstractHandlerRegistry<T>) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
-                LOGGER.info("Found handler registry: " + registry.getClass().getName());
+                LOGGER.info("Found handler registry: " + registry.getClass().getName() + " in file : " + handlerConfigInfo.getXmlConfigFile().getAbsolutePath());
                 // init the Registry
                 try {
                     this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);

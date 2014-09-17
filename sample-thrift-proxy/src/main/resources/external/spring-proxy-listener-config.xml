@@ -19,7 +19,6 @@
         </property>
     </bean>
 
-
     <!--  ChannelHandlerPipelineFactory for TCP Server -->
     <bean id="thriftChannelPipelineFactory" class="com.flipkart.phantom.runtime.impl.server.netty.ChannelHandlerPipelineFactory">
         <property name="channelHandlerBeanNamesMap">

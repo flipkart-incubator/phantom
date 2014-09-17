@@ -85,7 +85,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
     @SuppressWarnings("rawtypes")
 	public void init(TaskContext taskContext) throws Exception {
         if (this.initializationCommands == null || this.initializationCommands.size() == 0) {
-            LOGGER.warn("No initialization commands specified for the TaskHandler: " + this.getName());
+            LOGGER.info("No initialization commands specified for the TaskHandler: " + this.getName());
         } else {
             for (Map<String,String> initParam : this.initializationCommands) {
                 String commandName = initParam.get(PARAM_COMMAND_NAME);
