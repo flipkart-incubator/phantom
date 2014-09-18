@@ -1,5 +1,7 @@
-## 1.3.1-SNAPSHOT (Sep 10, 2014)
+## 1.3.1-SNAPSHOT (Sep 18, 2014)
 - RequestCacheableHystrixTaskHandler.getCacheKey() also receives data
+- Support for parallel init of Task handlers
+- Support for re-loading handlers via REST call
 
 ## 1.3.0-SNAPSHOT (Sep 10, 2014)
 - Added Request caching support to TaskHandlers
