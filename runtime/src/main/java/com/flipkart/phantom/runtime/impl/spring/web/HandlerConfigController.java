@@ -112,6 +112,31 @@ public class HandlerConfigController<T extends AbstractHandler> {
         return "message";
     }
 
+    @RequestMapping(value = {"/reload/**"}, method = RequestMethod.GET)
+    public String reloadHandler(ModelMap model, HttpServletRequest request, @ModelAttribute("handlerName") String handlerName) {
+        String message;
+        try {
+            this.configService.reloadHandler(handlerName);
+            message = "Successfully reloaded handler " + handlerName;
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            message = "Error while reloading handler: \n";
+            message += sw.toString() + "\n";
+            if (e.getCause() != null) {
+                sw = new StringWriter();
+                pw = new PrintWriter(sw);
+                e.getCause().printStackTrace(pw);
+                message += "Caused by: ";
+                message += sw.toString() + "\n";
+            }
+            LOGGER.error("Error reloading handler " + handlerName,e);
+        }
+        model.addAttribute("message", message);
+        return "message";
+    }
+
 	@RequestMapping(value = {"/deploy/**"}, method = RequestMethod.POST)
 	public String deployModifiedConfig(ModelMap model,HttpServletRequest request,  @ModelAttribute("handlerName") String handlerName,
 			@RequestParam(defaultValue = "") String XMLFileContents,
