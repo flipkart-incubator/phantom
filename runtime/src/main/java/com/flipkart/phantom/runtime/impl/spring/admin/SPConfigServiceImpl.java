@@ -286,6 +286,48 @@ public class SPConfigServiceImpl<T extends AbstractHandler> implements SPConfigS
 
     /**
      * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#reloadHandler(String)
+     * @param handlerName The name of the TaskHandler to be reloaded
+     * @throws Exception in case of errors
+     */
+    public void reloadHandler(String handlerName) throws Exception {
+
+        // get the handler config file
+        File handlerFile = null;
+        try {
+            handlerFile = this.getHandlerConfig(handlerName).getFile();
+        } catch (NullPointerException e) {
+            LOGGER.error("Resource for handler: " + handlerName + " not found. Returning");
+            throw new PlatformException("File not found for handler: " + handlerName, e);
+        } catch (IOException e) {
+            LOGGER.error("Handler Config File for handler: " + handlerName + " not found. Returning");
+            throw new PlatformException("File not found for handler: " + handlerName, e);
+        }
+
+        // Check if file actually exists
+        if (!handlerFile.exists()) {
+            LOGGER.error("Handler Config File: " + handlerFile.getAbsolutePath() + " doesn't exist. Returning");
+            throw new PlatformException("File not found: " + handlerFile.getAbsolutePath());
+        }
+
+        // Check for read permissions
+        if (!handlerFile.canRead()) {
+            LOGGER.error("No read permission for: " + handlerFile.getAbsolutePath() + ". Returning");
+            throw new PlatformException("Read permissions not found for file: " + handlerFile.getAbsolutePath());
+        }
+
+        // get the registered AbstractHandler for the file name
+        T handler = this.configURItoHandlerName.get(handlerFile.toURI()).get(0);
+
+        // re-load the handler
+        // loading component destroys all beans in the config file given by the handler config info
+        // this mean this only works if there is only one handler per handler xml file
+        // else all handlers in the xml file are reloaded
+        this.componentContainer.reloadHandler(handler, this.getHandlerConfig(handlerName));
+    }
+
+    /**
+     * Interface method implementation
      * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllHandlers()
      */
     public List<AbstractHandler> getAllHandlers() {
