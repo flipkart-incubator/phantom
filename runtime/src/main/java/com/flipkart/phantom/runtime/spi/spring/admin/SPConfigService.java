@@ -79,6 +79,12 @@ public interface SPConfigService<T extends AbstractHandler> {
     public void reinitHandler(String taskHandler) throws Exception;
 
     /**
+     * Reloads a TaskHandler, if found.
+     * @param taskHandler The name of the TaskHandler to be reloaded
+     */
+    public void reloadHandler(String taskHandler) throws Exception;
+
+    /**
      * Get all handlers info
      */
     public List<AbstractHandler> getAllHandlers();
