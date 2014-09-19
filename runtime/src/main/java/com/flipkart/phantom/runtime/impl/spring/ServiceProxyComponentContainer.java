@@ -225,6 +225,11 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             for (String registryBean : registryBeans) {
                 AbstractHandlerRegistry<T> registry = (AbstractHandlerRegistry<T>) handlerConfigInfo.getProxyHandlerContext().getBean(registryBean);
                 LOGGER.info("Found handler registry: " + registry.getClass().getName() + " in file : " + handlerConfigInfo.getXmlConfigFile().getAbsolutePath());
+                // ensure that the same registry is not added twice in any of the config files
+                if (this.configService.getDeployedRegistries().contains(registry)) {
+                	 LOGGER.error("Error initializing registry: " + registry.getClass().getName() + ". Duplicate reference in location : " + handlerConfigInfo.getXmlConfigFile().getAbsolutePath());
+                	throw new PlatformException("Error initializing registry: " + registry.getClass().getName() + ". Duplicate reference in location : " + handlerConfigInfo.getXmlConfigFile().getAbsolutePath());
+                }
                 // init the Registry
                 try {
                     AbstractHandlerRegistry.InitedHandlerInfo<T>[] initedHandlerInfos = registry.init(this.handlerConfigInfoList, this.taskContext);

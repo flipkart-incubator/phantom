@@ -70,6 +70,14 @@ public class SPConfigServiceImpl<T extends AbstractHandler> implements SPConfigS
 
     /**
      * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getDeployedRegistries()
+     */
+    public List<AbstractHandlerRegistry<T>> getDeployedRegistries() {
+    	return this.registries;
+    }
+    
+    /**
+     * Interface method implementation
      * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addDeployedNetworkServer(com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer)
      */
     public void addDeployedNetworkServer(AbstractNetworkServer server) {

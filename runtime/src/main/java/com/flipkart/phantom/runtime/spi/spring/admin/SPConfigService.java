@@ -36,7 +36,7 @@ import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 public interface SPConfigService<T extends AbstractHandler> {
 
     /**
-     * Get all the Deployed {@link com.flipkart.phantom.runtime.impl.server.netty.TCPNettyServer} instances
+     * Get all the Deployed {@link AbstractNetworkServer} instances
      * @return List list of network servers
      */
     public List<AbstractNetworkServer> getDeployedNetworkServers();
@@ -52,6 +52,12 @@ public interface SPConfigService<T extends AbstractHandler> {
      * @param registry The {@link AbstractHandlerRegistry} instance
      */
     public void addHandlerRegistry(AbstractHandlerRegistry<T> registry);
+    
+    /**
+     * Get all the Deployed {@link AbstractHandlerRegistry} instances
+     * @return List list of registry instances
+     */
+    public List<AbstractHandlerRegistry<T>> getDeployedRegistries();
 
 	/**
 	 * Gets the Handler configuration file as a resource
