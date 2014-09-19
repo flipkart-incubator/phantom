@@ -68,19 +68,22 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	public AbstractHandlerRegistry.InitedHandlerInfo<T>[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
     	final List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos = new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo<T>>();
     	// we want to init handlers defined as HandlerConfigInfo#FIRST_ORDER first, serially, before loading others in parallel
-    	Collections.sort(handlerConfigInfoList, new Comparator<HandlerConfigInfo>() {
+    	// create a new list as we are changing ordering of elements being passed in
+    	List<HandlerConfigInfo> tempHandlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
+    	tempHandlerConfigInfoList.addAll(handlerConfigInfoList);
+    	Collections.sort(tempHandlerConfigInfoList, new Comparator<HandlerConfigInfo>() {
 			public int compare(HandlerConfigInfo o1, HandlerConfigInfo o2) { 
 				// sort by ascending order of HandlerConfigInfo#getLoadOrder()
 				return (o1.getLoadOrder() - o2.getLoadOrder());
 			}
     	});
-        for (int i=0; i<handlerConfigInfoList.size(); i++) {
-        	HandlerConfigInfo handlerConfigInfo = handlerConfigInfoList.get(i);
+        for (int i=0; i<tempHandlerConfigInfoList.size(); i++) {
+        	HandlerConfigInfo handlerConfigInfo = tempHandlerConfigInfoList.get(i);
         	if (handlerConfigInfo.getLoadOrder() == HandlerConfigInfo.FIRST_ORDER) {
         		this.initHandlers(initedHandlerInfos, taskContext, 1, handlerConfigInfo); // we load this serially
         	} else {
         		this.initHandlers(initedHandlerInfos, taskContext, this.getHandlerInitConcurrency(), 
-        				handlerConfigInfoList.subList(i, handlerConfigInfoList.size()).toArray(new HandlerConfigInfo[0])); // load all remaining handlers in parallel
+        				tempHandlerConfigInfoList.subList(i, tempHandlerConfigInfoList.size()).toArray(new HandlerConfigInfo[0])); // load all remaining handlers in parallel
         		break;
         	}
         }

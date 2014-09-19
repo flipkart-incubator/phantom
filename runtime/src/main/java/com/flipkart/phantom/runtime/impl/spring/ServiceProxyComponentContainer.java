@@ -150,10 +150,11 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
                 break;
             }
         }
-
+        // we look up the unique instance of ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG. This call would throw an exception if multiple are found
+        String commonProxyBeansFileName = FileLocator.findUniqueFile(ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG).getAbsolutePath();
         ServiceProxyComponentContainer.commonProxyHandlerBeansContext = new ClassPathXmlApplicationContext(new String[]{ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG}, defaultCtxFactory.getCommonBeansContext());
         // add the common proxy beans independently to the list of proxy handler contexts as common handlers are declared there
-        this.handlerConfigInfoList.add(new HandlerConfigInfo(new File(ServiceProxyFrameworkConstants.COMMON_PROXY_CONFIG), null, ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
+        this.handlerConfigInfoList.add(new HandlerConfigInfo(new File(commonProxyBeansFileName), null, ServiceProxyComponentContainer.commonProxyHandlerBeansContext));
 
         // Get the Config Service Bean
         this.configService = (SPConfigServiceImpl<T>) ServiceProxyComponentContainer.commonProxyHandlerBeansContext.getBean(ServiceProxyComponentContainer.CONFIG_SERVICE_BEAN);
@@ -161,18 +162,14 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
 
         // Load additional if runtime nature is "server". This context is the new common beans context
         if (RuntimeVariables.getRuntimeNature().equalsIgnoreCase(RuntimeConstants.SERVER)) {
+            // we look up the unique instance of ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG. This call would throw an exception if multiple are found
+            String commonProxyServerNatureBeansFileName = FileLocator.findUniqueFile(ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG).getAbsolutePath();
             ServiceProxyComponentContainer.commonProxyHandlerBeansContext = new ClassPathXmlApplicationContext(
                     new String[]{ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG},
-                    ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
-            );
+                    ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext());
             // now add the common server nature proxy hander beans to the contexts list
-            this.handlerConfigInfoList.add(
-                    new HandlerConfigInfo(
-                            new File(ServiceProxyFrameworkConstants.COMMON_PROXY_SERVER_NATURE_CONFIG),
-                            null,
-                            ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()
-                    )
-            );
+            this.handlerConfigInfoList.add(new HandlerConfigInfo(new File(commonProxyServerNatureBeansFileName),
+                 null,ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext()));
         }
 
         // locate and load a single common proxy handler bean XML files which is initialized before all other individual handlers
@@ -190,8 +187,9 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             } else {
                 final String errorMessage = "Found multiple common-proxy-handler-configs, only one is allowed";
                 LOGGER.error(errorMessage);
-                for (File commonHandlerConfig : commonProxyHandlerConfigFiles)
+                for (File commonHandlerConfig : commonProxyHandlerConfigFiles) {
                     LOGGER.error(commonHandlerConfig.getAbsolutePath());
+                }
                 throw new PlatformException(errorMessage);
             }
         }
@@ -217,6 +215,9 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             LOGGER.info("Loaded: " + proxyListenerBeanFile);
         }
 
+        // store reference to the TaskContext 
+        this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
+        
         // load all registries
         for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
             // handler registries
@@ -226,7 +227,6 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
                 LOGGER.info("Found handler registry: " + registry.getClass().getName() + " in file : " + handlerConfigInfo.getXmlConfigFile().getAbsolutePath());
                 // init the Registry
                 try {
-                    this.taskContext = (TaskContext) ServiceProxyComponentContainer.getCommonProxyHandlerBeansContext().getBean(ServiceProxyComponentContainer.TASK_CONTEXT_BEAN);
                     AbstractHandlerRegistry.InitedHandlerInfo<T>[] initedHandlerInfos = registry.init(this.handlerConfigInfoList, this.taskContext);
                     LOGGER.info("Initialized handler registry: " + registry.getClass().getName());
                     //Add the file path of each inited handler to SPConfigService (for configuration console)
