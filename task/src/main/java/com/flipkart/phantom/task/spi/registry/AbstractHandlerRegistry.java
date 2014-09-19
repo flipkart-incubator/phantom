@@ -219,14 +219,16 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	        	FutureTask<T> handlerInitTask = new FutureTask<T>(new Callable<T>() {
 					public T call() throws Exception {
         	            try {
-			                LOGGER.info("Initializing {} : " + handler.getName(), getHandlerType().getName());
-			                handler.init(taskContext);
-				            // call post init for any registry specific handling
-				            postInitHandler(handler);
-			                handler.activate();
-			                initedHandlerInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo<T>(handler,handlerConfigInfo));                    	            			
-				            // put in all handlers map
-				            handlers.put(handler.getName(),handler);                
+        	            	if (!handler.isActive()) { // init the handler only if not inited already
+				                LOGGER.info("Initializing {} : " + handler.getName(), getHandlerType().getName());
+				                handler.init(taskContext);
+					            // call post init for any registry specific handling
+					            postInitHandler(handler);
+				                handler.activate();
+				                initedHandlerInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo<T>(handler,handlerConfigInfo));                    	            			
+					            // put in all handlers map
+					            handlers.put(handler.getName(),handler);
+        	            	}
         	            } catch (Exception e) {
         	                LOGGER.error("Error initializing " + getHandlerType().getName() + " : {}. Error is: " + e.getMessage(), handler.getName(), e);
         	                // consuming the exception here. Failures will be handled in Future#get()
