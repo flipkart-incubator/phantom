@@ -179,10 +179,7 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             if (commonProxyHandlerConfigFiles.length == 1) {
                 File commonProxyHandlerConfigFile = commonProxyHandlerConfigFiles[0];
                 // load the common proxy handler
-                HandlerConfigInfo commonHandlersConfigInfo = new HandlerConfigInfo(commonProxyHandlerConfigFile);
-                // set the load order to first order i.e. load before others
-                commonHandlersConfigInfo.setLoadOrder(HandlerConfigInfo.FIRST_ORDER);
-                this.loadProxyHandlerContext(commonHandlersConfigInfo);
+                this.loadProxyHandlerContext( new HandlerConfigInfo(commonProxyHandlerConfigFile));
                 LOGGER.info("Loaded Common Proxy Handler Config: " + commonProxyHandlerConfigFile);
             } else {
                 final String errorMessage = "Found multiple common-proxy-handler-configs, only one is allowed";
