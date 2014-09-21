@@ -10,7 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.3.1-SNAPSHOT    | Sept 2014      |    Feature enhancement release
+| Version 1.3.2-SNAPSHOT    | Sept 2014      |    Feature enhancement and bug fix release
 | Version 1.3.0-SNAPSHOT    | Sept 2014      |    Feature enhancement and code clean up
 | Version 1.2.9-SNAPSHOT    | Aug 2014      |    Feature enhancement and bug fix release
 | Version 1.2.8    | June 2014      |    Upgrade to Hystrix 1.4.0-RC4
