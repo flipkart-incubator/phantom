@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.task.impl;
 
+import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
@@ -27,6 +29,7 @@ import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -57,6 +60,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
 
     /** The taskContext being passed to the Handlers, providing a way for communication to the Container */
     private TaskContext taskContext;
+
+    /** The publisher used to broadcast events to Service Proxy Subscribers */
+    private ServiceProxyEventProducer eventProducer;
 
     /**
      * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
@@ -199,6 +205,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * @throws UnsupportedOperationException if no handler found for command
      */
     public TaskResult executeCommand(String commandName, String proxyName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
+        long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -207,6 +214,20 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
                 return  command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
+            }
+            finally {
+                if (eventProducer != null) {
+                    // Publishes event both in case of success and failure.
+                    final Map<String, String> params = ((TaskRequestWrapper)requestWrapper).getParams();
+
+                    ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
+                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+                    if(params.containsKey("requestSentTime"))
+                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+
+                    eventProducer.publishEvent(eventBuilder.build());
+                } else
+                    LOGGER.debug("eventProducer not set, not publishing event");
             }
         }
     }
@@ -230,7 +251,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * @throws UnsupportedOperationException if no handler found for command
      */
     @SuppressWarnings("unchecked")
-	public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+    public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -243,7 +264,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
         }
     }
 
-        /**
+    /**
      * Executes a command asynchronously. (Returns a future promise)
      * @param commandName name of the command
      * @param requestWrapper requestWrapper having data,hashmap of parameters
@@ -311,7 +332,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * Helper methods to create and return the appropriate TaskHandlerExecutor instance
      */
     private Executor<TaskResult> getTaskHandlerExecutorWithSemaphoreIsolation(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                                                     TaskHandler taskHandler, int maxConcurrentSize) {
+                                                                              TaskHandler taskHandler, int maxConcurrentSize) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     requestWrapper , maxConcurrentSize);
@@ -321,7 +342,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
         }
     }
     private Executor<TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                                String refinedProxyName, int maxConcurrentSize, int executorTimeOut, TaskHandler taskHandler) {
+                                                        String refinedProxyName, int maxConcurrentSize, int executorTimeOut, TaskHandler taskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
                     refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper);
@@ -335,7 +356,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
      * Helper methods to create and return the appropriate TaskHandlerExecutor instance
      */
     private  Executor<TaskResult> getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                                                               TaskHandler taskHandler, int maxConcurrentSize, Decoder decoder) {
+                                                                                         TaskHandler taskHandler, int maxConcurrentSize, Decoder decoder) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return  new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     requestWrapper , maxConcurrentSize,decoder);
@@ -345,8 +366,8 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
         }
     }
     private Executor<TaskResult> getTaskHandlerExecutorWithDecoder(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                                          String refinedProxyName, int maxConcurrentSize, int executorTimeOut,
-                                                                          TaskHandler taskHandler, Decoder decoder) {
+                                                                   String refinedProxyName, int maxConcurrentSize, int executorTimeOut,
+                                                                   TaskHandler taskHandler, Decoder decoder) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
                     refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
@@ -354,5 +375,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRes
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, executorTimeOut,
                     refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
         }
+    }
+
+    public void setEventProducer(ServiceProxyEventProducer eventProducer) {
+        this.eventProducer = eventProducer;
     }
 }

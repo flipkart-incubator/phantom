@@ -183,6 +183,10 @@ public class CommandInterpreter {
 				}
 			}
 		} else {
+            byte[] metaData = result.getMetadata();
+            if(metaData != null && (metaData.length > 0)) {
+               outputStream.write(metaData);
+            }
 			Object data = result.getData();
 			if(data!=null) {
 				if(data instanceof byte[]) {

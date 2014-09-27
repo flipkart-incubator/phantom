@@ -35,6 +35,7 @@ public class TaskResult<T> {
     private final List<T> dataList;
     private int length = DEFAULT_LENGTH;
     private boolean profilingDone = false;
+    private byte[] metadata;
 
     /** Various constructors for this class*/
 
@@ -72,6 +73,34 @@ public class TaskResult<T> {
      *
      * @param success Flag for the task execution
      * @param message Response Message
+     * @param data Response Data
+     * @param metadata metadata of the task result. To be sent before the data
+     */
+    public TaskResult(boolean success, String message,T data, byte[] metadata) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+        this.dataList = null;
+        this.metadata = metadata;
+        if(data != null) {
+            if(data instanceof byte[]) {
+                byte[] dataBytes = (byte[]) data;
+                if(metadata != null) {
+                    this.length= dataBytes.length + metadata.length;
+                } else {
+                    this.length= dataBytes.length;
+                }
+
+            } else {
+                this.length = TaskResult.DEFAULT_LENGTH;
+            }
+        }
+    }
+
+    /**
+     *
+     * @param success Flag for the task execution
+     * @param message Response Message
      * @param dataArray Response Data Array
      * @param length Data ArrayLength
      */
@@ -83,7 +112,7 @@ public class TaskResult<T> {
         this.length=length;
     }
 
-        /**
+    /**
      *
      * @param success Flag for the task execution
      * @param message Response Message
@@ -135,5 +164,9 @@ public class TaskResult<T> {
     public boolean isProfilingDone() {
         return profilingDone;
     }
+    public byte[] getMetadata() {
+        return metadata;
+    }
     /** End Getter/Setter methods*/
+
 }
