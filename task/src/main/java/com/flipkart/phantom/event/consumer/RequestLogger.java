@@ -75,7 +75,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
      */
     private void log(final ServiceProxyEvent event) {
         List<HystrixEventType> events = event.getHystrixEventList();
-        if (events.size() > 1 && !events.contains(HystrixEventType.SUCCESS)) {
+        if (events.size() > 0 && !events.contains(HystrixEventType.SUCCESS)) {
             LOGGER.error(
                     "ClientRequestId=" + event.getRequestId() + " " +
                             "Command=" + event.getCommandName() + " " +
