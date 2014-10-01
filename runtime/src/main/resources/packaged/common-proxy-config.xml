@@ -32,24 +32,38 @@
     <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
         <property name="taskContext" ref="taskContext" />
         <property name="registry" ref="taskHandlerRegistry" />
-        <property name="eventProducer"  ref="serviceProxyEventProducer" />
+        <property name="eventProducer"  ref="commonServiceProxyEventProducer" />
     </bean>
 
     <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry">
     </bean>
 
-        <!-- Task Handler Event Publishers & Consumers-->
+    <!-- Task Handler Event Publishers & Consumers-->
 
     <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
-    <bean id="endpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
+    <bean id="commonEndpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
         <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
     </bean>
 
     <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
-    <bean id="serviceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
+    <bean id="commonServiceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
         <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
-        <property name="eventProducer" ref="endpointEventProducer"/>
+        <property name="eventProducer" ref="commonEndpointEventProducer"/>
     </bean>
+
+    <!--This bean corresponds to consumer of Service Proxy Events which listens to all event types and logs errors-->
+    <bean id="commonErrorRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TASK_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+            </list>
+        </property>
+    </bean>
+    <!-- Task Handler Event Publishers & Consumers-->
 		
 	<!-- Netty common beans -->
 	<bean id="defaultChannelGroup" class="org.jboss.netty.channel.group.DefaultChannelGroup">
