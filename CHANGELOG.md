@@ -1,3 +1,9 @@
+## 1.3.4-SNAPSHOT (Oct 10, 2014)
+- Added support for parallel init for Task handlers
+
+## 1.3.3 (Oct 05, 2014)
+- Bug fix for logging handler execution warnings and errors
+
 ## 1.3.2-SNAPSHOT (Sep 21, 2014)
 - RequestCacheableHystrixTaskHandler.getCacheKey() also receives data
 - Handlers can now veto or allow container init to continue
