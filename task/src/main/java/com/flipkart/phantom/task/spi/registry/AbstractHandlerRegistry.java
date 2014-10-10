@@ -17,15 +17,25 @@
 package com.flipkart.phantom.task.spi.registry;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.trpr.platform.core.PlatformException;
 import org.trpr.platform.core.impl.logging.LogFactory;
 import org.trpr.platform.core.spi.logging.Logger;
 
+import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
 
@@ -59,33 +69,29 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
      */
     @SuppressWarnings("unchecked")
 	public AbstractHandlerRegistry.InitedHandlerInfo<T>[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
-    	List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos = new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo<T>>();
-    	for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
-	        String[] handlerBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(this.getHandlerType());
-	        for (String taskHandlerBeanId : handlerBeanIds) {
-	        	T handler = (T) handlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
-	            try {
-	            	if (!handler.isActive()) { // init the handler only if not inited already
-		                LOGGER.info("Initializing {} : " + handler.getName(), getHandlerType().getName());
-		                handler.init(taskContext);
-			            // call post init for any registry specific handling
-			            postInitHandler(handler);
-		                handler.activate();
-		                initedHandlerInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo<T>(handler,handlerConfigInfo));                    	            			
-			            // put in all handlers map
-			            handlers.put(handler.getName(),handler);
-	            	}
-	            } catch (Exception e) {
-	                LOGGER.error("Error initializing " + getHandlerType().getName() + " : {}. Error is: " + e.getMessage(), handler.getName(), e);
-	            	if (handler.getInitOutcomeStatus() == AbstractHandler.VETO_INIT) {        	            	
-	                    throw new PlatformException("Error initializing vetoing handler " + getHandlerType().getName() + " : " + handler.getName());
-	            	} else {
-	            		LOGGER.warn("Continuing after init failed for non-vetoing handler " + getHandlerType().getName() + " : " + handler.getName());
-	            	}
-	            }
-	        }
-	    }
-    	return initedHandlerInfos.toArray(new AbstractHandlerRegistry.InitedHandlerInfo[0]);        
+    	// this is a synchronized list as multiple threads add to it and we also iterate through it
+    	List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos = Collections.synchronizedList(new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo<T>>());
+    	// we want to init handlers defined as HandlerConfigInfo#FIRST_ORDER first, serially, before loading others in parallel
+    	// create a new list as we are changing ordering of elements being passed in
+    	List<HandlerConfigInfo> tempHandlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
+    	tempHandlerConfigInfoList.addAll(handlerConfigInfoList);
+    	Collections.sort(tempHandlerConfigInfoList, new Comparator<HandlerConfigInfo>() {
+			public int compare(HandlerConfigInfo o1, HandlerConfigInfo o2) { 
+				// sort by ascending order of HandlerConfigInfo#getLoadOrder()
+				return (o1.getLoadOrder() - o2.getLoadOrder());
+			}
+    	});
+        for (int i=0; i<tempHandlerConfigInfoList.size(); i++) {
+        	HandlerConfigInfo handlerConfigInfo = tempHandlerConfigInfoList.get(i);
+        	if (handlerConfigInfo.getLoadOrder() == HandlerConfigInfo.FIRST_ORDER) {
+        		this.initHandlers(initedHandlerInfos, taskContext, 1, handlerConfigInfo); // we load this serially
+        	} else {
+        		this.initHandlers(initedHandlerInfos, taskContext, this.getHandlerInitConcurrency(), 
+        				tempHandlerConfigInfoList.subList(i, tempHandlerConfigInfoList.size()).toArray(new HandlerConfigInfo[0])); // load all remaining handlers in parallel
+        		break;
+        	}
+        }
+        return initedHandlerInfos.toArray(new AbstractHandlerRegistry.InitedHandlerInfo[0]);        
     }
 
     /**
@@ -192,6 +198,97 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 		}
     }
     
+    /**
+     * Helper method to init handlers with the specified concurrency
+     * @param initedHandlerInfos the list to add meta data of all successfully inited handlers
+     * @param taskContext TaskContext instance to pass to all handlers during init
+     * @param concurrency the concurrent number of handler inits
+     * @param configInfos HandlerConfigInfo instances containing handlers to be inited
+     */
+    @SuppressWarnings("unchecked")
+	private void initHandlers(List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos, TaskContext taskContext,
+    		int concurrency, HandlerConfigInfo...configInfos) {
+    	ExecutorService pool = Executors.newFixedThreadPool(concurrency,new ThreadFactory() {
+    		int nameSuffix = -1;
+			public Thread newThread(Runnable r) {
+				nameSuffix += 1;
+				return new Thread(r,"Handler-Init-Thread-" + nameSuffix);
+			}
+    	});
+    	List<FutureTask<T>> handlerInitTasks = new LinkedList<FutureTask<T>>();
+    	for (HandlerConfigInfo handlerConfigInfo : configInfos) {
+	        String[] handlerBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(this.getHandlerType());
+	        for (String taskHandlerBeanId : handlerBeanIds) {
+	        	T handler = (T) handlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
+	        	FutureTask<T> handlerInitTask = new FutureTask<T>(new HandlerInitFutureTask(handler,taskContext,handlerConfigInfo,initedHandlerInfos));
+	        	handlerInitTasks.add(handlerInitTask);
+            	pool.execute(handlerInitTask);
+	        }
+    	}
+    	for (FutureTask<T> handlerInitTask : handlerInitTasks) {
+    		T initedHandler = null;
+    		try {
+				initedHandler = handlerInitTask.get();				
+			} catch (Exception e) {
+                LOGGER.error("Error initializing handlers of type : " + getHandlerType().getName() + ".Error is: " + e.getMessage(), e);
+                pool.shutdownNow();
+	            throw new PlatformException("Error initializing handlers of type : " + getHandlerType().getName() + ".Error is: " + e.getMessage(), e);
+			}
+            if (!initedHandler.isActive()) {
+            	if (initedHandler.getInitOutcomeStatus() == AbstractHandler.VETO_INIT) {        	            	
+                    pool.shutdownNow();
+                    throw new PlatformException("Error initializing vetoing handler " + getHandlerType().getName() + " : " + initedHandler.getName());
+            	} else {
+            		LOGGER.warn("Continuing after init failed for non-vetoing handler " + getHandlerType().getName() + " : " + initedHandler.getName());
+            	}
+            }	
+    	}
+		LOGGER.info("Number of handlers inited : " + handlerInitTasks.size());
+    	while(!pool.isTerminated()) {
+    		pool.shutdown();
+    		try {
+				pool.awaitTermination(10, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				// we dont expect this to happen, but if it does, throw a Platform exception
+                throw new PlatformException("Error initializing handlers. Init interrupted. Error is : " + e.getMessage(), e);
+			}
+    	}
+    }
+    
+    /**
+     * {@link Callable} implementation for initing {@link TaskHandler} instances asynchronously using {@link Future}
+     */
+    private class HandlerInitFutureTask implements Callable<T> {
+    	T handler;
+    	TaskContext taskContext;
+    	HandlerConfigInfo handlerConfigInfo;
+    	List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos;
+    	HandlerInitFutureTask(T handler,TaskContext taskContext,HandlerConfigInfo handlerConfigInfo,List<AbstractHandlerRegistry.InitedHandlerInfo<T>> initedHandlerInfos) {
+    		this.handler = handler;
+    		this.taskContext = taskContext;
+    		this.handlerConfigInfo = handlerConfigInfo;
+    		this.initedHandlerInfos = initedHandlerInfos;
+    	}
+		public T call() throws Exception {
+            try {
+            	if (!handler.isActive()) { // init the handler only if not inited already
+	                LOGGER.info("Initializing {} : " + handler.getName(), getHandlerType().getName());
+	                handler.init(taskContext);
+		            // call post init for any registry specific handling
+		            postInitHandler(handler);
+	                handler.activate();
+	                initedHandlerInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo<T>(handler,handlerConfigInfo));                    	            			
+		            // put in all handlers map
+		            handlers.put(handler.getName(),handler);
+            	}
+            } catch (Exception e) {
+                LOGGER.error("Error initializing " + getHandlerType().getName() + " : {}. Error is: " + e.getMessage(), handler.getName(), e);
+                // consuming the exception here. Failures will be handled in Future#get()
+            }
+			return handler;
+		}
+    }
+
     /** Getter/Setter methods */
 	public int getHandlerInitConcurrency() {
 		return handlerInitConcurrency;

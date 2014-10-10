@@ -29,6 +29,13 @@ import java.io.File;
  */
 public class HandlerConfigInfo {
 	
+	/** Constants defining the load order */
+	public static final int FIRST_ORDER = 0;
+	public static final int DEFAULT_ORDER = 1;
+	
+	/** The load order*/
+	private int loadOrder = HandlerConfigInfo.DEFAULT_ORDER;
+
 	/** The sub-folder containing proxy handler and dependent binaries. This is used in addition to the proxy runtime classpath.
 	 *  This path is relative to the location where ServiceProxyFrameworkConstants.SPRING_PROXY_HANDLER_CONFIG file is found 
 	 */
@@ -97,7 +104,7 @@ public class HandlerConfigInfo {
 		return  "HandlerConfigInfo [xmlConfigFile=" + xmlConfigFile + ", binariesPath=" + binariesPath + "]";
 	}
 	
-	/** Getter methods*/
+	/** Setter/Getter methods*/
 	/**
 	 * Returns the proxy handler's ApplicationContext, if loaded, else null
 	 * @return null or the proxy handler's AbstractApplicationContext
@@ -111,4 +118,10 @@ public class HandlerConfigInfo {
 	public String getBinariesPath() {
 		return this.binariesPath;
 	}
+	public int getLoadOrder() {
+		return loadOrder;
+	}
+	public void setLoadOrder(int loadOrder) {
+		this.loadOrder = loadOrder;
+	}	
 }

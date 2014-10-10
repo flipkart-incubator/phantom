@@ -179,7 +179,10 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             if (commonProxyHandlerConfigFiles.length == 1) {
                 File commonProxyHandlerConfigFile = commonProxyHandlerConfigFiles[0];
                 // load the common proxy handler
-                this.loadProxyHandlerContext( new HandlerConfigInfo(commonProxyHandlerConfigFile));
+                HandlerConfigInfo commonHandlersConfigInfo = new HandlerConfigInfo(commonProxyHandlerConfigFile);
+                // set the load order to first order i.e. load before others
+                commonHandlersConfigInfo.setLoadOrder(HandlerConfigInfo.FIRST_ORDER);
+                this.loadProxyHandlerContext(commonHandlersConfigInfo);
                 LOGGER.info("Loaded Common Proxy Handler Config: " + commonProxyHandlerConfigFile);
             } else {
                 final String errorMessage = "Found multiple common-proxy-handler-configs, only one is allowed";
@@ -233,6 +236,9 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
                     LOGGER.info("Initialized handler registry: " + registry.getClass().getName());
                     //Add the file path of each inited handler to SPConfigService (for configuration console)
                     for (AbstractHandlerRegistry.InitedHandlerInfo<T> initedHandlerInfo : initedHandlerInfos) {
+                    	if (initedHandlerInfo == null) {
+                    		System.out.println("Handler is nul!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + " Size is : " + initedHandlerInfos.length);
+                    	}
                         this.configService.addHandlerConfigPath(initedHandlerInfo.getHandlerConfigInfo().getXmlConfigFile(), initedHandlerInfo.getInitedHandler());
                     }
                 } catch (Exception e) {
