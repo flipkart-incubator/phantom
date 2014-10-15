@@ -1,5 +1,6 @@
 ## 1.3.4-SNAPSHOT (Oct 10, 2014)
 - Added support for parallel init for Task handlers
+- Upgrade to Trooper 1.3.2-SNAPSHOT version
 
 ## 1.3.3 (Oct 05, 2014)
 - Bug fix for logging handler execution warnings and errors
