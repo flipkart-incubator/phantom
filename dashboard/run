@@ -1,0 +1,3 @@
+#!/bin/bash
+
+java -cp "target/dashboard-1.3.4-SNAPSHOT.jar:target/lib/*" org.trpr.platform.runtime.impl.bootstrap.BootstrapLauncher src/main/resources/external/bootstrap.xml

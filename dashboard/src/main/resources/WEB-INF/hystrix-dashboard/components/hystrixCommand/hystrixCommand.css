@@ -37,6 +37,11 @@
 	color: black;
 }
 
+.dependencies div.monitor p.name a {
+    text-decoration: none;
+    color: black;
+}
+
 .dependencies div.monitor_data {
 	margin: 0 auto;	
 }

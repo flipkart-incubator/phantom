@@ -18,6 +18,7 @@ package com.flipkart.sp.dashboard.impl.spring.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -39,4 +40,19 @@ public class DefaultController {
 	public String dashboard(ModelMap model, HttpServletRequest request) {
 		return "cluster-dashboard";
 	}
+
+    @RequestMapping(value = {"/command/{cmd}"}, method = RequestMethod.GET)
+    public String command(@PathVariable String cmd, ModelMap model) {
+        model.addAttribute("command", cmd);
+        return "command";
+    }
+
+
+    @RequestMapping(value = {"/tp/{tp}"}, method = RequestMethod.GET)
+    public String tp(@PathVariable String tp, ModelMap model) {
+        model.addAttribute("tp", tp);
+        return "tp";
+    }
+
+
 }

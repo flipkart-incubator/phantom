@@ -36,6 +36,11 @@
 	padding-bottom: 5px;
 }
 
+.dependencyThreadPools div.monitor p.name a {
+    text-decoration: none;
+    color: black;
+}
+
 .dependencyThreadPools div.monitor_data {
 	margin: 0 auto;	
 }

@@ -28,7 +28,7 @@ Some icons from Silk icon set 1.3 by Mark James, http://www.famfamfam.com/lab/ic
 		<div id="primary-navigation">
 			<div id="primary-left">
 				<ul>
-					<li><a href="/dashboard">Aggregated Dashboard</a></li>
+					<li><a href="/cluster-dashboard">Aggregated Dashboard</a></li>
 				</ul>
 			</div>
 		</div>
