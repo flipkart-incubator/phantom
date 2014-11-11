@@ -178,7 +178,16 @@ abstract public class AbstractHandler {
      */
     public String getVersionedThreadPoolName(String threadPool)
     {
-      return threadPool + "." + getVersion();
+        int version = getVersion();
+        if(version > 0)
+        {
+            return threadPool + "." + getVersion();
+        }
+        else
+        {
+            return threadPool;
+        }
+
     }
 
 

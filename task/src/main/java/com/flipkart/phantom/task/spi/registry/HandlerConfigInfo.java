@@ -138,13 +138,5 @@ public class HandlerConfigInfo {
     public void setVersion(int version) {
         this.version = version;
     }
-
-    /**
-     * Get a new version number for thread pool to have new and unique name
-     * @return Incremented version number from current value
-     */
-    public int getNewVersion()
-    {
-        return ++version;
-    }
+	
 }
