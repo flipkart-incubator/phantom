@@ -319,13 +319,12 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
         registry.unregisterTaskHandler(handler);
         LOGGER.debug("Unregistered TaskHandler: " + handler.getName());
         this.loadComponent(resource);
-        //set version for entire list
-        setHandlerConfigVersion(this.handlerConfigInfoList,version);
 
         // now add the newly loaded handler to its registry
         for (HandlerConfigInfo handlerConfigInfo : this.handlerConfigInfoList) {
             if (handlerConfigInfo.getXmlConfigFile().getAbsolutePath().equalsIgnoreCase(((FileSystemResource) resource).getFile().getAbsolutePath())) {
                 List<HandlerConfigInfo> reloadHandlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
+                handlerConfigInfo.setVersion(version);
                 reloadHandlerConfigInfoList.add(handlerConfigInfo);
                 try {
                     registry.init(reloadHandlerConfigInfoList, taskContext);
@@ -335,18 +334,6 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
                 }
                 return;
             }
-        }
-    }
-
-    /**
-     * This method set the config version to incremented version of previous handler
-     * @param handlerConfigInfoList the List<HandlerConfigInfo>
-     */
-    private void setHandlerConfigVersion(List<HandlerConfigInfo> handlerConfigInfoList, int newVersion)
-    {
-        for (HandlerConfigInfo handlerConfigInfo : this.handlerConfigInfoList)
-        {
-            handlerConfigInfo.setVersion(newVersion);
         }
     }
 
