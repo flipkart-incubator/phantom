@@ -56,6 +56,11 @@ abstract public class AbstractHandler {
     private AtomicInteger status = new AtomicInteger(INACTIVE);
 
     /**
+     * Version in used for new thread pool name while reload of handler to have new connection pool effective
+     */
+    private int version =0;
+
+    /**
      * Method which returns the name of the handler
      * @return String name
      */
@@ -147,6 +152,35 @@ abstract public class AbstractHandler {
 	}
 	public void setInitOutcomeStatus(int initOutcomeStatus) {
 		this.initOutcomeStatus = initOutcomeStatus;
-	}    
+	}
+
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    /**
+     * Get a new version number for Handler to have new and unique name
+     * @return Incremented version number from current value
+     */
+    public int getNewVersion()
+    {
+        return ++version;
+    }
+
+    /**
+     * Returns the versioned thread pool name which this handler will handle.
+     * @return commands
+     */
+    public String getVersionedThreadPoolName(String threadPool)
+    {
+      return threadPool + "." + getVersion();
+    }
+
+
     
 }

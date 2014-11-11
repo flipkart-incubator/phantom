@@ -21,6 +21,8 @@ import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -34,6 +36,9 @@ import java.util.Map;
  */
 @SuppressWarnings("rawtypes")
 public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor <TaskResult> {
+
+    /** Log instance for this class */
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
@@ -91,7 +96,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
                                   String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
                 .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
         this.taskHandler = taskHandler;
@@ -101,6 +106,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.params = taskRequestWrapper.getParams();
         this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
+        LOGGER.info("Created Task handler executor using thread pool name :" + threadPoolName);
     }
 
     /**
@@ -120,7 +126,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
                                   String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper , Decoder decoder ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
                 .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
         this.taskHandler = taskHandler;
@@ -131,6 +137,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
         this.decoder = decoder;
+        LOGGER.info("Created Task handler executor using thread pool name :" + threadPoolName);
     }
 
     /**

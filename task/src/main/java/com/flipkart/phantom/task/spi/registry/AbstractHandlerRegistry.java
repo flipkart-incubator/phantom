@@ -154,7 +154,7 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	 * @param taskHandler the AbstractHandler to be removed
 	 */
     public void unregisterTaskHandler(T handler) {
-    	this.handlers.remove(handler.getName());
+        this.handlers.remove(handler.getName());
     	this.postUnregisterHandler(handler);
     };
     
@@ -220,6 +220,7 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	        String[] handlerBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(this.getHandlerType());
 	        for (String taskHandlerBeanId : handlerBeanIds) {
 	        	T handler = (T) handlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
+                handler.setVersion(handlerConfigInfo.getVersion());
 	        	FutureTask<T> handlerInitTask = new FutureTask<T>(new HandlerInitFutureTask(handler,taskContext,handlerConfigInfo,initedHandlerInfos));
 	        	handlerInitTasks.add(handlerInitTask);
             	pool.execute(handlerInitTask);

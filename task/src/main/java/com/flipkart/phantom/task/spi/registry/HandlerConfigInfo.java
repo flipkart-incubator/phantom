@@ -52,7 +52,12 @@ public class HandlerConfigInfo {
 	
 	/** The Spring ApplicationContext initialized using information contained in this HandlerConfigInfo*/
 	private AbstractApplicationContext proxyHandlerContext;
-	
+
+    /**
+     * Version in used for new thread pool name while reload of handler to have new connection pool effective
+     */
+    private int version =0;
+
 	/**
 	 * Constructors
 	 */
@@ -123,5 +128,23 @@ public class HandlerConfigInfo {
 	}
 	public void setLoadOrder(int loadOrder) {
 		this.loadOrder = loadOrder;
-	}	
+	}
+
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    /**
+     * Get a new version number for thread pool to have new and unique name
+     * @return Incremented version number from current value
+     */
+    public int getNewVersion()
+    {
+        return ++version;
+    }
 }
