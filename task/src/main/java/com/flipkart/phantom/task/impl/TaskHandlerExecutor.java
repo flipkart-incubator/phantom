@@ -106,7 +106,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.params = taskRequestWrapper.getParams();
         this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
-        LOGGER.info("Created Task handler executor using thread pool name :" + threadPoolName);
+        LOGGER.info("Created Task handler executor using thread pool name :" + taskHandler.getVersionedThreadPoolName(threadPoolName));
     }
 
     /**
@@ -137,7 +137,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         this.taskRequestWrapper = taskRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
         this.decoder = decoder;
-        LOGGER.info("Created Task handler executor using thread pool name :" + threadPoolName);
+        LOGGER.info("Created Task handler executor using thread pool name :" + taskHandler.getVersionedThreadPoolName(threadPoolName));
     }
 
     /**
