@@ -15,14 +15,24 @@
  */
 package com.flipkart.phantom.task.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.*;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.google.common.base.Optional;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-
-import java.util.Map;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
@@ -33,7 +43,7 @@ import java.util.Map;
  * @version 1.0, 19th March, 2013
  */
 @SuppressWarnings("rawtypes")
-public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor <TaskResult> {
+public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor<TaskRequestWrapper, TaskResult> {
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
@@ -47,6 +57,9 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
 
     /** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
     public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 10;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
 
     /** The {@link TaskHandler} or {@link HystrixTaskHandler} instance which this Command wraps around */
     protected TaskHandler taskHandler;
@@ -71,9 +84,10 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
 
     /** Event which records various paramenters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
-
-    /** Event Type for publishing all events which are generated here */
-    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
+    
+    /** List of request and response interceptors */
+    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<TaskRequestWrapper>>();
+    private List<ResponseInterceptor<TaskResult>> responseInterceptors = new LinkedList<ResponseInterceptor<TaskResult>>();
 
     /**
      * Basic constructor for {@link TaskHandler}. The Hystrix command name is commandName. The group name is the Handler Name
@@ -264,8 +278,31 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
                 return hystrixTaskHandler.getFallBack(taskContext, command, taskRequestWrapper, decoder);
             }
         }
-
         return null;
+    }
+
+    /**
+     * Interface method implementation. Adds the RequestInterceptor to the list of request interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addRequestInterceptor(com.flipkart.phantom.task.spi.interceptor.RequestInterceptor)
+     */
+    public void addRequestInterceptor(RequestInterceptor<TaskRequestWrapper> requestInterceptor) {    	
+    	this.requestInterceptors.add(requestInterceptor);
+    }
+
+    /**
+     * Interface method implementation. Adds the ResponseInterceptor to the list of response interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addResponseInterceptor(com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor)
+     */
+    public void addResponseInterceptor(ResponseInterceptor<TaskResult> responseInterceptor){
+    	this.responseInterceptors.add(responseInterceptor);
+    }
+    
+    /**
+     * Interface method implementation. Returns the name of the TaskHandler used by this Executor
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     */
+    public Optional<String> getServiceName(TaskRequestWrapper requestWrapper) {
+    	return Optional.of(this.taskHandler.getName());
     }
 
     /**
@@ -284,9 +321,11 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         return this.taskHandler.getCallInvocationType();
     }
 
+    /**
+     * Getter method for the event builder
+     */
     public ServiceProxyEvent.Builder getEventBuilder() {
         return eventBuilder;
     }
 
-    /** End Getter/Setter methods */
 }

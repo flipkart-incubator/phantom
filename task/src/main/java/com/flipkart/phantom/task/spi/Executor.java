@@ -17,27 +17,51 @@
 package com.flipkart.phantom.task.spi;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.google.common.base.Optional;
 
 /**
- * <code>Executor</code> is an interface which executes any task and returns the result of Type T.
- * This interface provides a way of decoupling task submission from the mechanics
- * of how each task will be run
+ * <code>Executor</code> is an interface which executes any task with request of type RequestWrapper and returns the result of Type S.
+ * This interface provides a way of decoupling task submission from the mechanics of how each task will be run.
+ * Also supports request and response processing interceptors.
  *
  * @author : arya.ketan
- * @version : 1.0
- * @date : 28/10/13
+ * @author : Regunath B
+ * @version : 2.0
+ * @date : 11/11/14
  */
-public interface Executor<T>{
+public interface Executor<T extends RequestWrapper,S> {
 	
 	/**
 	 * Executes a given task and returns the result
 	 * @return task execution result
 	 */
-    public T execute() ;
+    public S execute();
 
     /**
      * Gets the ServiceProxyEvent builder implementation
      * @return the ServiceProxyEvent builder implementation
      */
     public ServiceProxyEvent.Builder getEventBuilder();
+    
+    /**
+     * Adds the specified RequestInterceptor to the request processing path
+     * @param requestInterceptor the RequestInterceptor to process the request
+     */
+    public void addRequestInterceptor(RequestInterceptor<T> requestInterceptor);
+    
+    /**
+     * Adds the specified ResponseInterceptor to the response processing path
+     * @param responseInterceptor the ResponseInterceptor to process the response
+     */
+    public void addResponseInterceptor(ResponseInterceptor<S> responseInterceptor);
+    
+    /**
+     * Returns the service name for this executor
+     * @param requestWrapper the request wrapper
+     * @return an optional service name
+     */
+    public Optional<String> getServiceName(T requestWrapper);
+    
 }

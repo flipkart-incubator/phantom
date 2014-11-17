@@ -49,7 +49,6 @@ public class TaskContextImpl implements TaskContext {
     /** ObjectMapper instance */
     private ObjectMapper objectMapper = new ObjectMapper();
 
-
     /** The TaskHandlerExecutorRepository instance for getting thrift handler executor instances */
     private TaskHandlerExecutorRepository executorRepository;
 
@@ -90,14 +89,12 @@ public class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException
-    {
+    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException {
         return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
     }
 
     @Override
-    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException
-    {
+    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
@@ -105,8 +102,7 @@ public class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException
-    {
+    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);

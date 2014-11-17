@@ -33,19 +33,19 @@ import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
  * @version : 1.0
  * @date : 28/10/13
  */
-public interface ExecutorRepository<T, S extends AbstractHandler>{
+public interface ExecutorRepository<T extends RequestWrapper,S, R extends AbstractHandler>{
 
     /**
      *  Getter for the registry holding the names of the Handlers
      * @return   {@link com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry}
      */
-    public AbstractHandlerRegistry<S> getRegistry();
+    public AbstractHandlerRegistry<R> getRegistry();
 
     /**
      *  Setter for the  registry holding the names of the TaskHandler
      * @param  registry
      */
-    public void setRegistry(AbstractHandlerRegistry<S> registry);
+    public void setRegistry(AbstractHandlerRegistry<R> registry);
 
     /**
      *  Getter for the <code>TaskContext</code>, that provides methods
@@ -72,6 +72,6 @@ public interface ExecutorRepository<T, S extends AbstractHandler>{
      * @param requestWrapper  the requestWrapper passed to the executor which process it to get the response
      * @return  {@link Executor}
      */
-    public Executor<T> getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper);
+    public Executor<T,S> getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper);
 
 }
