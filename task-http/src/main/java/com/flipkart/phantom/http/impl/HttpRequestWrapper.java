@@ -17,6 +17,7 @@
 package com.flipkart.phantom.http.impl;
 
 import com.flipkart.phantom.task.spi.RequestWrapper;
+import com.google.common.base.Optional;
 
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,7 @@ import java.util.Map;
  * @version : 1.0
  * @date : 28/10/13
  */
-public class HttpRequestWrapper implements RequestWrapper
-{
+public class HttpRequestWrapper extends RequestWrapper {
 
     /** Data */
     private byte[] data;
@@ -52,6 +52,32 @@ public class HttpRequestWrapper implements RequestWrapper
 
     /** * The minor version of HTTP or its derived protocols, such as  */
     private int minorVersion;
+    
+    /**
+     * Abstract method implementation. Interprets the request name from the URI
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getRequestName()
+     */
+    public String getRequestName() {
+    	String requestName = this.uri;
+    	if (this.getServiceName().isPresent()) {
+    		return requestName;
+    	}
+        final String[] split = this.uri.split("/");
+        if (split.length > 2 && this.uri.startsWith("/")) {
+            // If path starts with '/', then context is between first two '/'. Left over is path for service.
+            final int contextPathSeparatorIndex = this.uri.indexOf("/", 1);
+            requestName = this.uri.substring(contextPathSeparatorIndex);
+        } 	
+    	return requestName;
+    }
+    
+    /**
+     * Abstract method implementation. Returns a concat string of the Http request method name (i.e. GET, POST) and the request URI
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getRequestMetaData()
+     */
+    public Optional<String> getRequestMetaData() {
+    	return Optional.of(method + " " + uri);
+    }
 
     /** Start Getter/Setter methods */
 

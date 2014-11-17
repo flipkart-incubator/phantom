@@ -32,7 +32,7 @@ import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public class HttpProxyExecutorRepository implements ExecutorRepository<HttpResponse, HttpProxy>{
+public class HttpProxyExecutorRepository implements ExecutorRepository<HttpRequestWrapper,HttpResponse, HttpProxy>{
 
     /** repository */
     private HttpProxyRegistry registry;
@@ -47,7 +47,7 @@ public class HttpProxyExecutorRepository implements ExecutorRepository<HttpRespo
      * @param requestWrapper requestWrapper Object containing requestWrapper Data
      * @return  an {@link HttpProxyExecutor} instance
      */
-    public Executor<HttpResponse> getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
+    public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
             return new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);

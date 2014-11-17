@@ -15,12 +15,24 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.thrift.transport.TTransport;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.*;
-import org.apache.thrift.transport.TTransport;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.google.common.base.Optional;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 /**
  * <code>ThriftProxyExecutor</code> is an extension of {@link com.netflix.hystrix.HystrixCommand}. It is essentially a
@@ -30,7 +42,7 @@ import org.apache.thrift.transport.TTransport;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor<TTransport> {
+public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements Executor<ThriftRequestWrapper, TTransport> {
 
     /** The default Hystrix group to which the command belongs, unless otherwise mentioned*/
     public static final String DEFAULT_HYSTRIX_GROUP = "defaultThriftGroup";
@@ -40,6 +52,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
 
     /** The default Hystrix Thread pool to which this command belongs, unless otherwise mentioned */
     public static final int DEFAULT_HYSTRIX_THREAD_POOL_SIZE = 20;
+
+    /** Event Type for publishing all events which are generated here */
+    private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
 
     /** The {@link ThriftProxy} or {@link ThriftProxy} instance which this Command wraps around */
     protected ThriftProxy thriftProxy;
@@ -53,9 +68,10 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     /** Event which records various paramenters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
 
-    /** Event Type for publishing all events which are generated here */
-    private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
-
+    /** List of request and response interceptors */
+    private List<RequestInterceptor<ThriftRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<ThriftRequestWrapper>>();
+    private List<ResponseInterceptor<TTransport>> responseInterceptors = new LinkedList<ResponseInterceptor<TTransport>>();
+    
     /**
      * Constructor for this class.
      * @param hystrixThriftProxy the HystrixThriftProxy that must be wrapped by Hystrix
@@ -123,6 +139,30 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
         return setter;
     }
 
+    /**
+     * Interface method implementation. Adds the RequestInterceptor to the list of request interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addRequestInterceptor(com.flipkart.phantom.task.spi.interceptor.RequestInterceptor)
+     */
+    public void addRequestInterceptor(RequestInterceptor<ThriftRequestWrapper> requestInterceptor) {    	
+    	this.requestInterceptors.add(requestInterceptor);
+    }
+
+    /**
+     * Interface method implementation. Adds the ResponseInterceptor to the list of response interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addResponseInterceptor(com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor)
+     */
+    public void addResponseInterceptor(ResponseInterceptor<TTransport> responseInterceptor){
+    	this.responseInterceptors.add(responseInterceptor);
+    }
+    
+    /**
+     * Interface method implementation. Returns the name of the ThriftProxy used by this Executor
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     */
+    public Optional<String> getServiceName(ThriftRequestWrapper requestWrapper) {
+    	return Optional.of(this.thriftProxy.getName());
+    }    
+    
     /**Getter/Setter methods */
     public TTransport getClientTransport() {
         return this.clientTransport;

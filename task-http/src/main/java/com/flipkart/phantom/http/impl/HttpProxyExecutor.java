@@ -16,12 +16,24 @@
 
 package com.flipkart.phantom.http.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.http.HttpResponse;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.*;
-import org.apache.http.HttpResponse;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.google.common.base.Optional;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
 
 /**
@@ -31,10 +43,13 @@ import org.apache.http.HttpResponse;
  * @version 1.0
  * @created 16/7/13 1:54 AM
  */
-public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor<HttpResponse> {
+public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor<HttpRequestWrapper, HttpResponse> {
 
+    /** Event Type for publishing all events which are generated here */
+    private final static String HTTP_HANDLER = "HTTP_HANDLER";
+    
     /** Http Request Wrapper */
-    HttpRequestWrapper httpRequestWrapper;
+    private HttpRequestWrapper httpRequestWrapper;
 
     /** the proxy client */
     private HttpProxy proxy;
@@ -42,9 +57,10 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     /** Event which records various parameters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
 
-    /** Event Type for publishing all events which are generated here */
-    private final static String HTTP_HANDLER = "HTTP_HANDLER";
-
+    /** List of request and response interceptors */
+    private List<RequestInterceptor<HttpRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<HttpRequestWrapper>>();
+    private List<ResponseInterceptor<HttpResponse>> responseInterceptors = new LinkedList<ResponseInterceptor<HttpResponse>>();
+    
     /** only constructor uses the proxy client, task context and the http requestWrapper */
     public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, RequestWrapper requestWrapper) {
         super(
@@ -71,7 +87,31 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
         return proxy.doRequest(this.httpRequestWrapper);
     }
+    
+    /**
+     * Interface method implementation. Returns the name of the {@link HttpProxy} used by this Executor
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     */
+    public Optional<String> getServiceName(HttpRequestWrapper requestWrapper) {
+    	return Optional.of(this.proxy.getName());
+    }
 
+    /**
+     * Interface method implementation. Adds the RequestInterceptor to the list of request interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addRequestInterceptor(com.flipkart.phantom.task.spi.interceptor.RequestInterceptor)
+     */
+    public void addRequestInterceptor(RequestInterceptor<HttpRequestWrapper> requestInterceptor) {    	
+    	this.requestInterceptors.add(requestInterceptor);
+    }
+
+    /**
+     * Interface method implementation. Adds the ResponseInterceptor to the list of response interceptors that will be invoked
+     * @see com.flipkart.phantom.task.spi.Executor#addResponseInterceptor(com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor)
+     */
+    public void addResponseInterceptor(ResponseInterceptor<HttpResponse> responseInterceptor){
+    	this.responseInterceptors.add(responseInterceptor);
+    }
+    
     /**
      * Interface method implementation
      * @return response HttpResponse from the fallback
@@ -82,6 +122,9 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         return proxy.fallbackRequest(this.httpRequestWrapper);
     }
 
+    /**
+     * Retruns the event builder instance
+     */
     public ServiceProxyEvent.Builder getEventBuilder() {
         return eventBuilder;
     }
