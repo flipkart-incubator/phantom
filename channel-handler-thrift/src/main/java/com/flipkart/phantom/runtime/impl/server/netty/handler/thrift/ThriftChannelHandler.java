@@ -58,7 +58,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThriftChannelHandler.class);
 
     /** The Thrift TaskRepository to lookup ThriftServiceProxyClient from */
-    private ExecutorRepository<TTransport, ThriftProxy> repository;
+    private ExecutorRepository<ThriftRequestWrapper, TTransport, ThriftProxy> repository;
 
     /** The ThriftHandler of this channel  */
     private String thriftProxy;
@@ -106,9 +106,13 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             ThriftRequestWrapper thriftRequestWrapper = new ThriftRequestWrapper();
 
             thriftRequestWrapper.setClientSocket(clientTransport);
+            thriftRequestWrapper.setMethodName(message.name);
 
             //Execute
-            Executor<TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
+            Executor<ThriftRequestWrapper,TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
+            // set the service name for the request
+            thriftRequestWrapper.setServiceName(executor.getServiceName(thriftRequestWrapper));
+            
             try {
                 executor.execute();
             } catch (Exception e) {
@@ -141,10 +145,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
         event.getChannel().close();
         super.exceptionCaught(ctx, event);
     }
-    public ExecutorRepository<TTransport, ThriftProxy> getRepository() {
+    public ExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository<TTransport, ThriftProxy> repository) {
+    public void setRepository(ExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> repository) {
         this.repository = repository;
     }
     public int getResponseSize() {

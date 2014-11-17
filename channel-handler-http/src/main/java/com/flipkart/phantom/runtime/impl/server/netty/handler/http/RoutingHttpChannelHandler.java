@@ -85,7 +85,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     private ChannelGroup defaultChannelGroup;
 
     /** The HttpProxyRepository to lookup HttpProxy from */
-    private ExecutorRepository<HttpResponse, HttpProxy> repository;
+    private ExecutorRepository<HttpRequestWrapper,HttpResponse, HttpProxy> repository;
 
     /** The HTTP proxy handler map*/
     private Map<String, String> proxyMap = new HashMap<String, String>();
@@ -148,8 +148,11 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
             proxy = this.proxyMap.get(RoutingHttpChannelHandler.ALL_ROUTES);
             LOGGER.info("Routing key for : " + request.getUri() + " returned null. Using default proxy instead.");
         }
-        Executor<HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
+        Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
 
+        // set the service name for the request
+        executorHttpRequest.setServiceName(executor.getServiceName(executorHttpRequest));
+        
         // execute
         HttpResponse response = null;
         try {
@@ -239,10 +242,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
         this.defaultChannelGroup = defaultChannelGroup;
     }
-    public ExecutorRepository<HttpResponse, HttpProxy> getRepository() {
+    public ExecutorRepository<HttpRequestWrapper,HttpResponse, HttpProxy> getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository<HttpResponse, HttpProxy> repository) {
+    public void setRepository(ExecutorRepository<HttpRequestWrapper,HttpResponse, HttpProxy> repository) {
         this.repository = repository;
     }
     public Map<String, String> getProxyMap() {
