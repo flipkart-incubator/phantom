@@ -85,7 +85,22 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     @Override
     protected HttpResponse run() throws Exception {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
-        return proxy.doRequest(this.httpRequestWrapper);
+        for (RequestInterceptor<HttpRequestWrapper> requestInterceptor : this.requestInterceptors) {
+        	requestInterceptor.process(this.httpRequestWrapper);
+        }
+        Optional<RuntimeException> transportException = Optional.absent();
+        HttpResponse response = null;
+        try {
+        	response = proxy.doRequest(this.httpRequestWrapper);
+        } catch (RuntimeException e) {
+        	transportException = Optional.of(e);
+        	throw e; // rethrow this for it to handled by other layers in the call stack
+        } finally {
+	        for (ResponseInterceptor<HttpResponse> responseInterceptor : this.responseInterceptors) {
+	        	responseInterceptor.process(response, transportException);
+	        }
+        }
+        return response;
     }
     
     /**

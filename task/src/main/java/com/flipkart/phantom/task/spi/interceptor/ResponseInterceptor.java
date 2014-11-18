@@ -15,6 +15,8 @@
  */
 package com.flipkart.phantom.task.spi.interceptor;
 
+import com.google.common.base.Optional;
+
 /**
  * <code>ResponseInterceptor</code> intercepts task execution responses of type S. Provides a hook into the task response processing pipeline that may be used
  * to post-process task responses and perform activities like tracing. 
@@ -28,6 +30,6 @@ public interface ResponseInterceptor<S> {
 	 * Intercept and process the task response of type S
 	 * @param response the task response
 	 */
-	public void process(S response);
+	public void process(S response, Optional<RuntimeException> transportError);
 	
 }

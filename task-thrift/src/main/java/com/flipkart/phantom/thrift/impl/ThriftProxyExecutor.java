@@ -64,6 +64,9 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
 
     /** The client's TTransport*/
     protected TTransport clientTransport;
+    
+    /** The Thrift request wrapper*/
+    protected ThriftRequestWrapper thriftRequestWrapper;
 
     /** Event which records various paramenters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
@@ -83,7 +86,7 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
         this.thriftProxy = hystrixThriftProxy;
         this.taskContext = taskContext;
 
-        ThriftRequestWrapper thriftRequestWrapper = (ThriftRequestWrapper)requestWrapper;
+        this.thriftRequestWrapper = (ThriftRequestWrapper)requestWrapper;
         this.clientTransport = thriftRequestWrapper.getClientSocket();
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, THRIFT_HANDLER);
     }
@@ -94,7 +97,22 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     @Override
     protected TTransport run() {
         eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
-        return thriftProxy.doRequest(this.clientTransport);
+        for (RequestInterceptor<ThriftRequestWrapper> requestInterceptor : this.requestInterceptors) {
+        	requestInterceptor.process(this.thriftRequestWrapper);
+        }
+        TTransport response = null;
+        Optional<RuntimeException> transportException = Optional.absent();
+        try {
+        	response = thriftProxy.doRequest(this.clientTransport);
+        }  catch (RuntimeException e) {
+        	transportException = Optional.of(e);
+        	throw e; // rethrow this for it to handled by other layers in the call stack
+        } finally {
+	        for (ResponseInterceptor<TTransport> responseInterceptor : this.responseInterceptors) {
+	        	responseInterceptor.process(response, transportException);
+	        }   
+        }
+        return response;
     }
 
     /**

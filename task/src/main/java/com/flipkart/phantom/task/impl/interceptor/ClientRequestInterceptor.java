@@ -31,13 +31,13 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
 /**
- * <code>AbstractClientRequestInterceptor</code> is an implementation of {@link RequestInterceptor} that traces client requests to services and task handlers.
+ * <code>ClientRequestInterceptor</code> is an implementation of {@link RequestInterceptor} that traces client requests to services and task handlers.
  * This implementation is based on the Brave ClientRequestInterceptor code. 
  * 
  * @author Regunath B
  * @version 1.0, 13th Nov, 2014
  */
-public abstract class AbstractClientRequestInterceptor implements RequestInterceptor<RequestWrapper>, InitializingBean {
+public class ClientRequestInterceptor<T extends RequestWrapper> implements RequestInterceptor<T>, InitializingBean {
 
 	/** The request annotation and value strings*/
     private static final String REQUEST_ANNOTATION = "request";
@@ -62,19 +62,19 @@ public abstract class AbstractClientRequestInterceptor implements RequestInterce
 	 * Interface method implementation. Performs client request tracing.
 	 * @see com.flipkart.phantom.task.spi.interceptor.RequestInterceptor#process(com.flipkart.phantom.task.spi.RequestWrapper)
 	 */
-	public void process(RequestWrapper request) {
+	public void process(T request) {
 		String spanName = this.getSpanName(request);
 		SpanId newSpanId = clientTracer.startNewSpan(spanName);
 		this.addTracingHeaders(request, newSpanId, spanName);
         final Optional<String> serviceName = request.getServiceName();
         if (serviceName.isPresent()) {
-            clientTracer.setCurrentClientServiceName(serviceName.get());
+            this.clientTracer.setCurrentClientServiceName(serviceName.get());
         }
         final Optional<String> requestMetadata = request.getRequestMetaData();
         if (requestMetadata.isPresent()) {
-        	clientTracer.submitBinaryAnnotation(REQUEST_ANNOTATION, requestMetadata.get());
+        	this.clientTracer.submitBinaryAnnotation(REQUEST_ANNOTATION, requestMetadata.get());
         }
-        clientTracer.setClientSent();
+        this.clientTracer.setClientSent();
 	}
 	
 	/**
@@ -82,7 +82,13 @@ public abstract class AbstractClientRequestInterceptor implements RequestInterce
 	 * @param request the request wrapper instance
 	 * @return the span name
 	 */
-	protected abstract String getSpanName(RequestWrapper request);
+	protected String getSpanName(T request) {
+		String spanName = request.getRequestName();
+        if (this.spanNameFilter.isPresent()) {
+            spanName = this.spanNameFilter.get().filterSpanName(spanName);
+        }
+        return spanName;
+	}
 	
 	/**
 	 * Adds tracing headers to the request wrapper for the specified span.
@@ -91,7 +97,7 @@ public abstract class AbstractClientRequestInterceptor implements RequestInterce
 	 * @param spanId the span being executed
 	 * @param spanName the name of the span
 	 */
-	protected void addTracingHeaders(RequestWrapper request, SpanId spanId, String spanName) {
+	protected void addTracingHeaders(T request, SpanId spanId, String spanName) {
 		Map<String, String> headers = new HashMap<String, String>();
         if (spanId != null) {
         	headers.put(BraveHttpHeaders.Sampled.getName(), TRUE);
