@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.TraceFilter;
+
 /**
  * The abstract handler class, which has functions necessary only for basic proxy functions
  * @author kartikbu
@@ -39,10 +42,12 @@ abstract public class AbstractHandler {
 	public static final int VETO_INIT = 999999;    
 
     /** The status showing the TaskHandler is inited and ready to use */
-    public static int ACTIVE = 1;
-
+    public static final int ACTIVE = 1;
     /** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
-    public static int INACTIVE = 0;
+    public static final int INACTIVE = 0;
+    
+    /** The default value for tracing frequency. This value indicates that tracing if OFF*/
+    public static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);
 
     /** The default command invocation type for this AbstractHandler*/
     private int callInvocationType = AbstractHandler.SYNC_CALL;
@@ -52,8 +57,11 @@ abstract public class AbstractHandler {
     
     private int initOutcomeStatus = AbstractHandler.VETO_INIT;
 
-    /** The status of this ThriftProxy (active/inactive) */
+    /** The status of this handler (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
+    
+    /** The request tracing frequency for this handler*/
+    private TraceFilter traceFilter = NO_TRACING;
 
     /**
      * Method which returns the name of the handler
@@ -147,6 +155,12 @@ abstract public class AbstractHandler {
 	}
 	public void setInitOutcomeStatus(int initOutcomeStatus) {
 		this.initOutcomeStatus = initOutcomeStatus;
-	}    
+	}
+	public TraceFilter getTraceFilter() {
+		return traceFilter;
+	}
+	public void setTraceFilter(TraceFilter traceFilter) {
+		this.traceFilter = traceFilter;
+	}
     
 }

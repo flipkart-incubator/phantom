@@ -38,6 +38,7 @@ import org.trpr.platform.core.spi.logging.Logger;
 import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.spi.AbstractHandler;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.github.kristofa.brave.TraceFilter;
 
 /**
  * Interface for handler registry. Controls lifecycle methods of all handlers understood by the registry.
@@ -57,9 +58,12 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	/** The handler init concurrency */
 	private int handlerInitConcurrency = AbstractHandlerRegistry.DEFAULT_HANDLER_INIT_CONCURRENCY;
 	
-    /** List of AbstractHandlerS */
+    /** Map of AbstractHandlerS keyed by their names */
     protected Map<String,T> handlers = new HashMap<String,T>();
-	
+
+    /** Map of TraceFilterS keyed by the Handler names */
+    protected Map<String,TraceFilter> traceFilters = new HashMap<String,TraceFilter>();
+    
     /**
      * Lifecycle init method. Initializes all individual handlers understood.
      * @param handlerConfigInfoList List of HandlerConfigInfo which is to be analyzed and initialized
@@ -126,6 +130,7 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
             try {
             	this.handlers.get(name).shutdown(taskContext);
             	this.handlers.get(name).deactivate();
+            	this.unregisterTaskHandler(this.handlers.get(name));
             } catch (Exception e) {
                 LOGGER.warn("Failed to shutdown {}: " + name, this.getHandlerType().getName(), e);
             }
@@ -149,12 +154,22 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
         return this.handlers.get(name);
     }
     
+    /**
+     * Gets the TraceFilter associated with the handler identified by the specified name 
+     * @param handlerName the TaskHandler name
+     * @return TraceFilter instance for the TaskHandler
+     */
+    public TraceFilter getTraceFilterForHandler(String handlerName) {
+    	return this.traceFilters.get(handlerName);
+    }
+    
 	/**
 	 * Unregisters (removes) a AbstractHandler from this registry.
 	 * @param taskHandler the AbstractHandler to be removed
 	 */
     public void unregisterTaskHandler(T handler) {
     	this.handlers.remove(handler.getName());
+    	this.traceFilters.remove(handler.getName());
     	this.postUnregisterHandler(handler);
     };
     
@@ -280,6 +295,8 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
 	                initedHandlerInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo<T>(handler,handlerConfigInfo));                    	            			
 		            // put in all handlers map
 		            handlers.put(handler.getName(),handler);
+		            // add the trace filter for the handler
+		            traceFilters.put(handler.getName(), handler.getTraceFilter());
             	}
             } catch (Exception e) {
                 LOGGER.error("Error initializing " + getHandlerType().getName() + " : {}. Error is: " + e.getMessage(), handler.getName(), e);

@@ -18,6 +18,7 @@
                 <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
             </list>
         </property>
     </bean>
