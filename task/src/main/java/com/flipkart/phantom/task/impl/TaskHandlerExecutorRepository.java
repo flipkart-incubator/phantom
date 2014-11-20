@@ -16,6 +16,13 @@
 
 package com.flipkart.phantom.task.impl;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
@@ -23,14 +30,11 @@ import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.Future;
 
 /**
  * <code>TaskHandlerExecutorRepository</code> is a repository that searches for a {@link TaskHandler}
@@ -63,6 +67,10 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
 
     /** The publisher used to broadcast events to Service Proxy Subscribers */
     private ServiceProxyEventProducer eventProducer;
+    
+    /** The client request and response interceptors*/
+    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors;
+    private List<ResponseInterceptor<TaskResult>> responseInterceptors;
 
     /**
      * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
@@ -72,48 +80,27 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
     public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper) {
+    	Executor<TaskRequestWrapper,TaskResult> executor = null;
         //Regex matching of threadPoolName and commandName
-        //(Hystrix dashboard requires names to be alphanumeric)
-        String refinedCommandName = commandName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
-        String refinedProxyName = proxyName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
-
-        if(!commandName.equals(refinedCommandName)) {
-            LOGGER.debug("Command names are not allowed to have Special characters/ whitespaces. Replacing: "+commandName+" with "+refinedCommandName);
+        //(Hystrix dashboard requires names to be alphanumeric)    	
+    	String refinedCommandName = this.getRefinedName(commandName);
+    	String refinedProxyName = this.getRefinedName(proxyName);
+    	TaskHandler taskHandler = this.getTaskHandler(commandName, refinedCommandName, proxyName, refinedProxyName, requestWrapper);
+    	int maxConcurrency = this.getMaxConcurrency(taskHandler, proxyName);
+    	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
+        if(taskHandler instanceof HystrixTaskHandler) {
+	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
+	        	executor = getTaskHandlerExecutorWithSemaphoreIsolation((TaskRequestWrapper) requestWrapper, refinedCommandName, 
+	        			taskHandler, maxConcurrency);
+	        } else {
+	        	executor = getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName,
+	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler);
+	        }
+        } else { 
+        	executor = getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+        			maxConcurrency, executionTimeout, taskHandler);
         }
-        if(!proxyName.equals(refinedProxyName)) {
-            LOGGER.debug("Thread pool names are not allowed to have Special characters/ whitespaces. Replacing: "+proxyName+" with "+refinedProxyName);
-        }
-        if(proxyName.isEmpty()) {
-            proxyName=commandName;
-            LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
-        }
-        TaskHandler taskHandler = getTaskHandlerRegistry().getTaskHandlerByCommand(commandName);
-        if(taskHandler!=null) {
-            if (!taskHandler.isActive()) {
-                LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
-                return null;
-            }
-            if(taskHandler instanceof HystrixTaskHandler) {
-                HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
-                LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
-                int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
-                if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
-                    LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
-                    maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
-                }
-                if(hystrixTaskHandler.getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-                    return getTaskHandlerExecutorWithSemaphoreIsolation((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize);
-                }
-                return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName,
-                        refinedProxyName, maxConcurrentSize,hystrixTaskHandler.getExecutorTimeout(commandName), taskHandler);
-
-            } else { //Run everything with defaults
-                return getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
-                        HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, DEFAULT_THREAD_POOL_SIZE,taskHandler);
-            }
-        } else {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        }
+        return this.wrapExecutorWithInterceptors(executor);
     }
 
     /**
@@ -126,46 +113,27 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
     public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper, Decoder decoder) {
+    	Executor<TaskRequestWrapper,TaskResult> executor = null;
         //Regex matching of threadPoolName and commandName
-        //(Hystrix dashboard requires names to be alphanumeric)
-        String refinedCommandName = commandName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
-        String refinedProxyName = proxyName.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
-        if(!commandName.equals(refinedCommandName)) {
-            LOGGER.debug("Command names are not allowed to have Special characters/ whitespaces. Replacing: "+commandName+" with "+refinedCommandName);
+        //(Hystrix dashboard requires names to be alphanumeric)    	
+    	String refinedCommandName = this.getRefinedName(commandName);
+    	String refinedProxyName = this.getRefinedName(proxyName);
+    	TaskHandler taskHandler = this.getTaskHandler(commandName, refinedCommandName, proxyName, refinedProxyName, requestWrapper);
+    	int maxConcurrency = this.getMaxConcurrency(taskHandler, proxyName);
+    	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
+        if(taskHandler instanceof HystrixTaskHandler) {
+	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
+	        	executor = getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, 
+	        			taskHandler, maxConcurrency, decoder);
+	        } else {
+	        	executor = getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName,
+	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler, decoder);
+	        }
+        } else { 
+        	executor = getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+        			maxConcurrency, executionTimeout, taskHandler, decoder);
         }
-        if(!proxyName.equals(refinedProxyName)) {
-            LOGGER.debug("Thread pool names are not allowed to have Special characters/ whitespaces. Replacing: "+proxyName+" with "+refinedProxyName);
-        }
-        if(proxyName.isEmpty()) {
-            proxyName=commandName;
-            LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
-        }
-        TaskHandler taskHandler = getTaskHandlerRegistry().getTaskHandlerByCommand(commandName);
-        if(taskHandler!=null) {
-            if (!taskHandler.isActive()) {
-                LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
-                return null;
-            }
-            if(taskHandler instanceof HystrixTaskHandler) {
-                HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
-                LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
-                int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
-                if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
-                    LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
-                    maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
-                }
-                if(hystrixTaskHandler.getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-                    return getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, taskHandler, maxConcurrentSize, decoder);
-                }
-                return getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName,
-                        refinedProxyName, maxConcurrentSize, hystrixTaskHandler.getExecutorTimeout(commandName), taskHandler, decoder);
-            } else { //Run everything with defaults
-                return getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
-                        HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT, DEFAULT_THREAD_POOL_SIZE, taskHandler, decoder);
-            }
-        } else {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        }
+        return this.wrapExecutorWithInterceptors(executor);
     }
 
     /**
@@ -211,20 +179,17 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
             try {
-                return  command.execute();
+                return command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
-            }
-            finally {
+            } finally {
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
                     final Map<String, String> params = ((TaskRequestWrapper)requestWrapper).getParams();
-
                     ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
                     eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
                     if(params.containsKey("requestSentTime"))
                         eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
-
                     eventProducer.publishEvent(eventBuilder.build());
                 } else
                     LOGGER.debug("eventProducer not set, not publishing event");
@@ -291,43 +256,6 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         return this.executeAsyncCommand(commandName,commandName, requestWrapper);
     }
 
-    /** Getter/Setter methods */
-
-    @Override
-    public AbstractHandlerRegistry<TaskHandler> getRegistry() {
-        return this.registry;
-    }
-
-    @Override
-    public void setRegistry(AbstractHandlerRegistry<TaskHandler> taskHandlerRegistry) {
-        this.registry = (TaskHandlerRegistry)taskHandlerRegistry;
-    }
-
-    @Override
-    public TaskContext getTaskContext() {
-        return this.taskContext;
-    }
-
-    @Override
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
-
-    /**
-     * Returns the Task Handler Registry instance.
-     * @return
-     */
-    public TaskHandlerRegistry getTaskHandlerRegistry() {
-        AbstractHandlerRegistry<TaskHandler> registry = getRegistry();
-        if(registry instanceof TaskHandlerRegistry){
-            return (TaskHandlerRegistry)registry;
-        }
-        else {
-            return new TaskHandlerRegistry();
-        }
-    }
-    /** End Getter/Setter methods */
-
     /**
      * Helper methods to create and return the appropriate TaskHandlerExecutor instance
      */
@@ -336,8 +264,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     requestWrapper , maxConcurrentSize);
-        }
-        else {
+        } else {
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,requestWrapper , maxConcurrentSize);
         }
     }
@@ -360,8 +287,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler){
             return  new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),refinedCommandName,
                     requestWrapper , maxConcurrentSize,decoder);
-        }
-        else {
+        } else {
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName,requestWrapper , maxConcurrentSize, decoder);
         }
     }
@@ -376,8 +302,112 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
                     refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
         }
     }
+    
+    /**
+     * Helper method to wrap the Executor with request and response interceptors 
+     */
+    private Executor<TaskRequestWrapper,TaskResult> wrapExecutorWithInterceptors(Executor<TaskRequestWrapper,TaskResult> executor) {
+        if (executor != null) {
+        	// we'll add the request and response interceptors that are used in tracing
+        	for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
+        		executor.addRequestInterceptor(requestInterceptor);
+        	}
+        	for (ResponseInterceptor<TaskResult> responseInterceptor : this.responseInterceptors) {
+        		executor.addResponseInterceptor(responseInterceptor);
+        	}
+        }
+        return executor;
+    }
+    
+    /**
+     * Helper method to get the execution timeout
+     */
+    private int getExecutionTimeout(TaskHandler taskHandler, String commandName) {
+    	int executionTimeout = HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT;
+    	if (taskHandler instanceof HystrixTaskHandler) {
+    		executionTimeout = ((HystrixTaskHandler)taskHandler).getExecutorTimeout(commandName);
+    	}
+    	return executionTimeout;
+    }
+    
+    /**
+     * Helper method to get the max concurrency size for the specified handler
+     */
+    private int getMaxConcurrency(TaskHandler taskHandler, String proxyName) {
+        int maxConcurrentSize = DEFAULT_THREAD_POOL_SIZE;
+        if(taskHandler instanceof HystrixTaskHandler) {
+            HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
+            LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
+            if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
+                LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
+                maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
+            }
+        }
+        return maxConcurrentSize;
+    }
+    
+    /**
+     * Helper method to refine the specified name
+     */
+    private String getRefinedName(String name) {
+    	return name.replaceAll(ONLY_ALPHANUMERIC_REGEX, "").replaceAll(WHITESPACE_REGEX, "");
+    }
+    
+    /**
+     * Helper method to validate the handler identifications parameters and return a suitable active TaskHandler 
+     */
+    private TaskHandler getTaskHandler(String commandName, String refinedCommandName, String proxyName, String refinedProxyName, RequestWrapper requestWrapper) {
+        if(!commandName.equals(refinedCommandName)) {
+            LOGGER.debug("Command names are not allowed to have Special characters/ whitespaces. Replacing: "+commandName+" with "+refinedCommandName);
+        }
+        if(!proxyName.equals(refinedProxyName)) {
+            LOGGER.debug("Thread pool names are not allowed to have Special characters/ whitespaces. Replacing: "+proxyName+" with "+refinedProxyName);
+        }
+        if(proxyName.isEmpty()) {
+            proxyName=commandName;
+            LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
+        }
+        TaskHandler taskHandler = getTaskHandlerRegistry().getTaskHandlerByCommand(commandName);
+        if(taskHandler!=null) {
+            if (!taskHandler.isActive()) {
+                LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
+                return null;
+            }
+        } else {
+        	throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);        	
+        }
+        return taskHandler;
+    }
 
+    /** Getter/Setter methods*/
+    public AbstractHandlerRegistry<TaskHandler> getRegistry() {
+        return this.registry;
+    }
+    public void setRegistry(AbstractHandlerRegistry<TaskHandler> taskHandlerRegistry) {
+        this.registry = (TaskHandlerRegistry)taskHandlerRegistry;
+    }
+    public TaskContext getTaskContext() {
+        return this.taskContext;
+    }
+    public void setTaskContext(TaskContext taskContext) {
+        this.taskContext = taskContext;
+    }
+    public TaskHandlerRegistry getTaskHandlerRegistry() {
+        AbstractHandlerRegistry<TaskHandler> registry = getRegistry();
+        if(registry instanceof TaskHandlerRegistry){
+            return (TaskHandlerRegistry)registry;
+        } else {
+            return new TaskHandlerRegistry();
+        }
+    }    
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;
     }
+	public void setRequestInterceptors(List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors) {
+		this.requestInterceptors = requestInterceptors;
+	}
+	public void setResponseInterceptors(List<ResponseInterceptor<TaskResult>> responseInterceptors) {
+		this.responseInterceptors = responseInterceptors;
+	}
+    
 }

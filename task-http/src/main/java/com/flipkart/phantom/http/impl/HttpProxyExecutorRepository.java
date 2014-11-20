@@ -16,12 +16,16 @@
 
 package com.flipkart.phantom.http.impl;
 
+import java.util.List;
+
 import org.apache.http.HttpResponse;
 
 import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
+import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 
@@ -40,6 +44,10 @@ public class HttpProxyExecutorRepository implements ExecutorRepository<HttpReque
     /** The TaskContext instance */
     private TaskContext taskContext;
 
+    /** The client request and response interceptors*/
+    private List<RequestInterceptor<HttpRequestWrapper>> requestInterceptors;
+    private List<ResponseInterceptor<HttpResponse>> responseInterceptors;
+    
     /**
      * Returns {@link Executor} for the specified requestWrapper
      * @param commandName command Name as specified by Executor. Not used in this case.
@@ -50,31 +58,48 @@ public class HttpProxyExecutorRepository implements ExecutorRepository<HttpReque
     public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
-            return new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
+        	HttpProxyExecutor executor = new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
+            return this.wrapExecutorWithInterceptors(executor);
         }
         throw new RuntimeException("The HttpProxy is not active.");
     }
 
+    /**
+     * Helper method to wrap the Executor with request and response interceptors 
+     */
+    private Executor<HttpRequestWrapper,HttpResponse> wrapExecutorWithInterceptors(Executor<HttpRequestWrapper,HttpResponse> executor) {
+        if (executor != null) {
+        	// we'll add the request and response interceptors that are used in tracing
+        	for (RequestInterceptor<HttpRequestWrapper> requestInterceptor : this.requestInterceptors) {
+        		executor.addRequestInterceptor(requestInterceptor);
+        	}
+        	for (ResponseInterceptor<HttpResponse> responseInterceptor : this.responseInterceptors) {
+        		executor.addResponseInterceptor(responseInterceptor);
+        	}
+        }
+        return executor;
+    }
+    
     /** Getter/Setter methods */
-
-    @Override
     public AbstractHandlerRegistry<HttpProxy> getRegistry() {
         return registry;
     }
-
-    @Override
     public void setRegistry(AbstractHandlerRegistry<HttpProxy> registry) {
         this.registry = (HttpProxyRegistry)registry;
     }
-
-    @Override
     public TaskContext getTaskContext() {
         return this.taskContext;
     }
-
-    @Override
     public void setTaskContext(TaskContext taskContext) {
         this.taskContext = taskContext;
     }
+	public void setRequestInterceptors(
+			List<RequestInterceptor<HttpRequestWrapper>> requestInterceptors) {
+		this.requestInterceptors = requestInterceptors;
+	}
+	public void setResponseInterceptors(
+			List<ResponseInterceptor<HttpResponse>> responseInterceptors) {
+		this.responseInterceptors = responseInterceptors;
+	}
     /** End Getter/Setter methods */
 }
