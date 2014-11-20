@@ -175,11 +175,19 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
     
     /**
      * Interface method implementation. Returns the name of the ThriftProxy used by this Executor
-     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName()
      */
-    public Optional<String> getServiceName(ThriftRequestWrapper requestWrapper) {
+    public Optional<String> getServiceName() {
     	return Optional.of(this.thriftProxy.getName());
-    }    
+    }  
+    
+    /**
+     * Interface method implementation. Returns the ThriftRequestWrapper instance that this Executor was created with
+     * @see com.flipkart.phantom.task.spi.Executor#getRequestWrapper()
+     */
+    public ThriftRequestWrapper getRequestWrapper() {
+    	return this.thriftRequestWrapper;
+    }
     
     /**Getter/Setter methods */
     public TTransport getClientTransport() {

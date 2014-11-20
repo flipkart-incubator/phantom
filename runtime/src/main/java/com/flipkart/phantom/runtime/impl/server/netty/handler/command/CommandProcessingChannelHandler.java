@@ -88,7 +88,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
                 executor = (TaskHandlerExecutor) this.repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(), taskRequestWrapper);
             }
             // set the service name for the request
-            taskRequestWrapper.setServiceName(executor.getServiceName(taskRequestWrapper));
+            taskRequestWrapper.setServiceName(executor.getServiceName());
             
             try {
                 TaskResult result = null;

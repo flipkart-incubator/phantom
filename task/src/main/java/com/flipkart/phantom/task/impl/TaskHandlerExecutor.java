@@ -305,12 +305,20 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     
     /**
      * Interface method implementation. Returns the name of the TaskHandler used by this Executor
-     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName()
      */
-    public Optional<String> getServiceName(TaskRequestWrapper requestWrapper) {
+    public Optional<String> getServiceName() {
     	return Optional.of(this.taskHandler.getName());
     }
 
+    /**
+     * Interface method implementation. Returns the TaskRequestWrapper instance that this Executor was created with
+     * @see com.flipkart.phantom.task.spi.Executor#getRequestWrapper()
+     */
+    public TaskRequestWrapper getRequestWrapper() {
+    	return this.taskRequestWrapper;
+    }
+    
     /**
      * First It checks the call invocation type has been overridden for the command,
      * if not, it defaults to task handler call invocation type.

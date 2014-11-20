@@ -16,6 +16,7 @@
 
 package com.flipkart.phantom.task.impl;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -25,15 +26,23 @@ import org.slf4j.LoggerFactory;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
+import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
+import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestContext;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.github.kristofa.brave.BraveContext;
+import com.github.kristofa.brave.ClientTracer;
+import com.github.kristofa.brave.TraceFilter;
+import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
@@ -71,6 +80,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
     /** The client request and response interceptors*/
     private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors;
     private List<ResponseInterceptor<TaskResult>> responseInterceptors;
+    
+    /** The EventDispatchingSpanCollector instance used in tracing requests*/
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
 
     /**
      * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
@@ -100,7 +112,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         	executor = getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
         			maxConcurrency, executionTimeout, taskHandler);
         }
-        return this.wrapExecutorWithInterceptors(executor);
+        return this.wrapExecutorWithInterceptors(executor, taskHandler);
     }
 
     /**
@@ -133,7 +145,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         	executor = getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
         			maxConcurrency, executionTimeout, taskHandler, decoder);
         }
-        return this.wrapExecutorWithInterceptors(executor);
+        return this.wrapExecutorWithInterceptors(executor, taskHandler);
     }
 
     /**
@@ -306,9 +318,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
     /**
      * Helper method to wrap the Executor with request and response interceptors 
      */
-    private Executor<TaskRequestWrapper,TaskResult> wrapExecutorWithInterceptors(Executor<TaskRequestWrapper,TaskResult> executor) {
+    private Executor<TaskRequestWrapper,TaskResult> wrapExecutorWithInterceptors(Executor<TaskRequestWrapper,TaskResult> executor, TaskHandler taskHandler) {
         if (executor != null) {
-        	// we'll add the request and response interceptors that are used in tracing
+        	// we'll add the request and response interceptors that were configured on this repository
         	for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
         		executor.addRequestInterceptor(requestInterceptor);
         	}
@@ -316,6 +328,24 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         		executor.addResponseInterceptor(responseInterceptor);
         	}
         }
+        // now add the tracing interceptors - has to be an instance specific to each new Executor i.e. Request
+        ClientRequestInterceptor<TaskRequestWrapper> tracingRequestInterceptor = new ClientRequestInterceptor<TaskRequestWrapper>();
+        // check if the request already has tracing context initiated and use it, else create a new one
+        Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
+        BraveContext requestTracingContext = null;
+        if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
+        	requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
+        } else {
+        	RequestContext newRequestContext = new RequestContext();
+        	newRequestContext.setRequestTracingContext(new BraveContext());
+        	requestContextOptional = Optional.of(newRequestContext);
+        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
+        }
+    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(taskHandler.getName()));
+    	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
+    	tracingRequestInterceptor.setClientTracer(clientTracer);
+        executor.addRequestInterceptor(tracingRequestInterceptor);
+        executor.addResponseInterceptor(new CommandClientResponseInterceptor<TaskResult>());
         return executor;
     }
     
@@ -408,6 +438,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
 	}
 	public void setResponseInterceptors(List<ResponseInterceptor<TaskResult>> responseInterceptors) {
 		this.responseInterceptors = responseInterceptors;
+	}
+	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
+		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
 	}
     
 }

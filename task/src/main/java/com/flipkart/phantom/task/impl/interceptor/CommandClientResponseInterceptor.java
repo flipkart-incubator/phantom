@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.phantom.runtime.impl.interceptor;
+package com.flipkart.phantom.task.impl.interceptor;
 
 import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.impl.interceptor.AbstractClientResponseInterceptor;

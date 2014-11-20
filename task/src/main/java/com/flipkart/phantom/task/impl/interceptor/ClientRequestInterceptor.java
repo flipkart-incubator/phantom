@@ -18,9 +18,6 @@ package com.flipkart.phantom.task.impl.interceptor;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
-
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.SpanNameFilter;
@@ -37,7 +34,7 @@ import com.google.common.collect.Lists;
  * @author Regunath B
  * @version 1.0, 13th Nov, 2014
  */
-public class ClientRequestInterceptor<T extends RequestWrapper> implements RequestInterceptor<T>, InitializingBean {
+public class ClientRequestInterceptor<T extends RequestWrapper> implements RequestInterceptor<T> {
 
 	/** The request annotation and value strings*/
     private static final String REQUEST_ANNOTATION = "request";
@@ -50,14 +47,6 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
     /** The optional Span name filter*/
     private Optional<SpanNameFilter> spanNameFilter;
 
-    /**
-     * Interface method implementation. Checks if all mandatory properties have been set
-     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
-     */
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.clientTracer, "The 'clientTracer' may not be null");
-    }
-    
 	/**
 	 * Interface method implementation. Performs client request tracing.
 	 * @see com.flipkart.phantom.task.spi.interceptor.RequestInterceptor#process(com.flipkart.phantom.task.spi.RequestWrapper)

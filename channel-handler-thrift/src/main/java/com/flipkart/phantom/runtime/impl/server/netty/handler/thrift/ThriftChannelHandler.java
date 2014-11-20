@@ -111,7 +111,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
             //Execute
             Executor<ThriftRequestWrapper,TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
             // set the service name for the request
-            thriftRequestWrapper.setServiceName(executor.getServiceName(thriftRequestWrapper));
+            thriftRequestWrapper.setServiceName(executor.getServiceName());
             
             try {
                 executor.execute();

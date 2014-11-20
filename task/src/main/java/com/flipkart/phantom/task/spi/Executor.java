@@ -59,9 +59,14 @@ public interface Executor<T extends RequestWrapper,S> {
     
     /**
      * Returns the service name for this executor
-     * @param requestWrapper the request wrapper
      * @return an optional service name
      */
-    public Optional<String> getServiceName(T requestWrapper);
+    public Optional<String> getServiceName();
+    
+    /**
+     * Returns the RequestWrapper that this Executor was created with 
+     * @return RequestWrapper instance
+     */
+    public T getRequestWrapper();
     
 }

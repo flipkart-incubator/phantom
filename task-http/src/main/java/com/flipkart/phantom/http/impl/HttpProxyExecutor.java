@@ -105,12 +105,20 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     
     /**
      * Interface method implementation. Returns the name of the {@link HttpProxy} used by this Executor
-     * @see com.flipkart.phantom.task.spi.Executor#getServiceName(com.flipkart.phantom.task.spi.RequestWrapper)
+     * @see com.flipkart.phantom.task.spi.Executor#getServiceName()
      */
-    public Optional<String> getServiceName(HttpRequestWrapper requestWrapper) {
+    public Optional<String> getServiceName() {
     	return Optional.of(this.proxy.getName());
     }
 
+    /**
+     * Interface method implementation. Returns the HttpRequestWrapper instance that this Executor was created with
+     * @see com.flipkart.phantom.task.spi.Executor#getRequestWrapper()
+     */
+    public HttpRequestWrapper getRequestWrapper() {
+    	return this.httpRequestWrapper;
+    }
+    
     /**
      * Interface method implementation. Adds the RequestInterceptor to the list of request interceptors that will be invoked
      * @see com.flipkart.phantom.task.spi.Executor#addRequestInterceptor(com.flipkart.phantom.task.spi.interceptor.RequestInterceptor)

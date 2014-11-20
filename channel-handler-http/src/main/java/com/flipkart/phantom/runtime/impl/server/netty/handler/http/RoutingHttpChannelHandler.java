@@ -151,7 +151,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
 
         // set the service name for the request
-        executorHttpRequest.setServiceName(executor.getServiceName(executorHttpRequest));
+        executorHttpRequest.setServiceName(executor.getServiceName());
         
         // execute
         HttpResponse response = null;
