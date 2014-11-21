@@ -11,6 +11,11 @@
     <bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
         <property name="name" value="defaultProxy" />
         <property name="pool" ref="sampleConnectionPool" />
+        <property name="traceFilter">
+            <bean class="com.github.kristofa.brave.FixedSampleRateTraceFilter">
+				<constructor-arg index="0" value="1"/>                
+            </bean>
+        </property>
     </bean>
 
     <!-- http connection pool -->
