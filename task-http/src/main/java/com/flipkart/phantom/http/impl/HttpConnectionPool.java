@@ -16,14 +16,6 @@
 
 package com.flipkart.phantom.http.impl;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -40,18 +32,12 @@ import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.flipkart.phantom.task.impl.TaskContextFactory;
-import com.github.kristofa.brave.Brave;
-import com.github.kristofa.brave.ClientTracer;
-import com.github.kristofa.brave.EndPointSubmitter;
-import com.github.kristofa.brave.FixedSampleRateTraceFilter;
-import com.github.kristofa.brave.ServerTracer;
-import com.github.kristofa.brave.SpanCollector;
-import com.github.kristofa.brave.TraceFilter;
-import com.github.kristofa.brave.httpclient.BraveHttpRequestInterceptor;
-import com.github.kristofa.brave.httpclient.BraveHttpResponseInterceptor;
-import com.github.kristofa.brave.zipkin.ZipkinSpanCollector;
-import com.google.common.base.Optional;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests
@@ -109,9 +95,6 @@ public class HttpConnectionPool {
 
     /** Setting for forwarding Http headers*/
     private boolean forwardHeaders = HttpConnectionPool.FORWARD_HEADERS;
-    
-    private ClientTracer clientTracer;
-    private ServerTracer serverTracer;
 
     /**
      * Initialize the connection pool
@@ -152,14 +135,6 @@ public class HttpConnectionPool {
 
         // create client pool
         this.client = new DefaultHttpClient(cm, httpParams);
-        List<TraceFilter> filters =Arrays.<TraceFilter>asList(new FixedSampleRateTraceFilter(1));
-        SpanCollector spanCollector = new ZipkinSpanCollector("localhost", 9410);
-        clientTracer = Brave.getClientTracer(spanCollector, filters);      
-        serverTracer = Brave.getServerTracer(spanCollector, filters);
-        final EndPointSubmitter endPointSubmitter = Brave.getEndPointSubmitter();
-        endPointSubmitter.submit(host,port,"HttpProxy");
-        this.client.addRequestInterceptor(new BraveHttpRequestInterceptor(clientTracer, Optional.<String>absent()));
-        this.client.addResponseInterceptor(new BraveHttpResponseInterceptor(clientTracer));
     }
 
     /**
@@ -168,35 +143,17 @@ public class HttpConnectionPool {
      * @return response HttpResponse object
      */
     public HttpResponse execute(HttpRequestBase request, List<Map.Entry<String,String>> headers) throws Exception {
-    	serverTracer.setStateUnknown("HttpProxy");
-    	/*
-    	clientTracer.startNewSpan("HttpRequest");
-    	clientTracer.setCurrentClientServiceName("HttpProxy");
-    	clientTracer.submitBinaryAnnotation("Request",request.getURI().getPath());
-    	clientTracer.setClientSent();
-    	*/
         setRequestHeaders(request, headers);
         logger.debug("Sending request: "+request.getURI());
         if (processQueue.tryAcquire()) {
             HttpResponse response;
             try {
                 response = client.execute(request);
-            	clientTracer.startNewSpan("GetConfig");
-            	clientTracer.setCurrentClientServiceName("GetConfig");
-            	clientTracer.submitBinaryAnnotation("Config key","poolsize");
-            	clientTracer.setClientSent();
-            	try {
-            		TaskContextFactory.getTaskContext().getConfig("TestGroup", "TestKey", 1);
-            	} catch(Exception e) {
-            		// ignore
-            	}
-            	clientTracer.setClientReceived();
             } catch (Exception e) {
                 processQueue.release();
                 throw e;
             }
             processQueue.release();
-        	//clientTracer.setClientReceived();
             return response;
         } else {
             throw new Exception("Process queue full!");
