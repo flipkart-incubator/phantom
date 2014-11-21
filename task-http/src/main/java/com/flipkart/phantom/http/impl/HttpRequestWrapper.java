@@ -16,11 +16,13 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.google.common.base.Optional;
-
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+
+import com.flipkart.phantom.task.spi.RequestWrapper;
+import com.google.common.base.Optional;
 
 /**
  *
@@ -59,15 +61,19 @@ public class HttpRequestWrapper extends RequestWrapper {
      */
     public String getRequestName() {
     	String requestName = this.uri;
-    	if (this.getServiceName().isPresent()) {
-    		return requestName;
+    	if (!this.getServiceName().isPresent()) {
+	        final String[] split = this.uri.split("/");
+	        if (split.length > 2 && this.uri.startsWith("/")) {
+	            // If path starts with '/', then context is between first two '/'. Left over is path for service.
+	            final int contextPathSeparatorIndex = this.uri.indexOf("/", 1);
+	            requestName = this.uri.substring(contextPathSeparatorIndex);
+	        }
     	}
-        final String[] split = this.uri.split("/");
-        if (split.length > 2 && this.uri.startsWith("/")) {
-            // If path starts with '/', then context is between first two '/'. Left over is path for service.
-            final int contextPathSeparatorIndex = this.uri.indexOf("/", 1);
-            requestName = this.uri.substring(contextPathSeparatorIndex);
-        } 	
+    	try {
+			requestName = new URI(requestName).getPath();
+		} catch (URISyntaxException e) {
+			// ignore. we will return the URI string as is
+		}
     	return requestName;
     }
     

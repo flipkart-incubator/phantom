@@ -28,11 +28,9 @@ import org.trpr.platform.core.PlatformException;
 import java.util.*;
 
 /**
- * <code>TaskHandler</code> executes a unit of work i.e thrift. Provides lifecycle methods to initialize the thrift processing infrastructure. Life cycle methods
+ * <code>TaskHandler</code> executes a Command request. Provides lifecycle methods to initialize the Command protocol processing infrastructure. Life cycle methods
  * are invoked by the container in a thread-safe manner before this TaskHandler actually starts processing requests.
- * This implementation works on the Command pattern where-in all data required to execute the thrift is provided in the method call to execute the thrift.
- * Task execution is stateless i.e. there is no shared state between any number of consecutive thrift executions. The thrift execution pattern is request-response
- * driven. 
+ * This implementation works on the Command pattern where-in all data required to execute the request is provided in the method call.
  *
  * @author devashishshankar
  * @author regunath.balasubramanian
@@ -41,6 +39,10 @@ import java.util.*;
  * @version 2.0, 11 July, 2013
  */
 public abstract class TaskHandler extends AbstractHandler implements DisposableBean {
+	
+	/** Default host name and port where this TaskHandler is available */
+	public static final String DEFAULT_HOST = "localhost";
+	public static final int DEFAULT_PORT = -1; // no valid port really
 
     /** Log instance for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandler.class);

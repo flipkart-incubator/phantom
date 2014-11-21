@@ -30,7 +30,7 @@ import org.trpr.platform.core.spi.event.EndpointEventProducer;
 public class ServiceProxyEventProducer {
 
     /** End Point URI Prefix to publish service proxy events */
-    private final static String EVENT_PUBLISHING_URI = "evt://com.flipkart.phantom.events.";
+    public final static String EVENT_PUBLISHING_URI = "evt://com.flipkart.phantom.events.";
 
     private EndpointEventProducer eventProducer;
 

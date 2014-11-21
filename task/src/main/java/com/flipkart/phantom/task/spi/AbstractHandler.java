@@ -47,7 +47,7 @@ abstract public class AbstractHandler {
     public static final int INACTIVE = 0;
     
     /** The default value for tracing frequency. This value indicates that tracing if OFF*/
-    public static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);
+    public static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(1);
 
     /** The default command invocation type for this AbstractHandler*/
     private int callInvocationType = AbstractHandler.SYNC_CALL;

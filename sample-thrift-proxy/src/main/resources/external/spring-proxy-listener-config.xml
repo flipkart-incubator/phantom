@@ -40,6 +40,7 @@
     <bean id="thriftProxyRepository" class="com.flipkart.phantom.thrift.impl.ThriftProxyExecutorRepository">
         <property name="taskContext" ref="taskContext"></property>
         <property name="registry" ref="thriftProxyRegistry"></property>
+        <property name="eventDispatchingSpanCollector" ref="eventDispatchingSpanCollector"/>
     </bean>
 
     <bean id="thriftProxyRegistry" class="com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry"></bean>

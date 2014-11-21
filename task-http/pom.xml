@@ -61,28 +61,7 @@
         </developer>
     </developers>
 
-  <properties>
-    <brave.version>2.2.1</brave.version>
-  </properties>
-    
     <dependencies>
-        
-<dependency>
-    <groupId>com.github.kristofa</groupId>
-    <artifactId>brave-zipkin-spancollector</artifactId>
-    <version>${brave.version}</version>
-</dependency>    
-<dependency>
-    <groupId>com.github.kristofa</groupId>
-    <artifactId>brave-apache-http-interceptors</artifactId>
-    <version>${brave.version}</version>
-</dependency>    
-<dependency>
-    <groupId>com.github.kristofa</groupId>
-    <artifactId>brave-impl-spring</artifactId>
-    <version>${brave.version}</version>
-</dependency>    
-
         <!-- Third party dependencies -->
         <dependency>
             <groupId>org.slf4j</groupId>

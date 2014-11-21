@@ -16,6 +16,7 @@
 package com.flipkart.phantom.thrift.impl;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.thrift.transport.TTransport;
@@ -34,6 +35,8 @@ import com.flipkart.phantom.thrift.impl.interceptor.ThriftClientResponseIntercep
 import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
 import com.github.kristofa.brave.BraveContext;
 import com.github.kristofa.brave.ClientTracer;
+import com.github.kristofa.brave.EndPointSubmitter;
+import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 
@@ -53,8 +56,8 @@ public class ThriftProxyExecutorRepository implements ExecutorRepository<ThriftR
     private ThriftProxyRegistry registry;
 
     /** The client request and response interceptors*/
-    private List<RequestInterceptor<ThriftRequestWrapper>> requestInterceptors;
-    private List<ResponseInterceptor<TTransport>> responseInterceptors;
+    private List<RequestInterceptor<ThriftRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<ThriftRequestWrapper>>();
+    private List<ResponseInterceptor<TTransport>> responseInterceptors = new LinkedList<ResponseInterceptor<TTransport>>();
     
     /** The EventDispatchingSpanCollector instance used in tracing requests*/
     private EventDispatchingSpanCollector eventDispatchingSpanCollector;
@@ -95,19 +98,27 @@ public class ThriftProxyExecutorRepository implements ExecutorRepository<ThriftR
          // check if the request already has tracing context initiated and use it, else create a new one
          Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
          BraveContext requestTracingContext = null;
+      	 List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(proxy.getName()));
          if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
          	requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
          } else {
-         	RequestContext newRequestContext = new RequestContext();
-         	newRequestContext.setRequestTracingContext(new BraveContext());
-         	requestContextOptional = Optional.of(newRequestContext);
-         	executor.getRequestWrapper().setRequestContext(requestContextOptional);
+        	 RequestContext newRequestContext = new RequestContext();
+         	 requestTracingContext = new BraveContext();
+         	 // we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
+         	 final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+         	 serverTracer.setStateUnknown(proxy.getName());
+             final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
+             endPointSubmitter.submit(proxy.getThriftServer(),proxy.getThriftPort(),proxy.getName());        	
+         	 newRequestContext.setRequestTracingContext(requestTracingContext);
+         	 requestContextOptional = Optional.of(newRequestContext);
+         	 executor.getRequestWrapper().setRequestContext(requestContextOptional);
          }
-     	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(proxy.getName()));
-     	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
-     	tracingRequestInterceptor.setClientTracer(clientTracer);
+     	 ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
+     	 tracingRequestInterceptor.setClientTracer(clientTracer);
          executor.addRequestInterceptor(tracingRequestInterceptor);
-         executor.addResponseInterceptor(new ThriftClientResponseInterceptor<TTransport>());
+         ThriftClientResponseInterceptor<TTransport> responseInterceptor = new ThriftClientResponseInterceptor<TTransport>();
+         responseInterceptor.setClientTracer(clientTracer);
+         executor.addResponseInterceptor(responseInterceptor);
          return executor;
      }
      

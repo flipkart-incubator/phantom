@@ -45,7 +45,7 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
     private ClientTracer clientTracer;
     
     /** The optional Span name filter*/
-    private Optional<SpanNameFilter> spanNameFilter;
+    private Optional<SpanNameFilter> spanNameFilter = Optional.absent();
 
 	/**
 	 * Interface method implementation. Performs client request tracing.
@@ -72,12 +72,26 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	 * @return the span name
 	 */
 	protected String getSpanName(T request) {
+		final Optional<String> spanNameFromRequest = this.getSpanNameFromRequest(request);
+		if (spanNameFromRequest.isPresent()) {
+			return spanNameFromRequest.get();
+		}
 		String spanName = request.getRequestName();
         if (this.spanNameFilter.isPresent()) {
             spanName = this.spanNameFilter.get().filterSpanName(spanName);
         }
         return spanName;
 	}
+	
+	/**
+	 * Gets a span name from the request. This implementation returns that it is absent. Subtypes of this class may return appropriate implementations,
+	 * if relevant
+	 * @return an optional span name from the request
+	 */
+    protected Optional<String> getSpanNameFromRequest(T request) {
+        Optional<String> spanName = Optional.absent();
+        return spanName;
+    }	
 	
 	/**
 	 * Adds tracing headers to the request wrapper for the specified span.

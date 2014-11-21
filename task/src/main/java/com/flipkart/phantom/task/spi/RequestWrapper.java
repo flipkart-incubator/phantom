@@ -31,7 +31,7 @@ import com.google.common.base.Optional;
 public abstract class RequestWrapper {
 	
 	/** The RequestContext instance*/
-	private Optional<RequestContext> requestContext;
+	private Optional<RequestContext> requestContext = Optional.absent();
 	
 	/** The name of the target service for this request wrapper*/
 	private Optional<String> serviceName;

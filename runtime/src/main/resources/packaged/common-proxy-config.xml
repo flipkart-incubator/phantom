@@ -35,7 +35,7 @@
         <property name="registry" ref="taskHandlerRegistry" />
         <property name="eventProducer"  ref="commonServiceProxyEventProducer" />
         <property name="eventDispatchingSpanCollector"  ref="eventDispatchingSpanCollector" />
-        </bean>
+    </bean>
 
     <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry"/>
 
@@ -58,7 +58,7 @@
     </bean>    
 
     <!--This bean corresponds to consumer of Service Proxy Events which listens to all event types and logs errors-->
-    <bean id="commonErrorRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
+    <bean id="commonRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
         <property name="subscriptions">
             <list>
                 <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>

@@ -17,6 +17,7 @@
 package com.flipkart.phantom.task.impl;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -41,6 +42,8 @@ import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import com.github.kristofa.brave.BraveContext;
 import com.github.kristofa.brave.ClientTracer;
+import com.github.kristofa.brave.EndPointSubmitter;
+import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
@@ -78,8 +81,8 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
     private ServiceProxyEventProducer eventProducer;
     
     /** The client request and response interceptors*/
-    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors;
-    private List<ResponseInterceptor<TaskResult>> responseInterceptors;
+    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<TaskRequestWrapper>>();
+    private List<ResponseInterceptor<TaskResult>> responseInterceptors = new LinkedList<ResponseInterceptor<TaskResult>>();
     
     /** The EventDispatchingSpanCollector instance used in tracing requests*/
     private EventDispatchingSpanCollector eventDispatchingSpanCollector;
@@ -333,19 +336,27 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         // check if the request already has tracing context initiated and use it, else create a new one
         Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
         BraveContext requestTracingContext = null;
-        if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
-        	requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
-        } else {
-        	RequestContext newRequestContext = new RequestContext();
-        	newRequestContext.setRequestTracingContext(new BraveContext());
-        	requestContextOptional = Optional.of(newRequestContext);
-        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
-        }
     	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(taskHandler.getName()));
+    	if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
+    		requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
+    	} else {
+    		RequestContext newRequestContext = new RequestContext();
+    		requestTracingContext = new BraveContext();
+    		// we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
+    		final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+    		serverTracer.setStateUnknown(taskHandler.getName());
+    		final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
+    		endPointSubmitter.submit(TaskHandler.DEFAULT_HOST,TaskHandler.DEFAULT_PORT,taskHandler.getName());        	
+    		newRequestContext.setRequestTracingContext(requestTracingContext);
+    		requestContextOptional = Optional.of(newRequestContext);
+    		executor.getRequestWrapper().setRequestContext(requestContextOptional);
+    	}
     	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
     	tracingRequestInterceptor.setClientTracer(clientTracer);
         executor.addRequestInterceptor(tracingRequestInterceptor);
-        executor.addResponseInterceptor(new CommandClientResponseInterceptor<TaskResult>());
+        CommandClientResponseInterceptor<TaskResult> responseInterceptor = new CommandClientResponseInterceptor<TaskResult>();
+        responseInterceptor.setClientTracer(clientTracer);
+        executor.addResponseInterceptor(responseInterceptor);
         return executor;
     }
     

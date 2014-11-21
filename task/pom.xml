@@ -100,7 +100,22 @@
 		    <groupId>com.github.kristofa</groupId>
 		    <artifactId>brave-impl</artifactId>
 		    <version>${brave.version}</version>
-		</dependency>            
+            <exclusions>
+                <exclusion> <!-- Remove Http client -->
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+                <exclusion> <!-- Remove Http core -->
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+                </exclusions>
+		</dependency>
+		<dependency>
+		    <groupId>com.github.kristofa</groupId>
+		    <artifactId>brave-zipkin-spancollector</artifactId>
+		    <version>${brave.version}</version>
+		</dependency>            				            
 	</dependencies>
 
     <build>
