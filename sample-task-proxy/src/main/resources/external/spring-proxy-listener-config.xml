@@ -73,6 +73,7 @@
             </list>
         </property>
     </bean>
+    <!-- Enable this bean only when distributed tracing is needed
     <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
         <property name="requestLogger" ref="commonRequestLogger"/>
         <property name="zipkinSpanCollector">
@@ -87,6 +88,7 @@
             </list>
         </property>
     </bean>
+    -->
     <!-- Task Handler Event Publishers & Consumers-->
     
 
