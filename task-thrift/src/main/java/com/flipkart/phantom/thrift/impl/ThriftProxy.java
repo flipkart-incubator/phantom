@@ -16,9 +16,11 @@
 
 package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.thrift.impl.proxy.SocketObjectFactory;
+import java.lang.reflect.Method;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.thrift.ProcessFunction;
 import org.apache.thrift.TBase;
@@ -34,10 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import java.lang.reflect.Method;
-import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.thrift.impl.proxy.SocketObjectFactory;
 
 /**
  * <code>ThriftProxy</code> holds the details of a ThriftProxy and loads the necessary Thrift Classes.
@@ -243,6 +244,22 @@ public abstract class ThriftProxy extends AbstractHandler implements Initializin
         return "ThriftProxy";
     }
 
+    /**
+     * Abstract method implementation. Returns the target thrift server host name
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getHost()
+     */
+    public String getHost() {
+    	return this.thriftServer;
+    }
+
+    /**
+     * Abstract method implementation. Returns the target thrift server port
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getPort()
+     */
+    public int getPort() {
+    	return this.thriftPort;
+    }
+    
     /**
      * Shutdown hooks provided by the ThriftProxy
      */

@@ -16,9 +16,6 @@
 
 package com.flipkart.phantom.task.impl;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -27,25 +24,13 @@ import org.slf4j.LoggerFactory;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
+import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestContext;
 import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
-import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.github.kristofa.brave.BraveContext;
-import com.github.kristofa.brave.ClientTracer;
-import com.github.kristofa.brave.EndPointSubmitter;
-import com.github.kristofa.brave.ServerTracer;
-import com.github.kristofa.brave.TraceFilter;
-import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
@@ -57,7 +42,7 @@ import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
  * @version 1.0, 20th March, 2013
  */
 @SuppressWarnings("rawtypes")
-public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> {
+public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> {
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutorRepository.class);
@@ -71,22 +56,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
     /** The default thread pool core size*/
     private static final int DEFAULT_THREAD_POOL_SIZE = 10;
 
-    /** The registry holding the names of the TaskHandler */
-    private TaskHandlerRegistry registry;
-
-    /** The taskContext being passed to the Handlers, providing a way for communication to the Container */
-    private TaskContext taskContext;
-
     /** The publisher used to broadcast events to Service Proxy Subscribers */
     private ServiceProxyEventProducer eventProducer;
     
-    /** The client request and response interceptors*/
-    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<TaskRequestWrapper>>();
-    private List<ResponseInterceptor<TaskResult>> responseInterceptors = new LinkedList<ResponseInterceptor<TaskResult>>();
-    
-    /** The EventDispatchingSpanCollector instance used in tracing requests*/
-    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
-
     /**
      * Gets the TaskHandlerExecutor or RequestCacheableTaskHandlerExecutor for a commandName
      * @param commandName the command name/String for which the Executor is needed
@@ -322,42 +294,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
      * Helper method to wrap the Executor with request and response interceptors 
      */
     private Executor<TaskRequestWrapper,TaskResult> wrapExecutorWithInterceptors(Executor<TaskRequestWrapper,TaskResult> executor, TaskHandler taskHandler) {
-        if (executor != null) {
-        	// we'll add the request and response interceptors that were configured on this repository
-        	for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
-        		executor.addRequestInterceptor(requestInterceptor);
-        	}
-        	for (ResponseInterceptor<TaskResult> responseInterceptor : this.responseInterceptors) {
-        		executor.addResponseInterceptor(responseInterceptor);
-        	}
-        }
-        // now add the tracing interceptors - has to be an instance specific to each new Executor i.e. Request
         ClientRequestInterceptor<TaskRequestWrapper> tracingRequestInterceptor = new ClientRequestInterceptor<TaskRequestWrapper>();
-        // check if the request already has tracing context initiated and use it, else create a new one
-        Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
-        BraveContext requestTracingContext = null;
-    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(taskHandler.getName()));
-    	if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
-    		requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
-    	} else {
-    		RequestContext newRequestContext = new RequestContext();
-    		requestTracingContext = new BraveContext();
-    		// we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
-    		final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-    		serverTracer.setStateUnknown(taskHandler.getName());
-    		final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
-    		endPointSubmitter.submit(TaskHandler.DEFAULT_HOST,TaskHandler.DEFAULT_PORT,taskHandler.getName());        	
-    		newRequestContext.setRequestTracingContext(requestTracingContext);
-    		requestContextOptional = Optional.of(newRequestContext);
-    		executor.getRequestWrapper().setRequestContext(requestContextOptional);
-    	}
-    	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
-    	tracingRequestInterceptor.setClientTracer(clientTracer);
-        executor.addRequestInterceptor(tracingRequestInterceptor);
-        CommandClientResponseInterceptor<TaskResult> responseInterceptor = new CommandClientResponseInterceptor<TaskResult>();
-        responseInterceptor.setClientTracer(clientTracer);
-        executor.addResponseInterceptor(responseInterceptor);
-        return executor;
+        CommandClientResponseInterceptor<TaskResult> tracingResponseInterceptor = new CommandClientResponseInterceptor<TaskResult>();
+        return this.wrapExecutorWithInterceptors(executor, taskHandler, tracingRequestInterceptor, tracingResponseInterceptor);
     }
     
     /**
@@ -379,9 +318,9 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
         if(taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
             LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
-            if(getTaskHandlerRegistry().getPoolSize(proxyName)!=null) {
+            if(((TaskHandlerRegistry)getRegistry()).getPoolSize(proxyName)!=null) {
                 LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
-                maxConcurrentSize = getTaskHandlerRegistry().getPoolSize(proxyName);
+                maxConcurrentSize = ((TaskHandlerRegistry)getRegistry()).getPoolSize(proxyName);
             }
         }
         return maxConcurrentSize;
@@ -408,7 +347,7 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
             proxyName=commandName;
             LOGGER.debug("null/empty threadPoolName passed. defaulting to commandName: "+commandName);
         }
-        TaskHandler taskHandler = getTaskHandlerRegistry().getTaskHandlerByCommand(commandName);
+        TaskHandler taskHandler = ((TaskHandlerRegistry)getRegistry()).getTaskHandlerByCommand(commandName);
         if(taskHandler!=null) {
             if (!taskHandler.isActive()) {
                 LOGGER.error("TaskHandler: "+taskHandler.getName()+" is not yet active. Command: "+commandName+" will not be processed");
@@ -421,37 +360,8 @@ public class TaskHandlerExecutorRepository implements ExecutorRepository<TaskReq
     }
 
     /** Getter/Setter methods*/
-    public AbstractHandlerRegistry<TaskHandler> getRegistry() {
-        return this.registry;
-    }
-    public void setRegistry(AbstractHandlerRegistry<TaskHandler> taskHandlerRegistry) {
-        this.registry = (TaskHandlerRegistry)taskHandlerRegistry;
-    }
-    public TaskContext getTaskContext() {
-        return this.taskContext;
-    }
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
-    public TaskHandlerRegistry getTaskHandlerRegistry() {
-        AbstractHandlerRegistry<TaskHandler> registry = getRegistry();
-        if(registry instanceof TaskHandlerRegistry){
-            return (TaskHandlerRegistry)registry;
-        } else {
-            return new TaskHandlerRegistry();
-        }
-    }    
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;
     }
-	public void setRequestInterceptors(List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors) {
-		this.requestInterceptors = requestInterceptors;
-	}
-	public void setResponseInterceptors(List<ResponseInterceptor<TaskResult>> responseInterceptors) {
-		this.responseInterceptors = responseInterceptors;
-	}
-	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
-		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
-	}
     
 }

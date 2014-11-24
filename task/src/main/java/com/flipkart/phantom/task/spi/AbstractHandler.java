@@ -75,6 +75,18 @@ abstract public class AbstractHandler {
      * @return String type
      */
     abstract public String getType();
+    
+    /**
+     * Gets the host name that is hosting this handler
+     * @return the host name
+     */
+    abstract public String getHost();
+
+    /**
+     * Gets the port where this handler may be invoked
+     * @return the port
+     */
+    abstract public int getPort();
 
     /**
      * Method which returns a short description of the handler

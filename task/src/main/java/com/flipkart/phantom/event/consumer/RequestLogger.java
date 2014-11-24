@@ -69,9 +69,9 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
         if (platformEvent instanceof ServiceProxyEvent) {
         	ServiceProxyEvent serviceProxyEvent = (ServiceProxyEvent)platformEvent;
         	String subscriptionKey = ServiceProxyEventProducer.EVENT_PUBLISHING_URI + serviceProxyEvent.getEventType();
-        	if (subscriptionConsumers.containsKey(subscriptionKey)) {
+        	if (this.subscriptionConsumers.containsKey(subscriptionKey)) {
         		// we pass on this event to the consumer registered to process the event
-        		subscriptionConsumers.get(subscriptionKey).onApplicationEvent(new PlatformApplicationEvent(platformEvent));
+        		this.subscriptionConsumers.get(subscriptionKey).onApplicationEvent(new PlatformApplicationEvent(platformEvent));
         	} else {
         		log((ServiceProxyEvent) platformEvent);
         	}
@@ -81,7 +81,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
     }
     
     /**
-     * Adds the specified endpoint URI to the subscriptions list of this consumer. Forwards all received callbacks to the specified EndpointEventConsumer
+     * Adds the specified endpoint URI to the subscriptions list of this consumer. Forwards all received matching callbacks to the specified EndpointEventConsumer
      * @param endpointURI the subscription to add to the list of subscriptions
      * @param eventConsumer the EndpointEventConsumer to invoke for all events with matching endpoint URIs.
      */

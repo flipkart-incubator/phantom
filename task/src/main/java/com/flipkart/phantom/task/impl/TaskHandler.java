@@ -41,7 +41,7 @@ import java.util.*;
 public abstract class TaskHandler extends AbstractHandler implements DisposableBean {
 	
 	/** Default host name and port where this TaskHandler is available */
-	public static final String DEFAULT_HOST = "localhost";
+	public static final String DEFAULT_HOST = "localhost"; // no remote hosts
 	public static final int DEFAULT_PORT = -1; // no valid port really
 
     /** Log instance for this class */
@@ -67,6 +67,22 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
         return "TaskHandler";
     }
 
+    /**
+     * Abstract method implementation. Returns the {@link TaskHandler#DEFAULT_HOST}
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getHost()
+     */
+    public String getHost() {
+    	return DEFAULT_HOST;
+    }
+
+    /**
+     * Abstract method implementation. Returns the {@link TaskHandler#DEFAULT_PORT}
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getPort()
+     */
+    public int getPort() {
+    	return DEFAULT_PORT;
+    }
+    
     /**
      * Abstract method implementation
      * @see AbstractHandler#getDetails()

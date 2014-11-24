@@ -15,30 +15,13 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.thrift.transport.TTransport;
 
-import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
+import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestContext;
 import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
-import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import com.flipkart.phantom.thrift.impl.interceptor.ThriftClientResponseInterceptor;
-import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
-import com.github.kristofa.brave.BraveContext;
-import com.github.kristofa.brave.ClientTracer;
-import com.github.kristofa.brave.EndPointSubmitter;
-import com.github.kristofa.brave.ServerTracer;
-import com.github.kristofa.brave.TraceFilter;
-import com.google.common.base.Optional;
 
 /**
  * <code>ThriftProxyExecutorRepository</code> is a repository of {@link ThriftProxyExecutor} instances. Provides methods to control instantiation of
@@ -47,21 +30,8 @@ import com.google.common.base.Optional;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutorRepository implements ExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> {
+public class ThriftProxyExecutorRepository extends AbstractExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> {
 
-    /** The TaskContext instance */
-    private TaskContext taskContext;
-
-    /** Thrift Proxy Registry containing the list of Thrift Proxies */
-    private ThriftProxyRegistry registry;
-
-    /** The client request and response interceptors*/
-    private List<RequestInterceptor<ThriftRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<ThriftRequestWrapper>>();
-    private List<ResponseInterceptor<TTransport>> responseInterceptors = new LinkedList<ResponseInterceptor<TTransport>>();
-    
-    /** The EventDispatchingSpanCollector instance used in tracing requests*/
-    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
-    
     /**
      *  Returns a {@link ThriftProxyExecutor} for the specified ThriftProxy and command name
      *
@@ -84,65 +54,9 @@ public class ThriftProxyExecutorRepository implements ExecutorRepository<ThriftR
       * Helper method to wrap the Executor with request and response interceptors 
       */
      private Executor<ThriftRequestWrapper,TTransport> wrapExecutorWithInterceptors(Executor<ThriftRequestWrapper,TTransport> executor, HystrixThriftProxy proxy) {
-         if (executor != null) {
-         	// we'll add the request and response interceptors that were configured on this repository
-         	for (RequestInterceptor<ThriftRequestWrapper> requestInterceptor : this.requestInterceptors) {
-         		executor.addRequestInterceptor(requestInterceptor);
-         	}
-         	for (ResponseInterceptor<TTransport> responseInterceptor : this.responseInterceptors) {
-         		executor.addResponseInterceptor(responseInterceptor);
-         	}
-         }
-         // now add the tracing interceptors - has to be an instance specific to each new Executor i.e. Request
          ClientRequestInterceptor<ThriftRequestWrapper> tracingRequestInterceptor = new ClientRequestInterceptor<ThriftRequestWrapper>();
-         // check if the request already has tracing context initiated and use it, else create a new one
-         Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
-         BraveContext requestTracingContext = null;
-      	 List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(proxy.getName()));
-         if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
-         	requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
-         } else {
-        	 RequestContext newRequestContext = new RequestContext();
-         	 requestTracingContext = new BraveContext();
-         	 // we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
-         	 final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-         	 serverTracer.setStateUnknown(proxy.getName());
-             final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
-             endPointSubmitter.submit(proxy.getThriftServer(),proxy.getThriftPort(),proxy.getName());        	
-         	 newRequestContext.setRequestTracingContext(requestTracingContext);
-         	 requestContextOptional = Optional.of(newRequestContext);
-         	 executor.getRequestWrapper().setRequestContext(requestContextOptional);
-         }
-     	 ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
-     	 tracingRequestInterceptor.setClientTracer(clientTracer);
-         executor.addRequestInterceptor(tracingRequestInterceptor);
-         ThriftClientResponseInterceptor<TTransport> responseInterceptor = new ThriftClientResponseInterceptor<TTransport>();
-         responseInterceptor.setClientTracer(clientTracer);
-         executor.addResponseInterceptor(responseInterceptor);
-         return executor;
+         ThriftClientResponseInterceptor<TTransport> tracingResponseInterceptor = new ThriftClientResponseInterceptor<TTransport>();
+         return this.wrapExecutorWithInterceptors(executor, proxy, tracingRequestInterceptor, tracingResponseInterceptor);
      }
      
-    /** Start Getter/Setter methods */
-    public TaskContext getTaskContext() {
-        return this.taskContext;
-    }
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
-    public AbstractHandlerRegistry<ThriftProxy> getRegistry() {
-        return this.registry;
-    }
-    public void setRegistry(AbstractHandlerRegistry<ThriftProxy> registry) {
-        this.registry =  (ThriftProxyRegistry) registry;
-    }
-	public void setRequestInterceptors(List<RequestInterceptor<ThriftRequestWrapper>> requestInterceptors) {
-		this.requestInterceptors = requestInterceptors;
-	}
-	public void setResponseInterceptors(List<ResponseInterceptor<TTransport>> responseInterceptors) {
-		this.responseInterceptors = responseInterceptors;
-	}
-	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
-		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
-	}    
-    /** End End Getter/Setter methods */
 }
