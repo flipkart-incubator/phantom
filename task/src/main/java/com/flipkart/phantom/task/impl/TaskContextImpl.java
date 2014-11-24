@@ -83,6 +83,7 @@ public class TaskContextImpl implements TaskContext {
      */
     public TaskResult executeCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
         return this.executorRepository.executeCommand(commandName, taskRequestWrapper);
@@ -96,6 +97,7 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
         return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
@@ -104,6 +106,7 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
         return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper,decoder);
@@ -114,6 +117,7 @@ public class TaskContextImpl implements TaskContext {
      */
     public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
         return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper);

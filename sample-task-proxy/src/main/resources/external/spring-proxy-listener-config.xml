@@ -38,6 +38,17 @@
     </bean>
     
     <!-- Task Handler Event Publishers & Consumers-->
+    <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
 
     <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
     <bean id="endpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
@@ -54,11 +65,25 @@
     <bean id="errorRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
         <property name="subscriptions">
             <list>
-                <value>evt://com.flipkart.phantom.events.TASK_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
-                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
                 <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+    <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
+        <property name="requestLogger" ref="commonRequestLogger"/>
+        <property name="zipkinSpanCollector">
+            <bean class="com.github.kristofa.brave.zipkin.ZipkinSpanCollector">
+				<constructor-arg index="0" value="localhost"/>
+      			<constructor-arg index="1" value="9410"/>                
+            </bean>
+        </property>
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
             </list>
         </property>
     </bean>

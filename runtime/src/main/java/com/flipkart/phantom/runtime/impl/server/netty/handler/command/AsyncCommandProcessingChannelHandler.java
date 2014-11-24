@@ -83,6 +83,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 
             /** Prepare the request Wrapper */
             TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+            taskRequestWrapper.setCommandName(commandName);
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
             TaskHandlerExecutor executor = (TaskHandlerExecutor) this.repository.getExecutor(commandName, poolName, taskRequestWrapper);

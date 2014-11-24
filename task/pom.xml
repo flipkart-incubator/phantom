@@ -101,16 +101,27 @@
 		    <artifactId>brave-impl</artifactId>
 		    <version>${brave.version}</version>
             <exclusions>
-                <exclusion> <!-- Remove Http client -->
+                <exclusion> <!-- Remove Http client, we will add the correct version -->
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
                 </exclusion>
-                <exclusion> <!-- Remove Http core -->
+                <exclusion> <!-- Remove Http core, we will add the correct version -->
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
                 </exclusion>
                 </exclusions>
 		</dependency>
+		<!-- Add back the Http client and components dependencies with the correct version -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.2.1</version>
+        </dependency>				
 		<dependency>
 		    <groupId>com.github.kristofa</groupId>
 		    <artifactId>brave-zipkin-spancollector</artifactId>

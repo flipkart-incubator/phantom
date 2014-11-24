@@ -231,6 +231,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
                 // Prepare the request Wrapper
                 TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+                taskRequestWrapper.setCommandName(readCommand.getCommand());
                 taskRequestWrapper.setData(readCommand.getCommandData());
                 taskRequestWrapper.setParams(readCommand.getCommandParams());
 
