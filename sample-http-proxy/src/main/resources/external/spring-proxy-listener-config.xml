@@ -38,9 +38,16 @@
         <constructor-arg value="1048576" />
     </bean>
     <bean id="httpRequestHandler" class="com.flipkart.phantom.runtime.impl.server.netty.handler.http.HttpChannelHandler" scope="prototype">
+        <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
         <property name="repository" ref="httpProxyRepository"/>
         <property name="defaultProxy" value="defaultProxy" />
         <property name="eventProducer" ref="serviceProxyEventProducer"/>
+        <property name="eventDispatchingSpanCollector" ref="eventDispatchingSpanCollector"/>
+        <property name="traceFilter">
+            <bean class="com.github.kristofa.brave.FixedSampleRateTraceFilter">
+				<constructor-arg index="0" value="1"/>                
+            </bean>
+        </property>
     </bean>
 
     <!-- The executor repository for handling requests to HttpProxy -->

@@ -65,6 +65,14 @@ public class TaskRequestWrapper extends RequestWrapper {
     	// no op as we dont have a way to define headers in the Command protocol
     }
 
+    /**
+     * Abstract method implementation. Returns an absent Optional as headers is not supported by the Command protocol
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getHeaders()
+     */
+    public Optional<List<Map.Entry<String, String>>> getHeaders() {
+        return Optional.absent();
+    }
+    
     /**Start Getter/Setter methods */
     public byte[] getData(){
         return data;

@@ -86,62 +86,47 @@ public class HttpRequestWrapper extends RequestWrapper {
     }
 
     /** Start Getter/Setter methods */
-
     public byte[] getData(){
         return data;
     }
-
     public void setData(byte[] data){
         this.data = data;
     }
-
     public String getMethod(){
         return method;
     }
-
     public void setMethod(String method){
         this.method = method;
     }
-
     public String getUri(){
         return uri;
     }
-
     public void setUri(String uri){
         this.uri = uri;
     }
-
-    public List<Map.Entry<String, String>> getHeaders(){
-        return headers;
+    public Optional<List<Map.Entry<String, String>>> getHeaders() {
+        return Optional.of(headers);
     }
-
     public void setHeaders(List<Map.Entry<String, String>> headers){
         this.headers = headers;
     }
-
     public String getProtocol(){
         return protocol;
     }
-
     public void setProtocol(String protocol){
         this.protocol = protocol;
     }
-
     public int getMajorVersion(){
         return majorVersion;
     }
-
     public void setMajorVersion(int majorVersion){
         this.majorVersion = majorVersion;
     }
-
     public int getMinorVersion(){
         return minorVersion;
     }
-
     public void setMinorVersion(int minorVersion){
         this.minorVersion = minorVersion;
     }
-
      /**End Getter/Setter methods */
 }

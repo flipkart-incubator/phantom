@@ -101,12 +101,12 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
         	// we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
         	final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
         	serverTracer.setStateUnknown(handler.getName());
-            final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
-            endPointSubmitter.submit(handler.getHost(),handler.getPort(),handler.getName());        	
         	newRequestContext.setRequestTracingContext(requestTracingContext);
         	requestContextOptional = Optional.of(newRequestContext);
         	executor.getRequestWrapper().setRequestContext(requestContextOptional);
         }
+        final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
+        endPointSubmitter.submit(handler.getHost(),handler.getPort(),handler.getName());        	
     	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
     	tracingRequestInterceptor.setClientTracer(clientTracer);
         executor.addRequestInterceptor(tracingRequestInterceptor);

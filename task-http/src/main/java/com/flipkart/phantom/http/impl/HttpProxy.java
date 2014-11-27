@@ -83,7 +83,7 @@ public abstract class HttpProxy extends AbstractHandler {
     public HttpResponse doRequest(HttpRequestWrapper httpRequestWrapper) throws Exception {
         /** get necessary data required for the output */
         return pool.execute(createRequest(httpRequestWrapper.getMethod(),httpRequestWrapper.getUri(),
-                httpRequestWrapper.getData()), httpRequestWrapper.getHeaders());
+                httpRequestWrapper.getData()), httpRequestWrapper.getHeaders().get());
     }
 
     /**

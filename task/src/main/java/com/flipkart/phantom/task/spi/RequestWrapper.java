@@ -34,7 +34,7 @@ public abstract class RequestWrapper {
 	private Optional<RequestContext> requestContext = Optional.absent();
 	
 	/** The name of the target service for this request wrapper*/
-	private Optional<String> serviceName;
+	private Optional<String> serviceName = Optional.absent();
 	
 	/**
 	 * Returns a name that best describes the request being executed. For e.g. it could be the URI part of a Http request, the Thrift command being executed
@@ -54,6 +54,12 @@ public abstract class RequestWrapper {
 	 * @param headers request headers
 	 */
 	public abstract void setHeaders(List<Map.Entry<String, String>> headers);
+	
+	/**
+	 * Returns an optional list of request headers that may have been set on the request
+	 * @return optional list of request headers
+	 */
+	public abstract Optional<List<Map.Entry<String, String>>> getHeaders();
 
 	/** Setter/Getter methods */
 	public Optional<RequestContext> getRequestContext() {

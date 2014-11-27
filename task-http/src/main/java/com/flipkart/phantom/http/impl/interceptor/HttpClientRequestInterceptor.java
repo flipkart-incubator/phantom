@@ -38,7 +38,7 @@ public class HttpClientRequestInterceptor<S extends HttpRequestWrapper> extends 
 	 */
     protected Optional<String> getSpanNameFromRequest(S request) {
         Optional<String> spanName = super.getSpanNameFromRequest(request);
-        for (Map.Entry<String, String> entry : request.getHeaders()) {
+        for (Map.Entry<String, String> entry : request.getHeaders().get()) {
         	if (entry.getKey().equalsIgnoreCase(BraveHttpHeaders.SpanName.getName())) {
         		spanName = Optional.of(entry.getValue());
         		break;
