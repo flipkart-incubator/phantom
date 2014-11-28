@@ -72,6 +72,6 @@ public interface ExecutorRepository<T extends RequestWrapper,S, R extends Abstra
      * @param requestWrapper  the requestWrapper passed to the executor which process it to get the response
      * @return  {@link Executor}
      */
-    public Executor<T,S> getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper);
+    public Executor<T,S> getExecutor(String commandName, String proxyName, T requestWrapper);
 
 }

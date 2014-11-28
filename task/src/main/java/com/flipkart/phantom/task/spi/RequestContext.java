@@ -16,10 +16,10 @@
 
 package com.flipkart.phantom.task.spi;
 
-import com.github.kristofa.brave.BraveContext;
+import com.github.kristofa.brave.ServerSpan;
 
 /**
- * <code>RequestContext</code> holds information around a task request. This class holds a reference to {@link BraveContext} implementation of the Zipkin
+ * <code>RequestContext</code> holds information around a task request. This class holds a reference to {@link ServerSpan} implementation of the Zipkin
  * Java instrumentation library.
  * 
  * @author Regunath B
@@ -29,14 +29,14 @@ import com.github.kristofa.brave.BraveContext;
 public class RequestContext {
 
 	/** Instance variables used in request tracing */
-	private BraveContext requestTracingContext;
+	private ServerSpan currentServerSpan;
 
 	/** Setter/Getter methods*/
-	public BraveContext getRequestTracingContext() {
-		return requestTracingContext;
+	public ServerSpan getCurrentServerSpan() {
+		return currentServerSpan;
 	}
-	public void setRequestTracingContext(BraveContext requestTracingContext) {
-		this.requestTracingContext = requestTracingContext;
-	}	
+	public void setCurrentServerSpan(ServerSpan currentServerSpan) {
+		this.currentServerSpan = currentServerSpan;
+	}
 	
 }

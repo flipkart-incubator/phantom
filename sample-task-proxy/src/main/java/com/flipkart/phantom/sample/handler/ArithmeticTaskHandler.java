@@ -16,6 +16,7 @@
 package com.flipkart.phantom.sample.handler;
 
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
+import com.flipkart.phantom.task.impl.TaskContextFactory;
 import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.TaskContext;
 
@@ -46,10 +47,12 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
         float num2 = Float.parseFloat(params.get("num2"));
 
         if (CMD_ADD.equals(command)) {
+        	TaskContextFactory.getTaskContext().executeCommand(CMD_SUB, data, params);
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_SUB.equals(command)) {
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_MUL.equals(command)) {
+        	TaskContextFactory.getTaskContext().executeCommand(CMD_SUB, data, params);
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_DIV.equals(command)) {
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));

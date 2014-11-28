@@ -25,6 +25,7 @@ import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.github.kristofa.brave.Brave;
 import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
@@ -240,7 +241,11 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     @SuppressWarnings("unchecked")
 	@Override
     protected  TaskResult run() throws Exception {
-        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        this.eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        if (this.taskRequestWrapper.getRequestContext().isPresent() && this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
+        	Brave.getServerSpanThreadBinder().setCurrentSpan(this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan());
+        }
+        Brave.getEndPointSubmitter().submit(this.taskHandler.getHost(),this.taskHandler.getPort(),this.taskHandler.getName());
         for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.taskRequestWrapper);
         }        
@@ -334,7 +339,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         }
         return this.taskHandler.getCallInvocationType();
     }
-
+    
     /**
      * Getter method for the event builder
      */

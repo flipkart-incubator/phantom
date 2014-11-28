@@ -42,8 +42,9 @@ import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.ServerRequestInterceptor;
 import com.flipkart.phantom.task.spi.RequestContext;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.github.kristofa.brave.BraveContext;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.ServerSpan;
 import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
@@ -216,21 +217,21 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<TaskRequestWrapper, TaskResult> initializeServerTracing(TaskRequestWrapper executorRequest) {
-		// set the server request context on the received request
-    	BraveContext serverTracingContext = new BraveContext();
-    	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setRequestTracingContext(serverTracingContext);		
-    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         ServerRequestInterceptor<TaskRequestWrapper, TaskResult> serverRequestInterceptor = new ServerRequestInterceptor<TaskRequestWrapper, TaskResult>();
     	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
-    	ServerTracer serverTracer = serverTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-    	serverRequestInterceptor.setEndPointSubmitter(serverTracingContext.getEndPointSubmitter());
+    	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+    	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
         serverRequestInterceptor.setServerTracer(serverTracer);
         serverRequestInterceptor.setServiceHost(CommandProcessingChannelHandler.hostName);
         serverRequestInterceptor.setServicePort(this.hostPort);
         serverRequestInterceptor.setServiceName(this.serviceName);   
         // now process the request to initialize tracing
         serverRequestInterceptor.process(executorRequest); 
+		// set the server request context on the received request
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	RequestContext serverRequestContext = new RequestContext();
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
+    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         return serverRequestInterceptor;
     }
 	

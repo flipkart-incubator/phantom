@@ -21,6 +21,16 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
@@ -30,16 +40,12 @@ import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.ServerRequestInterceptor;
 import com.flipkart.phantom.task.spi.RequestContext;
-import com.github.kristofa.brave.BraveContext;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.ServerSpan;
 import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
-
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <code>AsyncCommandProcessingChannelHandler</code> is similar to @link{CommandProcessingChannelHandler} except it executes the
@@ -200,21 +206,21 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<TaskRequestWrapper, TaskResult> initializeServerTracing(TaskRequestWrapper executorRequest) {
-		// set the server request context on the received request
-    	BraveContext serverTracingContext = new BraveContext();
-    	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setRequestTracingContext(serverTracingContext);		
-    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         ServerRequestInterceptor<TaskRequestWrapper, TaskResult> serverRequestInterceptor = new ServerRequestInterceptor<TaskRequestWrapper, TaskResult>();
     	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
-    	ServerTracer serverTracer = serverTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-    	serverRequestInterceptor.setEndPointSubmitter(serverTracingContext.getEndPointSubmitter());
+    	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+    	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
         serverRequestInterceptor.setServerTracer(serverTracer);
         serverRequestInterceptor.setServiceHost(AsyncCommandProcessingChannelHandler.hostName);
         serverRequestInterceptor.setServicePort(this.hostPort);
         serverRequestInterceptor.setServiceName(this.serviceName);   
         // now process the request to initialize tracing
         serverRequestInterceptor.process(executorRequest); 
+		// set the server request context on the received request
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	RequestContext serverRequestContext = new RequestContext();
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
+    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         return serverRequestInterceptor;
     }
 	

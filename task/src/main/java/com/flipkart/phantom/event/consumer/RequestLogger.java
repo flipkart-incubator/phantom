@@ -15,7 +15,6 @@
  */
 package com.flipkart.phantom.event.consumer;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl;
@@ -57,7 +58,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
 
     /** Logger for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestLogger.class);
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss.SSS");
+    private static FastDateFormat dateFormatter = DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
     
     /** Map of endpoint URIs and their registered consumers*/
     private Map<String, EndpointEventConsumer> subscriptionConsumers = new HashMap<String, EndpointEventConsumer>();

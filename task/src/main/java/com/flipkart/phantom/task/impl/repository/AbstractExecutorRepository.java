@@ -35,9 +35,7 @@ import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.github.kristofa.brave.BraveContext;
-import com.github.kristofa.brave.ClientTracer;
-import com.github.kristofa.brave.EndPointSubmitter;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
@@ -87,31 +85,29 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
         	for (ResponseInterceptor<S> responseInterceptor : this.responseInterceptors) {
         		executor.addResponseInterceptor(responseInterceptor);
         	}
+	        // now add the tracing interceptors - has to be an instance specific to each new Executor 
+	        Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
+	    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(handler.getName()));
+	    	// The request did not come through a server/service call i.e. not via Netty Channel handlers 
+	        if (!requestContextOptional.isPresent()) {
+	        	RequestContext newRequestContext = new RequestContext();
+	        	requestContextOptional = Optional.of(newRequestContext);
+	        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
+	        }
+	        if (requestContextOptional.get().getCurrentServerSpan() == null) {
+	        	final ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+	        	// we dont know what server trace this request was part of, so set it to unknown 
+	        	serverTracer.setStateUnknown(handler.getName());
+	        	// Also set the current server span to the request context 
+	        	requestContextOptional.get().setCurrentServerSpan(Brave.getServerSpanThreadBinder().getCurrentServerSpan());
+	        }
+	    	tracingRequestInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
+	    	tracingRequestInterceptor.setTraceFilters(traceFilters);
+	        executor.addRequestInterceptor(tracingRequestInterceptor);
+	        tracingResponseInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
+	    	tracingResponseInterceptor.setTraceFilters(traceFilters);
+	        executor.addResponseInterceptor(tracingResponseInterceptor);
         }
-        // now add the tracing interceptors - has to be an instance specific to each new Executor i.e. Request
-        // check if the request already has tracing context initiated and use it, else create a new one
-        Optional<RequestContext> requestContextOptional = executor.getRequestWrapper().getRequestContext();
-        BraveContext requestTracingContext = null;
-    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.registry.getTraceFilterForHandler(handler.getName()));
-        if (requestContextOptional.isPresent() && requestContextOptional.get().getRequestTracingContext() !=null) {
-        	requestTracingContext =  requestContextOptional.get().getRequestTracingContext();
-        } else {
-        	RequestContext newRequestContext = new RequestContext();
-        	requestTracingContext = new BraveContext();
-        	// we dont know what server trace this request was part of, so set it to unknown and set the endpoint to that of the proxy
-        	final ServerTracer serverTracer = requestTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-        	serverTracer.setStateUnknown(handler.getName());
-        	newRequestContext.setRequestTracingContext(requestTracingContext);
-        	requestContextOptional = Optional.of(newRequestContext);
-        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
-        }
-        final EndPointSubmitter endPointSubmitter = requestTracingContext.getEndPointSubmitter();
-        endPointSubmitter.submit(handler.getHost(),handler.getPort(),handler.getName());        	
-    	ClientTracer clientTracer = requestTracingContext.getClientTracer(this.eventDispatchingSpanCollector, traceFilters);
-    	tracingRequestInterceptor.setClientTracer(clientTracer);
-        executor.addRequestInterceptor(tracingRequestInterceptor);
-        tracingResponseInterceptor.setClientTracer(clientTracer);
-        executor.addResponseInterceptor(tracingResponseInterceptor);
         return executor;
     }
     

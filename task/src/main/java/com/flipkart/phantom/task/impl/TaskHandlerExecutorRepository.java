@@ -66,7 +66,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return The executor corresponding to the commandName.
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
-    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper) {
+    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, TaskRequestWrapper requestWrapper) {
     	Executor<TaskRequestWrapper,TaskResult> executor = null;
         //Regex matching of threadPoolName and commandName
         //(Hystrix dashboard requires names to be alphanumeric)    	
@@ -77,14 +77,14 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
     	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
         if(taskHandler instanceof HystrixTaskHandler) {
 	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-	        	executor = getTaskHandlerExecutorWithSemaphoreIsolation((TaskRequestWrapper) requestWrapper, refinedCommandName, 
+	        	executor = getTaskHandlerExecutorWithSemaphoreIsolation(requestWrapper, refinedCommandName, 
 	        			taskHandler, maxConcurrency);
 	        } else {
-	        	executor = getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName,
+	        	executor = getTaskHandlerExecutor(requestWrapper, refinedCommandName,
 	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler);
 	        }
         } else { 
-        	executor = getTaskHandlerExecutor((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+        	executor = getTaskHandlerExecutor(requestWrapper, refinedCommandName, refinedProxyName,
         			maxConcurrency, executionTimeout, taskHandler);
         }
         return this.wrapExecutorWithInterceptors(executor, taskHandler);
@@ -99,7 +99,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return The executor corresponding to the commandName.
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
-    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, RequestWrapper requestWrapper, Decoder decoder) {
+    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName,String proxyName, TaskRequestWrapper requestWrapper, Decoder decoder) {
     	Executor<TaskRequestWrapper,TaskResult> executor = null;
         //Regex matching of threadPoolName and commandName
         //(Hystrix dashboard requires names to be alphanumeric)    	
@@ -110,14 +110,14 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
     	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
         if(taskHandler instanceof HystrixTaskHandler) {
 	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
-	        	executor = getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, 
+	        	executor = getTaskHandlerExecutorWithSemaphoreIsolationAndDecoder(requestWrapper, refinedCommandName, 
 	        			taskHandler, maxConcurrency, decoder);
 	        } else {
-	        	executor = getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName,
+	        	executor = getTaskHandlerExecutorWithDecoder(requestWrapper, refinedCommandName,
 	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler, decoder);
 	        }
         } else { 
-        	executor = getTaskHandlerExecutorWithDecoder((TaskRequestWrapper) requestWrapper, refinedCommandName, refinedProxyName,
+        	executor = getTaskHandlerExecutorWithDecoder(requestWrapper, refinedCommandName, refinedProxyName,
         			maxConcurrency, executionTimeout, taskHandler, decoder);
         }
         return this.wrapExecutorWithInterceptors(executor, taskHandler);
@@ -130,7 +130,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return The executor corresponding to the commandName.
      * @throws UnsupportedOperationException if doesn't find a TaskHandler in the registry corresponding to the command name
      */
-    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName, RequestWrapper requestWrapper) {
+    public Executor<TaskRequestWrapper,TaskResult> getExecutor(String commandName, TaskRequestWrapper requestWrapper) {
         return this.getExecutor(commandName, commandName, requestWrapper);
     }
 
@@ -142,7 +142,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, String proxyName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
+    public Future<TaskResult> executeAsyncCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -159,7 +159,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public TaskResult executeCommand(String commandName, String proxyName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
+    public TaskResult executeCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
         long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
         if(command==null) {
@@ -172,7 +172,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
             } finally {
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
-                    final Map<String, String> params = ((TaskRequestWrapper)requestWrapper).getParams();
+                    final Map<String, String> params = requestWrapper.getParams();
                     ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
                     eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
                     if(params.containsKey("requestSentTime"))
@@ -191,7 +191,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public TaskResult executeCommand(String commandName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
+    public TaskResult executeCommand(String commandName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
         return this.executeCommand(commandName,commandName, requestWrapper);
     }
 
@@ -203,7 +203,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @throws UnsupportedOperationException if no handler found for command
      */
     @SuppressWarnings("unchecked")
-    public <T> TaskResult<T> executeCommand(String commandName, RequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -223,7 +223,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, RequestWrapper requestWrapper, Decoder decoder) throws UnsupportedOperationException {
+    public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper requestWrapper, Decoder decoder) throws UnsupportedOperationException {
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -239,7 +239,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, RequestWrapper requestWrapper) throws UnsupportedOperationException {
+    public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
         return this.executeAsyncCommand(commandName,commandName, requestWrapper);
     }
 

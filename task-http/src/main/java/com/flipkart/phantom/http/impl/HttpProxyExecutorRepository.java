@@ -23,7 +23,6 @@ import com.flipkart.phantom.http.impl.interceptor.HttpClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
 
 /**
  * Provides a repository of HttpProxyExecutor classes which execute HTTP requests using Hystrix commands
@@ -41,7 +40,7 @@ public class HttpProxyExecutorRepository extends AbstractExecutorRepository<Http
      * @param requestWrapper requestWrapper Object containing requestWrapper Data
      * @return  an {@link HttpProxyExecutor} instance
      */
-    public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
+    public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, HttpRequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
         	HttpProxyExecutor executor = new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);

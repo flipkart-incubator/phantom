@@ -15,10 +15,13 @@
  */
 package com.flipkart.phantom.task.impl.interceptor;
 
-import org.springframework.util.Assert;
+import java.util.List;
 
+import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.ClientTracer;
+import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 
 /**
@@ -35,22 +38,16 @@ public abstract class AbstractClientResponseInterceptor<S> implements ResponseIn
     private static final String FAILURE_ANNOTATION = "failure";
     private static final String RESPONSE_CODE_ANNOTATION = "responsecode";
 	
-    /** The ClientTracer implementation used in client request tracing*/
-    private ClientTracer clientTracer;
+    /** The EventDispatchingSpanCollector instance used in tracing requests*/
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
+    private List<TraceFilter> traceFilters;
     
-    /**
-     * Interface method implementation. Checks if all mandatory properties have been set
-     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
-     */
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.clientTracer, "The 'clientTracer' may not be null");
-    }
-	
 	/**
 	 * Interface method implementation. Interprets the response and submits suitable annotation to the client tracer and also marks receipt of the response on it. 
 	 * @see com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor#process(java.lang.Object)
 	 */
 	public void process(S response, Optional<RuntimeException> transportError) {
+    	ClientTracer clientTracer = Brave.getClientTracer(this.eventDispatchingSpanCollector, this.traceFilters);		
 		if (transportError.isPresent()) {
 			clientTracer.submitAnnotation(FAILURE_ANNOTATION);
 		} else {
@@ -63,7 +60,7 @@ public abstract class AbstractClientResponseInterceptor<S> implements ResponseIn
 	            clientTracer.submitAnnotation(FAILURE_ANNOTATION);
 	        }
 		}
-		this.clientTracer.setClientReceived();
+		clientTracer.setClientReceived();
 	}
 	
 	/**
@@ -81,11 +78,11 @@ public abstract class AbstractClientResponseInterceptor<S> implements ResponseIn
 	protected abstract Optional<Integer> getResponseStatusCode(S response);
 	
 	/** Getter/Setter methods */
-	public ClientTracer getClientTracer() {
-		return clientTracer;
+	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
+		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
 	}
-	public void setClientTracer(ClientTracer clientTracer) {
-		this.clientTracer = clientTracer;
-	}
+	public void setTraceFilters(List<TraceFilter> traceFilters) {
+		this.traceFilters = traceFilters;
+	}	
 	
 }

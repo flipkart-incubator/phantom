@@ -43,8 +43,6 @@ import org.slf4j.LoggerFactory;
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.runtime.impl.server.netty.channel.thrift.ThriftNettyChannelBuffer;
-import com.flipkart.phantom.task.impl.TaskRequestWrapper;
-import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.ServerRequestInterceptor;
 import com.flipkart.phantom.task.spi.Executor;
@@ -53,8 +51,9 @@ import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 import com.flipkart.phantom.thrift.impl.ThriftProxy;
 import com.flipkart.phantom.thrift.impl.ThriftProxyExecutor;
 import com.flipkart.phantom.thrift.impl.ThriftRequestWrapper;
-import com.github.kristofa.brave.BraveContext;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.ServerSpan;
 import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
@@ -227,21 +226,21 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<ThriftRequestWrapper, TTransport> initializeServerTracing(ThriftRequestWrapper executorRequest) {
-		// set the server request context on the received request
-    	BraveContext serverTracingContext = new BraveContext();
-    	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setRequestTracingContext(serverTracingContext);		
-    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         ServerRequestInterceptor<ThriftRequestWrapper, TTransport> serverRequestInterceptor = new ServerRequestInterceptor<ThriftRequestWrapper, TTransport>();
     	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
-    	ServerTracer serverTracer = serverTracingContext.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-    	serverRequestInterceptor.setEndPointSubmitter(serverTracingContext.getEndPointSubmitter());
+    	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+    	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
         serverRequestInterceptor.setServerTracer(serverTracer);
         serverRequestInterceptor.setServiceHost(ThriftChannelHandler.hostName);
         serverRequestInterceptor.setServicePort(this.hostPort);
         serverRequestInterceptor.setServiceName(this.serviceName);   
         // now process the request to initialize tracing
         serverRequestInterceptor.process(executorRequest); 
+		// set the server request context on the received request
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	RequestContext serverRequestContext = new RequestContext();
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
+    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         return serverRequestInterceptor;
     }
     

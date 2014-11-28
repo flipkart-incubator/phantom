@@ -52,8 +52,7 @@ public class TaskContextImpl implements TaskContext {
     /** The TaskHandlerExecutorRepository instance for getting thrift handler executor instances */
     private TaskHandlerExecutorRepository executorRepository;
 
-    static
-    {
+    static {
         try {
             hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
@@ -73,8 +72,9 @@ public class TaskContextImpl implements TaskContext {
         params.put("key", key);
         params.put("count", Integer.toString(count));
         TaskResult result = this.executeCommand(GET_CONFIG_COMMAND, null, params);
-        if (result == null)
+        if (result == null) {
             return "";
+        }
         return new String((byte[])result.getData());
     }
 

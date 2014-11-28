@@ -22,10 +22,10 @@ import org.apache.thrift.transport.TTransport;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.github.kristofa.brave.Brave;
 import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
@@ -81,12 +81,11 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
      * @param taskContext the TaskContext instance that manages the proxies
      * @param commandName the Hystrix command name.
      */
-    protected ThriftProxyExecutor(HystrixThriftProxy hystrixThriftProxy, TaskContext taskContext, String commandName, RequestWrapper requestWrapper) {
+    protected ThriftProxyExecutor(HystrixThriftProxy hystrixThriftProxy, TaskContext taskContext, String commandName, ThriftRequestWrapper thriftRequestWrapper) {
         super(constructHystrixSetter(hystrixThriftProxy,commandName));
         this.thriftProxy = hystrixThriftProxy;
         this.taskContext = taskContext;
-
-        this.thriftRequestWrapper = (ThriftRequestWrapper)requestWrapper;
+        this.thriftRequestWrapper = thriftRequestWrapper;
         this.clientTransport = thriftRequestWrapper.getClientSocket();
         this.eventBuilder = new ServiceProxyEvent.Builder(commandName, THRIFT_HANDLER);
     }
@@ -96,7 +95,11 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
      */
     @Override
     protected TTransport run() {
-        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        this.eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        if (this.thriftRequestWrapper.getRequestContext().isPresent() && this.thriftRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
+        	Brave.getServerSpanThreadBinder().setCurrentSpan(this.thriftRequestWrapper.getRequestContext().get().getCurrentServerSpan());
+        }
+        Brave.getEndPointSubmitter().submit(this.thriftProxy.getHost(),this.thriftProxy.getPort(),this.thriftProxy.getName());
         for (RequestInterceptor<ThriftRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.thriftRequestWrapper);
         }

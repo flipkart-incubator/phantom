@@ -23,10 +23,10 @@ import org.apache.http.HttpResponse;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.TaskContext;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
+import com.github.kristofa.brave.Brave;
 import com.google.common.base.Optional;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
@@ -44,7 +44,7 @@ import com.netflix.hystrix.HystrixThreadPoolProperties;
  * @created 16/7/13 1:54 AM
  */
 public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements Executor<HttpRequestWrapper, HttpResponse> {
-
+	
     /** Event Type for publishing all events which are generated here */
     private final static String HTTP_HANDLER = "HTTP_HANDLER";
     
@@ -62,18 +62,16 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
     private List<ResponseInterceptor<HttpResponse>> responseInterceptors = new LinkedList<ResponseInterceptor<HttpResponse>>();
     
     /** only constructor uses the proxy client, task context and the http requestWrapper */
-    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, RequestWrapper requestWrapper) {
+    public HttpProxyExecutor(HttpProxy proxy, TaskContext taskContext, HttpRequestWrapper httpRequestWrapper) {
         super(
-                Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
-                        .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
-                        .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
-                        .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
-                        .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds
-                                (proxy.getPool().getOperationTimeout()))
-        );
+            Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(proxy.getGroupKey()))
+                    .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
+                    .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
+                    .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
+                    .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds
+                            (proxy.getPool().getOperationTimeout())));
         this.proxy = proxy;
-        /** Get the Http Request */
-        this.httpRequestWrapper = (HttpRequestWrapper) requestWrapper;
+        this.httpRequestWrapper = httpRequestWrapper;
         this.eventBuilder = new ServiceProxyEvent.Builder(this.httpRequestWrapper.getUri(), HTTP_HANDLER);
     }
 
@@ -84,14 +82,18 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
      */
     @Override
     protected HttpResponse run() throws Exception {
-        eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        this.eventBuilder.withRequestExecutionStartTime(System.currentTimeMillis());
+        if (this.httpRequestWrapper.getRequestContext().isPresent() && this.httpRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
+        	Brave.getServerSpanThreadBinder().setCurrentSpan(this.httpRequestWrapper.getRequestContext().get().getCurrentServerSpan());
+        }
+        Brave.getEndPointSubmitter().submit(this.proxy.getHost(),this.proxy.getPort(),this.proxy.getName());
         for (RequestInterceptor<HttpRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.httpRequestWrapper);
         }
         Optional<RuntimeException> transportException = Optional.absent();
         HttpResponse response = null;
         try {
-        	response = proxy.doRequest(this.httpRequestWrapper);
+        	response = this.proxy.doRequest(this.httpRequestWrapper);
         } catch (RuntimeException e) {
         	transportException = Optional.of(e);
         	throw e; // rethrow this for it to handled by other layers in the call stack

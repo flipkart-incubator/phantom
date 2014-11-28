@@ -16,14 +16,18 @@
 package com.flipkart.phantom.task.impl.interceptor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.spi.RequestWrapper;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.SpanNameFilter;
+import com.github.kristofa.brave.Brave;
 import com.github.kristofa.brave.BraveHttpHeaders;
 import com.github.kristofa.brave.ClientTracer;
 import com.github.kristofa.brave.SpanId;
+import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
@@ -41,29 +45,33 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
     private static final String TRUE = "true";
     private static final String FALSE = "false";
 
-    /** The ClientTracer implementation used in client request tracing*/
-    private ClientTracer clientTracer;
-    
     /** The optional Span name filter*/
     private Optional<SpanNameFilter> spanNameFilter = Optional.absent();
 
+    /** The EventDispatchingSpanCollector instance used in tracing requests*/
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
+    private List<TraceFilter> traceFilters;
+    
 	/**
 	 * Interface method implementation. Performs client request tracing.
 	 * @see com.flipkart.phantom.task.spi.interceptor.RequestInterceptor#process(com.flipkart.phantom.task.spi.RequestWrapper)
 	 */
 	public void process(T request) {
+    	ClientTracer clientTracer = Brave.getClientTracer(this.eventDispatchingSpanCollector, this.traceFilters);
 		String spanName = this.getSpanName(request);
 		SpanId newSpanId = clientTracer.startNewSpan(spanName);
 		this.addTracingHeaders(request, newSpanId, spanName);
+		/*
         final Optional<String> serviceName = request.getServiceName();
         if (serviceName.isPresent()) {
-            this.clientTracer.setCurrentClientServiceName(serviceName.get());
+            clientTracer.setCurrentClientServiceName(serviceName.get());
         }
+        */
         final Optional<String> requestMetadata = request.getRequestMetaData();
         if (requestMetadata.isPresent()) {
-        	this.clientTracer.submitBinaryAnnotation(REQUEST_ANNOTATION, requestMetadata.get());
+        	clientTracer.submitBinaryAnnotation(REQUEST_ANNOTATION, requestMetadata.get());
         }
-        this.clientTracer.setClientSent();
+        clientTracer.setClientSent();
 	}
 	
 	/**
@@ -119,17 +127,17 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	}
 
 	/** Getter/Setter methods */
-	public ClientTracer getClientTracer() {
-		return clientTracer;
-	}
-	public void setClientTracer(ClientTracer clientTracer) {
-		this.clientTracer = clientTracer;
-	}
 	public Optional<SpanNameFilter> getSpanNameFilter() {
 		return spanNameFilter;
 	}
 	public void setSpanNameFilter(Optional<SpanNameFilter> spanNameFilter) {
 		this.spanNameFilter = spanNameFilter;
+	}
+	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
+		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
+	}
+	public void setTraceFilters(List<TraceFilter> traceFilters) {
+		this.traceFilters = traceFilters;
 	}	
 
 }
