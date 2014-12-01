@@ -23,6 +23,7 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
+import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.AbstractClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
@@ -94,13 +95,18 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
 	        	requestContextOptional = Optional.of(newRequestContext);
 	        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
 	        }
+        	final String serviceName = executor.getServiceName().isPresent() ? executor.getServiceName().get() : Executor.DEFAULT_SERVICE_NAME;
 	        if (requestContextOptional.get().getCurrentServerSpan() == null) {
 	        	final ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
 	        	// we dont know what server trace this request was part of, so set it to unknown 
 	        	serverTracer.setStateUnknown(handler.getName());
-	        	// Also set the current server span to the request context 
+	        	// set the endpoint to default
+	        	Brave.getEndPointSubmitter().submit(TaskHandler.DEFAULT_HOST, TaskHandler.DEFAULT_PORT, serviceName);
+	        	// Set the current server span on the request context 
 	        	requestContextOptional.get().setCurrentServerSpan(Brave.getServerSpanThreadBinder().getCurrentServerSpan());
 	        }
+	        // Set the client endpoint on the request context
+        	requestContextOptional.get().setCurrentClientEndpoint(new RequestContext.ServiceEndpoint(handler.getHost(), handler.getPort(), serviceName));
 	    	tracingRequestInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
 	    	tracingRequestInterceptor.setTraceFilters(traceFilters);
 	        executor.addRequestInterceptor(tracingRequestInterceptor);
@@ -110,7 +116,6 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
         }
         return executor;
     }
-    
     
     /** Getter/Setter methods */
     public AbstractHandlerRegistry<R> getRegistry() {

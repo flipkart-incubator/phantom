@@ -245,7 +245,6 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         if (this.taskRequestWrapper.getRequestContext().isPresent() && this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
         	Brave.getServerSpanThreadBinder().setCurrentSpan(this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan());
         }
-        Brave.getEndPointSubmitter().submit(this.taskHandler.getHost(),this.taskHandler.getPort(),this.taskHandler.getName());
         for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.taskRequestWrapper);
         }        

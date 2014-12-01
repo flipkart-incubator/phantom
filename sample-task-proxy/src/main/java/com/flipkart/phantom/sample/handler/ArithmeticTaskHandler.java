@@ -47,7 +47,6 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
         float num2 = Float.parseFloat(params.get("num2"));
 
         if (CMD_ADD.equals(command)) {
-        	TaskContextFactory.getTaskContext().executeCommand(CMD_SUB, data, params);
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_SUB.equals(command)) {
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));

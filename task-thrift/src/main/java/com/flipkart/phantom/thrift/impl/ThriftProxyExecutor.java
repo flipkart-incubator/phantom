@@ -99,7 +99,6 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
         if (this.thriftRequestWrapper.getRequestContext().isPresent() && this.thriftRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
         	Brave.getServerSpanThreadBinder().setCurrentSpan(this.thriftRequestWrapper.getRequestContext().get().getCurrentServerSpan());
         }
-        Brave.getEndPointSubmitter().submit(this.thriftProxy.getHost(),this.thriftProxy.getPort(),this.thriftProxy.getName());
         for (RequestInterceptor<ThriftRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.thriftRequestWrapper);
         }

@@ -18,7 +18,12 @@ package com.flipkart.phantom.task.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.spi.RequestContext;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.github.kristofa.brave.Brave;
+import com.github.kristofa.brave.ServerSpan;
+import com.google.common.base.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,11 +87,7 @@ public class TaskContextImpl implements TaskContext {
      * Executes a command
      */
     public TaskResult executeCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
-        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
-        taskRequestWrapper.setCommandName(commandName);
-        taskRequestWrapper.setData(data);
-        taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeCommand(commandName, taskRequestWrapper);
+        return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params));
     }
 
     @Override
@@ -96,31 +97,33 @@ public class TaskContextImpl implements TaskContext {
 
     @Override
     public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
-        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
-        taskRequestWrapper.setCommandName(commandName);
-        taskRequestWrapper.setData(data);
-        taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
+        return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
     }
 
     @Override
     public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
-        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
-        taskRequestWrapper.setCommandName(commandName);
-        taskRequestWrapper.setData(data);
-        taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper,decoder);
+        return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
     }
 
     /**
      * Executes a command asynchronously
      */
     public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+        return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params));
+    }
+    
+    /** Creates a TaskRequestWrapper from passed in params and sets the current server span on it*/
+    private TaskRequestWrapper createRequestFromParams(String commandName, byte[] data, Map<String, String> params) {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
         taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper);
+		// set the server request context on the received request
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	RequestContext serverRequestContext = new RequestContext();
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
+    	taskRequestWrapper.setRequestContext(Optional.of(serverRequestContext));
+    	return taskRequestWrapper;
     }
 
     /** Getter/Setter methods */

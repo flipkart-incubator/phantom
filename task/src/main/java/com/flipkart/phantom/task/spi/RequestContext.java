@@ -30,6 +30,7 @@ public class RequestContext {
 
 	/** Instance variables used in request tracing */
 	private ServerSpan currentServerSpan;
+	private ServiceEndpoint currentClientEndpoint;
 
 	/** Setter/Getter methods*/
 	public ServerSpan getCurrentServerSpan() {
@@ -37,6 +38,33 @@ public class RequestContext {
 	}
 	public void setCurrentServerSpan(ServerSpan currentServerSpan) {
 		this.currentServerSpan = currentServerSpan;
+	}
+	public ServiceEndpoint getCurrentClientEndpoint() {
+		return currentClientEndpoint;
+	}
+	public void setCurrentClientEndpoint(ServiceEndpoint currentClientEndpoint) {
+		this.currentClientEndpoint = currentClientEndpoint;
+	}
+
+	/** Service endpoint details. We dont use the Zipkin Endpoint class as it requires resolved host name which is expensive due to DNS lookups*/
+	public static final class ServiceEndpoint {
+		private String host;
+		private int port;
+		private String serviceName;
+		public ServiceEndpoint(String host, int port, String serviceName) {
+			this.host = host;
+			this.port = port;
+			this.serviceName = serviceName;
+		}
+		public String getHost() {
+			return host;
+		}
+		public int getPort() {
+			return port;
+		}
+		public String getServiceName() {
+			return serviceName;
+		}		
 	}
 	
 }

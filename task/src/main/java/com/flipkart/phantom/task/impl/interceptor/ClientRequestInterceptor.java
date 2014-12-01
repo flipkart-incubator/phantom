@@ -41,6 +41,7 @@ import com.google.common.collect.Lists;
 public class ClientRequestInterceptor<T extends RequestWrapper> implements RequestInterceptor<T> {
 
 	/** The request annotation and value strings*/
+    private static final String HOST_ANNOTATION = "host";
     private static final String REQUEST_ANNOTATION = "request";
     private static final String TRUE = "true";
     private static final String FALSE = "false";
@@ -61,12 +62,13 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 		String spanName = this.getSpanName(request);
 		SpanId newSpanId = clientTracer.startNewSpan(spanName);
 		this.addTracingHeaders(request, newSpanId, spanName);
-		/*
-        final Optional<String> serviceName = request.getServiceName();
-        if (serviceName.isPresent()) {
-            clientTracer.setCurrentClientServiceName(serviceName.get());
-        }
-        */
+		if (request.getRequestContext().isPresent() && request.getRequestContext().get().getCurrentClientEndpoint() != null) {
+			// override the service name with the value contained in the request
+			clientTracer.setCurrentClientServiceName(request.getRequestContext().get().getCurrentClientEndpoint().getServiceName());
+			// submit an annotation so that host endpoint is visible in the span
+			clientTracer.submitBinaryAnnotation(HOST_ANNOTATION, request.getRequestContext().get().getCurrentClientEndpoint().getHost() + 
+					":" + request.getRequestContext().get().getCurrentClientEndpoint().getPort());
+		}
         final Optional<String> requestMetadata = request.getRequestMetaData();
         if (requestMetadata.isPresent()) {
         	clientTracer.submitBinaryAnnotation(REQUEST_ANNOTATION, requestMetadata.get());

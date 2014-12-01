@@ -84,7 +84,7 @@ public class ServerRequestInterceptor<T extends RequestWrapper, S> implements Re
 	 * @see com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor#process(java.lang.Object, com.google.common.base.Optional)
 	 */
 	public void process(S response, Optional<RuntimeException> transportError) {
-		this.endPointSubmitter.submit(this.serviceHost, this.servicePort, this.serviceName);
+		//this.endPointSubmitter.submit(this.serviceHost, this.servicePort, this.serviceName);
 		if (transportError.isPresent()) {
 			this.serverTracer.submitAnnotation(FAILURE_ANNOTATION);
 		} 

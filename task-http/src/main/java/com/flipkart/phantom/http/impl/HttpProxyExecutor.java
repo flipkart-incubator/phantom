@@ -86,7 +86,6 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         if (this.httpRequestWrapper.getRequestContext().isPresent() && this.httpRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
         	Brave.getServerSpanThreadBinder().setCurrentSpan(this.httpRequestWrapper.getRequestContext().get().getCurrentServerSpan());
         }
-        Brave.getEndPointSubmitter().submit(this.proxy.getHost(),this.proxy.getPort(),this.proxy.getName());
         for (RequestInterceptor<HttpRequestWrapper> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.httpRequestWrapper);
         }

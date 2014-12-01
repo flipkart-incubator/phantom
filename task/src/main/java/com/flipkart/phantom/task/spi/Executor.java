@@ -33,6 +33,9 @@ import com.google.common.base.Optional;
  */
 public interface Executor<T extends RequestWrapper,S> {
 	
+	/** Constant for default service name */
+	public static final String DEFAULT_SERVICE_NAME = "Null Service";
+	
 	/**
 	 * Executes a given task and returns the result
 	 * @return task execution result
