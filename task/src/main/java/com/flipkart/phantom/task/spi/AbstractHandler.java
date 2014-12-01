@@ -46,8 +46,8 @@ abstract public class AbstractHandler {
     /** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
     public static final int INACTIVE = 0;
     
-    /** The default value for tracing frequency. This value indicates that tracing if OFF*/
-    public static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);
+    /** The default value for tracing frequency. This value indicates that every call is traced if the global tracing is turned on.*/
+    public static final TraceFilter TRACING_ON = new FixedSampleRateTraceFilter(1);
 
     /** The default command invocation type for this AbstractHandler*/
     private int callInvocationType = AbstractHandler.SYNC_CALL;
@@ -60,8 +60,8 @@ abstract public class AbstractHandler {
     /** The status of this handler (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
     
-    /** The request tracing frequency for this handler*/
-    private TraceFilter traceFilter = NO_TRACING;
+    /** The request tracing frequency for this handler. Each handler may override this setting*/
+    private TraceFilter traceFilter = TRACING_ON;
 
     /**
      * Method which returns the name of the handler

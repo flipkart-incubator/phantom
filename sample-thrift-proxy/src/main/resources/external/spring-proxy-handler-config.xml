@@ -12,11 +12,6 @@
         <property name="thriftServer" value="localhost" />
         <property name="thriftPort" value="8082" />
         <property name="thriftTimeoutMillis" value="1000" />
-        <property name="traceFilter">
-            <bean class="com.github.kristofa.brave.FixedSampleRateTraceFilter">
-				<constructor-arg index="0" value="1"/>                
-            </bean>
-        </property>
     </bean>
 
 </beans>
