@@ -118,11 +118,13 @@ public class TaskContextImpl implements TaskContext {
         taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
-		// set the server request context on the received request
     	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
-    	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setCurrentServerSpan(serverSpan);	
-    	taskRequestWrapper.setRequestContext(Optional.of(serverRequestContext));
+    	if (serverSpan.getSpan() != null) {
+    		// set the request context and the current server span on the received request only if a span exists
+        	RequestContext serverRequestContext = new RequestContext();
+    		serverRequestContext.setCurrentServerSpan(serverSpan); 
+        	taskRequestWrapper.setRequestContext(Optional.of(serverRequestContext));
+    	}
     	return taskRequestWrapper;
     }
 
