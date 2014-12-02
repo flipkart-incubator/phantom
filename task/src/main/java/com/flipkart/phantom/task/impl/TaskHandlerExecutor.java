@@ -34,6 +34,8 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a
@@ -45,6 +47,9 @@ import com.netflix.hystrix.HystrixThreadPoolProperties;
  */
 @SuppressWarnings("rawtypes")
 public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor<TaskRequestWrapper, TaskResult> {
+
+    /** Log instance for this class */
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
@@ -106,7 +111,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
                                   String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
                 .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
         this.taskHandler = taskHandler;
@@ -135,7 +140,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
                                   String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper , Decoder decoder ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
                 .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
         this.taskHandler = taskHandler;
