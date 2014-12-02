@@ -314,14 +314,17 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
      * @param resource the location to load the new definition of the handler from
      */
 	public void reloadHandler(T handler, Resource resource) {
+        int version = handler.getNewVersion();
         AbstractHandlerRegistry<T> registry = this.getRegistry(handler.getName());
         registry.unregisterTaskHandler(handler);
         LOGGER.debug("Unregistered TaskHandler: " + handler.getName());
         this.loadComponent(resource);
+
         // now add the newly loaded handler to its registry
         for (HandlerConfigInfo handlerConfigInfo : this.handlerConfigInfoList) {
             if (handlerConfigInfo.getXmlConfigFile().getAbsolutePath().equalsIgnoreCase(((FileSystemResource) resource).getFile().getAbsolutePath())) {
                 List<HandlerConfigInfo> reloadHandlerConfigInfoList = new LinkedList<HandlerConfigInfo>();
+                handlerConfigInfo.setVersion(version);
                 reloadHandlerConfigInfoList.add(handlerConfigInfo);
                 try {
                     registry.init(reloadHandlerConfigInfoList, taskContext);
