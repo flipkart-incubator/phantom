@@ -1,3 +1,6 @@
+## 1.3.5-SNAPSHOT (Dec 2, 2014)
+- Added Zipkin distributed tracing support
+
 ## 1.3.4-SNAPSHOT (Oct 10, 2014)
 - Added support for parallel init for Task handlers
 - Upgrade to Trooper 1.3.2-SNAPSHOT version
