@@ -109,8 +109,13 @@
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
                 </exclusion>
-                </exclusions>
+        	</exclusions>
 		</dependency>
+		<dependency>
+		    <groupId>com.github.kristofa</groupId>
+		    <artifactId>brave-zipkin-spancollector</artifactId>
+		    <version>${brave.version}</version>
+		</dependency>            				            
 		<!-- Add back the Http client and components dependencies with the correct version -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -122,11 +127,6 @@
             <artifactId>httpcore</artifactId>
             <version>4.2.1</version>
         </dependency>				
-		<dependency>
-		    <groupId>com.github.kristofa</groupId>
-		    <artifactId>brave-zipkin-spancollector</artifactId>
-		    <version>${brave.version}</version>
-		</dependency>            				            
 	</dependencies>
 
     <build>
