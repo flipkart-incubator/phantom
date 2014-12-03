@@ -55,7 +55,6 @@ import com.github.kristofa.brave.ServerSpan;
 import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
-import com.twitter.zipkin.gen.Span;
 
 /**
  * <code>UDSOIOServer</code> is a concrete implementation of the {@link AbstractNetworkServer}
@@ -139,7 +138,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public AFUNIXServerSocket socket;
 
     /** The TaskRepository to lookup TaskHandlerExecutors from */
-	private ExecutorRepository repository;
+	private ExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> repository;
 
     /** The publisher used to broadcast events to Service Proxy Subscribers */
     private ServiceProxyEventProducer eventProducer;
@@ -172,6 +171,8 @@ public class UDSOIOServer extends AbstractNetworkServer {
         //Required properties
         Assert.notNull(this.socketDir, "socketDir is a required property for UDSNetworkServer");
         Assert.notNull(this.socketName, "socketName is a required property for UDSNetworkServer");
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");
+        
         //Create the socket file
         this.socketFile = new File(new File(this.socketDir), this.socketName);
 
@@ -417,7 +418,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public ExecutorRepository getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository repository) {
+    public void setRepository(ExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> repository) {
         this.repository = repository;
     }
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {

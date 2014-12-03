@@ -39,6 +39,8 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
@@ -65,7 +67,7 @@ import com.google.common.base.Optional;
  * @author Regunath B
  * @version 1.0, 26 Mar 2013
  */
-public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
+public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implements InitializingBean {
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(ThriftChannelHandler.class);
@@ -126,6 +128,14 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler {
     /** The EventDispatchingSpanCollector instance used in tracing requests*/
     private EventDispatchingSpanCollector eventDispatchingSpanCollector;    
 
+    /**
+     * Interface method implementation. Checks if all mandatory properties have been set
+     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+     */
+    public void afterPropertiesSet() throws Exception {
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");        
+    }
+    
     /**
      * Overriden superclass method. Stores the host port that this handler's server is listening on
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelBound(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)

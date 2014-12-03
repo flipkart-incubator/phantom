@@ -155,6 +155,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         Assert.notNull(this.defaultProxy, "The 'defaultProxy' may not be null");
         // add the default proxy for all routes i.e. default
         this.proxyMap.put(RoutingHttpChannelHandler.ALL_ROUTES, defaultProxy);
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");        
     }
 
     /**
