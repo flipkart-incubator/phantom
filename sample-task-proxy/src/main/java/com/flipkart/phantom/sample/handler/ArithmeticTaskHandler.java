@@ -15,12 +15,11 @@
  */
 package com.flipkart.phantom.sample.handler;
 
+import java.util.Map;
+
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
-import com.flipkart.phantom.task.impl.TaskContextFactory;
 import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.TaskContext;
-
-import java.util.Map;
 
 /**
  * A simple task handler which does basic arithmetic operations.
@@ -32,7 +31,7 @@ import java.util.Map;
 public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     public final String CMD_ADD = "add";
-    public final String CMD_SUB = "substract";
+    public final String CMD_SUB = "subtract";
     public final String CMD_MUL = "multiply";
     public final String CMD_DIV = "divide";
 
@@ -51,7 +50,6 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
         } else if (CMD_SUB.equals(command)) {
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_MUL.equals(command)) {
-        	TaskContextFactory.getTaskContext().executeCommand(CMD_SUB, data, params);
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
         } else if (CMD_DIV.equals(command)) {
             return new TaskResult<byte[]>(true, Float.toString(num1+num2));
