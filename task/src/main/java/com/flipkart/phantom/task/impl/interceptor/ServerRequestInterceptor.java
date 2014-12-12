@@ -30,7 +30,7 @@ import com.google.common.base.Optional;
 
 /**
  * <code>ServerRequestInterceptor</code> is an implementation of {@link RequestInterceptor} that traces server requests.
- * This implementation is based on the Brave ServletTraceFilter code that may be used with different protocol servers/services, wrapped suitably where required.
+ * This implementation is based on the Brave ServletTraceFilter code and may be used with different protocol servers/services, wrapped suitably where required.
  * 
  * @author Regunath B
  * @version 1.0, 25th Nov, 2014
@@ -84,7 +84,6 @@ public class ServerRequestInterceptor<T extends RequestWrapper, S> implements Re
 	 * @see com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor#process(java.lang.Object, com.google.common.base.Optional)
 	 */
 	public void process(S response, Optional<RuntimeException> transportError) {
-		//this.endPointSubmitter.submit(this.serviceHost, this.servicePort, this.serviceName);
 		if (transportError.isPresent()) {
 			this.serverTracer.submitAnnotation(FAILURE_ANNOTATION);
 		} 
