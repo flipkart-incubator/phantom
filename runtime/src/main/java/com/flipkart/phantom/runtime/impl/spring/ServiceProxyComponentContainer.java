@@ -236,9 +236,6 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
                     LOGGER.info("Initialized handler registry: " + registry.getClass().getName());
                     //Add the file path of each inited handler to SPConfigService (for configuration console)
                     for (AbstractHandlerRegistry.InitedHandlerInfo<T> initedHandlerInfo : initedHandlerInfos) {
-                    	if (initedHandlerInfo == null) {
-                    		System.out.println("Handler is nul!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + " Size is : " + initedHandlerInfos.length);
-                    	}
                         this.configService.addHandlerConfigPath(initedHandlerInfo.getHandlerConfigInfo().getXmlConfigFile(), initedHandlerInfo.getInitedHandler());
                     }
                 } catch (Exception e) {
