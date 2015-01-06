@@ -16,12 +16,14 @@
 
 package com.flipkart.phantom.task.impl;
 
-import com.flipkart.phantom.task.spi.Decoder;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
+import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
  * An extension of {@link TaskHandler}. Provides methods to additionally set/customize Hytrix Command properties {https://github.com/Netflix/Hystrix}.

@@ -180,7 +180,6 @@ abstract public class AbstractHandler {
 		this.traceFilter = traceFilter;
 	}
 
-
     public int getVersion() {
         return version;
     }
@@ -193,8 +192,7 @@ abstract public class AbstractHandler {
      * Get a new version number for Handler to have new and unique name
      * @return Incremented version number from current value
      */
-    public int getNewVersion()
-    {
+    public int getNewVersion() {
         return ++version;
     }
 
@@ -202,18 +200,13 @@ abstract public class AbstractHandler {
      * Returns the versioned thread pool name which this handler will handle.
      * @return commands
      */
-    public String getVersionedThreadPoolName(String threadPool)
-    {
+    public String getVersionedThreadPoolName(String threadPool){
         int version = getVersion();
-        if(version > 0)
-        {
+        if(version > 0){
             return threadPool + "." + getVersion();
-        }
-        else
-        {
+        } else {
             return threadPool;
         }
-
     }
 
 }

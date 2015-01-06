@@ -18,8 +18,8 @@ package com.flipkart.phantom.sample.handler;
 import java.util.Map;
 
 import com.flipkart.phantom.task.impl.HystrixTaskHandler;
-import com.flipkart.phantom.task.impl.TaskResult;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskResult;
 
 /**
  * A simple task handler which does basic arithmetic operations.

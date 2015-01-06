@@ -19,10 +19,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.github.kristofa.brave.Brave;
@@ -34,8 +39,6 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <code>TaskHandlerExecutor</code> is an extension of {@link HystrixCommand}. It is essentially a

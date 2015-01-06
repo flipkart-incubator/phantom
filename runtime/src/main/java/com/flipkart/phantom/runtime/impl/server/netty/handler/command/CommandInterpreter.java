@@ -15,8 +15,11 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.phantom.task.impl.TaskResult;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -27,10 +30,8 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.springframework.util.SerializationUtils;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 
 /**
  * <code>CommandInterpreter</code> interprets a Command from the Netty {@link MessageEvent}

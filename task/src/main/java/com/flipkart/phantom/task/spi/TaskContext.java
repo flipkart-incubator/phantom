@@ -17,8 +17,8 @@
 package com.flipkart.phantom.task.spi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.phantom.task.impl.TaskRequestWrapper;
-import com.flipkart.phantom.task.impl.TaskResult;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 
 import java.util.Map;
 import java.util.concurrent.Future;

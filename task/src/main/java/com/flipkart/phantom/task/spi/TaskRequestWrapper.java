@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flipkart.phantom.task.impl;
+package com.flipkart.phantom.task.spi;
 
 import java.util.List;
 import java.util.Map;

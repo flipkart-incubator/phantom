@@ -31,6 +31,8 @@ import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
 import com.flipkart.phantom.task.spi.RequestWrapper;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**

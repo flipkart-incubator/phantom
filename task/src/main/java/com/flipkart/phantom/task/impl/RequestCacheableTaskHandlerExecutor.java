@@ -18,6 +18,7 @@ package com.flipkart.phantom.task.impl;
 
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
 
 /**
  * <code> RequestCacheableTaskHandlerExecutor </code> is a {@link TaskHandlerExecutor} that implements
