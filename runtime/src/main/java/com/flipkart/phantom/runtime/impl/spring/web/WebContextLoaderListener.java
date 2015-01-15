@@ -31,6 +31,8 @@ import com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer;
 
 /**
  * A custom {@link ContextLoaderListener} that uses the ServiceProxy Runtime {@link ServiceProxyComponentContainer#getCommonProxyHandlerBeansContext()} as the parent ApplicationContext
+ * by default. Additionally looks for a file by name {@link WebContextLoaderListener#COMMON_WEB_CONFIG} that may be used by apps to define additional common beans. When such a file exists,
+ * the parent ApplicationContext includes beans defined in the file.
  * 
  * @author Regunath B
  * @version 1.0, 14 Mar 2013
