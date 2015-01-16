@@ -19,7 +19,6 @@
         </property>
     </bean>
 
-
     <!--  ChannelHandlerPipelineFactory for TCP Server -->
     <bean id="commandChannelPipelineFactory" class="com.flipkart.phantom.runtime.impl.server.netty.ChannelHandlerPipelineFactory">
         <property name="channelHandlerBeanNamesMap">
@@ -36,14 +35,67 @@
         <property name="defaultChannelGroup" ref="defaultChannelGroup"/>
         <property name="repository" ref="taskHandlerRepository"/>
         <property name="eventProducer" ref="serviceProxyEventProducer"/>
+        <property name="eventDispatchingSpanCollector" ref="eventDispatchingSpanCollector"/>
+        <property name="traceFilter">
+            <bean class="com.github.kristofa.brave.FixedSampleRateTraceFilter">
+				<constructor-arg index="0" value="1"/>                
+            </bean>
+        </property>        
+    </bean>
+    
+    <!-- Task Handler Event Publishers & Consumers-->
+    <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
     </bean>
 
-    <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
-        <property name="taskContext" ref="taskContext" />
-        <property name="registry" ref="taskHandlerRegistry" />
+    <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
+    <bean id="endpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
+        <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
     </bean>
 
-    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry">
+    <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
+    <bean id="serviceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
+        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
+        <property name="eventProducer" ref="endpointEventProducer"/>
     </bean>
+
+    <!--This bean corresponds to consumer of Service Proxy Events which listens to all event types and logs errors-->
+    <bean id="errorRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+    <!-- Enable this bean only when distributed tracing is needed
+    <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
+        <property name="requestLogger" ref="commonRequestLogger"/>
+        <property name="zipkinSpanCollector">
+            <bean class="com.github.kristofa.brave.zipkin.ZipkinSpanCollector">
+				<constructor-arg index="0" value="localhost"/>
+      			<constructor-arg index="1" value="9410"/>                
+            </bean>
+        </property>
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+    -->
+    <!-- Task Handler Event Publishers & Consumers-->
+    
 
 </beans>

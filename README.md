@@ -3,19 +3,18 @@ Phantom
 
 Phantom is a high performance proxy for accessing distributed services. It is an RPC system with support for different 
 transports and protocols. Phantom is inspired by Twitter Finagle clients and builds on the capabilities of technologies like 
-Netty, Unix Domain Sockets, Netflix Hystrix and Spring. Phantom proxies have been used to serve hundreds of millions 
-of API calls in production deployments at Flipkart.
+Netty, Unix Domain Sockets, Netflix Hystrix and Spring. Phantom proxies have been used to serve several hundred million 
+API calls in production deployments at Flipkart.
 
 ## Releases
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.2.8    | June 2014      |    Upgrade to Hystrix 1.4.0-RC4
-| Version 1.2.8-SNAPSHOT    | February 2014      |    Feature enhancement and bug fix release
-| Version 1.2.7    | January 2014      |    Reduced default timeout of Hysterix Task Handlers.
-| Version 1.2.6    | January 2014      |    Introduced Option to load some handlers before others
-| Version 1.2.5    | January 2014      |    Better fallback handling in Thrift and Http proxies
-| Version 1.2.3    | December 2013      |    Changed command name published in Thrift Handler.
+| Version 1.3.5-SNAPSHOT    | Dec 2014      |    Feature release
+| Version 1.3.4-SNAPSHOT    | Oct 2014      |    Feature enhancement and bug fix release
+| Version 1.3.3             | Oct 2014      |    Bug fix release
+| Version 1.3.2-SNAPSHOT    | Sep 2014      |    Feature enhancement and bug fix release
+| Version 1.3.0-SNAPSHOT    | Sep 2014      |    Feature enhancement and code clean up
 
 ## Changelog
 

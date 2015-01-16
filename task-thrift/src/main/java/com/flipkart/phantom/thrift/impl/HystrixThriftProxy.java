@@ -16,9 +16,9 @@
 package com.flipkart.phantom.thrift.impl;
 
 import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.utils.StringUtils;
 import com.netflix.hystrix.HystrixCommandProperties;
 import org.apache.thrift.transport.TTransport;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +86,7 @@ public abstract class HystrixThriftProxy extends ThriftProxy {
         details += "Endpoint: " + this.getThriftServer() + ":" + this.getThriftPort() + "\n";
         details += "Timeout: " + this.getThriftTimeoutMillis() + "ms\n";
         details += "Executor Timeout: " + this.getProxyExecutorTimeout() + "ms\n";
-        details += "Methods: " + StringUtils.join(processMap.keySet().toArray(new String[]{}),", ") + "\n";
+        details += "Methods: " + StringUtils.collectionToDelimitedString(processMap.keySet(), ", ") + "\n";
         return details;
     }	
 	

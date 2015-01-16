@@ -40,7 +40,7 @@ import java.util.*;
  * @author devashishshankar
  * @version 1.0, 2nd May, 2013
  */
-public class SPConfigServiceImpl  implements SPConfigService {
+public class SPConfigServiceImpl<T extends AbstractHandler> implements SPConfigService<T> {
 
 	/** Logger instance for this class*/
 	private static final Logger LOGGER = LoggerFactory.getLogger(SPConfigServiceImpl.class);
@@ -49,16 +49,16 @@ public class SPConfigServiceImpl  implements SPConfigService {
 	public static final String PREV_HANDLER_FILE = "/spring-proxy-handler-prev.xml";
 	
 	/** The componentCOntainer instance for reloading the config file */
-	private ServiceProxyComponentContainer componentContainer;
+	private ServiceProxyComponentContainer<T> componentContainer;
 	
 	/** The map holding the mapping of a config file to it's handler name */
-	private Map<URI, List<AbstractHandler> > configURItoHandlerName = new HashMap<URI,List<AbstractHandler>>();
+	private Map<URI, List<T> > configURItoHandlerName = new HashMap<URI,List<T>>();
 	
 	/** The list of deployed TCP Servers */
 	private List<AbstractNetworkServer> deployedNetworkServers = new LinkedList<AbstractNetworkServer>();
 
     /** List of repositories */
-    private List<AbstractHandlerRegistry> registries = new ArrayList<AbstractHandlerRegistry>();
+    private List<AbstractHandlerRegistry<T>> registries = new ArrayList<AbstractHandlerRegistry<T>>();
 
     /**
      * Interface method implementation
@@ -68,6 +68,14 @@ public class SPConfigServiceImpl  implements SPConfigService {
         return deployedNetworkServers;
     }
 
+    /**
+     * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getDeployedRegistries()
+     */
+    public List<AbstractHandlerRegistry<T>> getDeployedRegistries() {
+    	return this.registries;
+    }
+    
     /**
      * Interface method implementation
      * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addDeployedNetworkServer(com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer)
@@ -80,7 +88,7 @@ public class SPConfigServiceImpl  implements SPConfigService {
      * Interface method implementation
      * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addHandlerRegistry(com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry)
      */
-    public void addHandlerRegistry(AbstractHandlerRegistry registry) {
+    public void addHandlerRegistry(AbstractHandlerRegistry<T> registry) {
         registries.add(registry);
     }
 
@@ -143,7 +151,7 @@ public class SPConfigServiceImpl  implements SPConfigService {
     	}
 
     	// get the registered AbstractHandler for the file name
-    	AbstractHandler handler = this.configURItoHandlerName.get(oldHandlerFile.toURI()).get(0);
+    	T handler = this.configURItoHandlerName.get(oldHandlerFile.toURI()).get(0);
         // re-load the handler
         // TODO
         // loading component destroys all beans in the config file given by the handler config info
@@ -263,9 +271,9 @@ public class SPConfigServiceImpl  implements SPConfigService {
 	 * Interface method implementation.
 	 * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#addHandlerConfigPath(java.io.File, com.flipkart.phantom.task.spi.AbstractHandler)
 	 */
-	public void addHandlerConfigPath(File taskHandlerFile, AbstractHandler handler) {
+	public void addHandlerConfigPath(File taskHandlerFile, T handler) {
 		if (this.configURItoHandlerName.get(taskHandlerFile.toURI()) == null) {
-			this.configURItoHandlerName.put(taskHandlerFile.toURI(), new LinkedList<AbstractHandler>());
+			this.configURItoHandlerName.put(taskHandlerFile.toURI(), new LinkedList<T>());
 		}
 		this.configURItoHandlerName.get(taskHandlerFile.toURI()).add(handler);
 	}
@@ -277,7 +285,7 @@ public class SPConfigServiceImpl  implements SPConfigService {
      * @throws Exception in case of errors
      */
     public void reinitHandler(String handlerName) throws Exception {
-        for (AbstractHandlerRegistry registry : registries) {
+        for (AbstractHandlerRegistry<T> registry : registries) {
             if (registry.getHandler(handlerName) != null) {
                 registry.reinitHandler(handlerName,TaskContextFactory.getTaskContext());
             }
@@ -286,21 +294,63 @@ public class SPConfigServiceImpl  implements SPConfigService {
 
     /**
      * Interface method implementation
+     * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#reloadHandler(String)
+     * @param handlerName The name of the TaskHandler to be reloaded
+     * @throws Exception in case of errors
+     */
+    public void reloadHandler(String handlerName) throws Exception {
+
+        // get the handler config file
+        File handlerFile = null;
+        try {
+            handlerFile = this.getHandlerConfig(handlerName).getFile();
+        } catch (NullPointerException e) {
+            LOGGER.error("Resource for handler: " + handlerName + " not found. Returning");
+            throw new PlatformException("File not found for handler: " + handlerName, e);
+        } catch (IOException e) {
+            LOGGER.error("Handler Config File for handler: " + handlerName + " not found. Returning");
+            throw new PlatformException("File not found for handler: " + handlerName, e);
+        }
+
+        // Check if file actually exists
+        if (!handlerFile.exists()) {
+            LOGGER.error("Handler Config File: " + handlerFile.getAbsolutePath() + " doesn't exist. Returning");
+            throw new PlatformException("File not found: " + handlerFile.getAbsolutePath());
+        }
+
+        // Check for read permissions
+        if (!handlerFile.canRead()) {
+            LOGGER.error("No read permission for: " + handlerFile.getAbsolutePath() + ". Returning");
+            throw new PlatformException("Read permissions not found for file: " + handlerFile.getAbsolutePath());
+        }
+
+        // get the registered AbstractHandler for the file name
+        T handler = this.configURItoHandlerName.get(handlerFile.toURI()).get(0);
+
+        // re-load the handler
+        // loading component destroys all beans in the config file given by the handler config info
+        // this mean this only works if there is only one handler per handler xml file
+        // else all handlers in the xml file are reloaded
+        this.componentContainer.reloadHandler(handler, this.getHandlerConfig(handlerName));
+    }
+
+    /**
+     * Interface method implementation
      * @see com.flipkart.phantom.runtime.spi.spring.admin.SPConfigService#getAllHandlers()
      */
     public List<AbstractHandler> getAllHandlers() {
         List<AbstractHandler> list = new ArrayList<AbstractHandler>();
-        for (AbstractHandlerRegistry registry : registries) {
+        for (AbstractHandlerRegistry<T> registry : registries) {
             list.addAll(registry.getHandlers());
         }
         return list;
     }
 
     /** Getter/Setter methods */
-	public ServiceProxyComponentContainer getComponentContainer() {
+	public ServiceProxyComponentContainer<T> getComponentContainer() {
 		return componentContainer;
 	}
-	public void setComponentContainer(ServiceProxyComponentContainer componentContainer) {
+	public void setComponentContainer(ServiceProxyComponentContainer<T> componentContainer) {
 		this.componentContainer = componentContainer;
 	}
 	/** End Getter/Setter methods */

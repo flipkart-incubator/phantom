@@ -16,93 +16,112 @@
 
 package com.flipkart.phantom.task.impl;
 
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
+import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 
 /**
  * An extension of {@link TaskHandler}. Provides methods to additionally set/customize Hytrix Command properties {https://github.com/Netflix/Hystrix}.
  * Uses {@link TaskHandler#getName()} as the HystrixCommand name for display on the dashboard.
- * 
+ *
  * @author devashishshankar
  * @version 1.0, 19 March, 2013
  */
 public abstract class HystrixTaskHandler extends TaskHandler {
 
-	/** The default executor timeout in millis*/
-	public static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
-		
-    /** 
-     * These can be used to limit the maximum concurrent requests at a thread pool level.
-     * The key will be the ThreadPool name.
-     * The value will be the thread pool size. 
-     * (If no. of concurrent requests for this thread pool exceed this value, they will be rejected by Hystrix)
+    /** The default executor timeout in millis*/
+    public static final int DEFAULT_EXECUTOR_TIMEOUT = 1000;
+
+    /**
+     * These can be used to limit the maximum concurrent requests for a Proxy or a command
+     * The key will be the Proxy name optionally overridden by a command name
+     * The value will be the concurrent pool size.
+     * If isolation strategy is @ExecutionIsolationStrategy#Thread then this param is used as a thread-concurrency pool
+     * as otherwise if the isolation strategy is @ExecutionIsolationStrategy#Semaphore , then this param is used for semaphore-concurrency pool
+     * (If no. of concurrent requests for this concurrent pool exceed this value, they will be rejected by Hystrix)
      * Note: the incoming request should have a "pool" param for it to be routed to the correct Thread Pool. If it doesn't,
      * the default command level thread pool will be used. (It's core size is 10 by default)
      */
-    private Map<String,Integer> threadPoolSizeParams = new HashMap<String,Integer>();
-    
-    /** 
+    private Map<String,Integer> concurrentPoolSizeParams = new HashMap<String,Integer>();
+
+    /**
      * These can be used to limit the maximum concurrent requests at a command level.
      * The key will be the HystrixCommand name. It should be a valid commandName. (Else an exception is thrown)
      * The value will be the thread pool size. 
-     * Note: threadPoolSizeParams override commandPoolSizeParams. commandPoolSizeParams will only be applied if there is no
+     * Note: commandPoolSizeParams override concurrentPoolSizeParams. commandPoolSizeParams will only be applied if there is no
      * "pool" param in incoming requests.
      * (If no. of concurrent requests for this thread pool exceed this value, they will be rejected by Hystrix)
      * If this property is not set for a command, default Hystrix Value for thread pool size(10) will be used.
      */
     private Map<String,Integer> commandPoolSizeParams = new HashMap<String,Integer>();
-    
+
     /**
      * Map of command names and their respective executor timeouts in milliseconds
      */
     protected Map<String,Integer> executorTimeouts = new HashMap<String, Integer>();
-    
+
     /**
-	 * This method will be executed if execute() fails.
-	 * @param command the command used
-	 * @param params thrift parameters
-	 * @param data extra data if any
-	 * @return response
-	 */
-	public abstract TaskResult getFallBack(TaskContext taskContext, String command, Map<String,String> params, byte[] data);
-    
-	/**
-	 * Return the ExecutionIsolationStrategy. Thread is the default.
-	 */
-	public ExecutionIsolationStrategy getIsolationStrategy() {
-		return ExecutionIsolationStrategy.THREAD;
-	}
-	
+     * This method will be executed if execute() fails.
+     * @param command the command used
+     * @param params thrift parameters
+     * @param data extra data if any
+     * @return response
+     */
+    public abstract TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String,String> params, byte[] data);
+
+    /**
+     * Returns null. Sub-Classes should override it, if they need fallback functionality.
+     * @param taskContext
+     * @param command
+     * @param taskRequestWrapper
+     * @param decoder
+     * @param <T>
+     * @return
+     * @throws RuntimeException
+     */
+    public <T> TaskResult<T> getFallBack(TaskContext taskContext, String command, TaskRequestWrapper taskRequestWrapper,Decoder<T> decoder) throws RuntimeException {
+        return null;
+    }
+
+    /**
+     * Return the ExecutionIsolationStrategy. Thread is the default.
+     */
+    public ExecutionIsolationStrategy getIsolationStrategy() {
+        return ExecutionIsolationStrategy.THREAD;
+    }
+
     /** Getter/Setter methods */
-	/**
-	 * Returns a command specific executor timeout. Default implementation returns {@value TaskHandler#DEFAULT_EXECUTOR_TIMEOUT}
-	 * @param commandName the command name being executed
-	 * @return the executor timeout value in milli seconds
-	 */
-	public int getExecutorTimeout(String commandName) {		
-		Integer timeout = this.getExecutorTimeouts().get(commandName);
-		return timeout != null ? timeout : HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT;
-	}
+    /**
+     * Returns a command specific executor timeout. Default implementation returns {@value HystrixTaskHandler#DEFAULT_EXECUTOR_TIMEOUT}
+     * @param commandName the command name being executed
+     * @return the executor timeout value in milli seconds
+     */
+    public int getExecutorTimeout(String commandName) {
+        Integer timeout = this.getExecutorTimeouts().get(commandName);
+        return timeout != null ? timeout : HystrixTaskHandler.DEFAULT_EXECUTOR_TIMEOUT;
+    }
     public Map<String,Integer> getCommandPoolSizeParams() {
-		return commandPoolSizeParams;
-	}
-	public void setCommandPoolSizeParams(Map<String,Integer> commandPoolSizeParams) {
-		this.commandPoolSizeParams = commandPoolSizeParams;
-	}	
-	public Map<String,Integer> getThreadPoolSizeParams() {
-		return threadPoolSizeParams;
-	}
-	public void setThreadPoolSizeParams(Map<String,Integer> threadPoolSizeParams) {
-		this.threadPoolSizeParams = threadPoolSizeParams;
-	}
-	public Map<String, Integer> getExecutorTimeouts() {
-		return this.executorTimeouts;
-	}
-	public void setExecutorTimeouts(Map<String, Integer> executorTimeouts) {
-		this.executorTimeouts = executorTimeouts;
-	}	
-	/** End Getter/Setter methods */
+        return commandPoolSizeParams;
+    }
+    public void setCommandPoolSizeParams(Map<String,Integer> commandPoolSizeParams) {
+        this.commandPoolSizeParams = commandPoolSizeParams;
+    }
+    public Map<String,Integer> getConcurrentPoolSizeParams() {
+        return concurrentPoolSizeParams;
+    }
+    public void setConcurrentPoolSizeParams(Map<String,Integer> concurrentPoolSizeParams) {
+        this.concurrentPoolSizeParams = concurrentPoolSizeParams;
+    }
+    public Map<String, Integer> getExecutorTimeouts() {
+        return this.executorTimeouts;
+    }
+    public void setExecutorTimeouts(Map<String, Integer> executorTimeouts) {
+        this.executorTimeouts = executorTimeouts;
+    }
+    /** End Getter/Setter methods */
 }

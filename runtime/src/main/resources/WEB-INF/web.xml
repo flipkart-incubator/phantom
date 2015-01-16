@@ -68,7 +68,6 @@
 		<url-pattern>/hystrix.snapshot.global</url-pattern> <!-- all the hystrix metrics will be streamed to JSON to this URL -->
 	</servlet-mapping>
 	
-
 	<!-- Spring MVC servlet for ServiceProxy Web Console -->
 	<servlet>
 		<servlet-name>ServiceProxyServlet</servlet-name>
@@ -79,11 +78,24 @@
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
-
-
+	
 	<servlet-mapping>
 		<servlet-name>ServiceProxyServlet</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-
+	
+	<!-- Sample Tracing filter integration. Uncommenting this would require a bean by name "ServletTraceFilter" to be defined
+	     in /resources/external/common-web-config.xml of the deployed Phantom runtime
+	     
+	<filter>
+	   <filter-name>ServletTraceFilter</filter-name>
+	   <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	<filter-mapping>
+	   <filter-name>ServletTraceFilter</filter-name>
+	   <url-pattern>/*</url-pattern>
+	</filter-mapping>	
+	
+	-->	
+	
 </web-app>

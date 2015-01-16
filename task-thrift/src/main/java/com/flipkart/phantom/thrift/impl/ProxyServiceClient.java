@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author Regunath B
  * @version 1.0, 28 Mar 2013
  */
+@SuppressWarnings("rawtypes")
 public class ProxyServiceClient extends TServiceClient {
 
 	/** Logger for this class*/

@@ -19,10 +19,12 @@
 	 * 
 	 * Publish this externally as "HystrixThreadPoolMonitor"
 	 */
-	window.HystrixThreadPoolMonitor = function(containerId) {
+	window.HystrixThreadPoolMonitor = function(containerId, filter) {
 		
 		var self = this; // keep scope under control
-		
+
+		self.filter = filter ? filter : [];
+
 		this.containerId = containerId;
 		
 		/**
@@ -60,7 +62,7 @@
 		 */
 		/* public */ self.eventSourceMessageListener = function(e) {
 			var data = JSON.parse(e.data);
-			if(data) {
+			if (data) {
 				// check for reportingHosts (if not there, set it to 1 for singleHost vs cluster)
 				if(!data.reportingHosts) {
 					data.reportingHosts = 1;
@@ -139,14 +141,26 @@
 		 * @param data
 		 */
 		/* private */ function displayThreadPool(data) {
-			
+
 			try {
 				preProcessData(data);
 			} catch (err) {
 				log("Failed preProcessData: " + err.message);
 				return;
 			}
-			
+
+			// filter based on filters passed
+			if (self.filter.length > 0) {
+			    var found = false;
+				for (var idx in self.filter) {
+					if (self.filter[idx] == data.name) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) return;
+            }
+
 			// add the 'addCommas' function to the 'data' object so the HTML templates can use it
 			data.addCommas = addCommas;
 			// add the 'roundNumber' function to the 'data' object so the HTML templates can use it

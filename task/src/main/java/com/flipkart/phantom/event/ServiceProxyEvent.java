@@ -16,14 +16,16 @@
 
 package com.flipkart.phantom.event;
 
-import com.flipkart.phantom.task.spi.Executor;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixEventType;
-import org.trpr.platform.model.event.PlatformEvent;
-
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+
+import org.trpr.platform.model.event.PlatformEvent;
+
+import com.flipkart.phantom.task.spi.Executor;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixEventType;
+import com.twitter.zipkin.gen.Span;
 
 /**
  * This is an extension of {@link org.trpr.platform.model.event.PlatformEvent}
@@ -41,7 +43,11 @@ import java.util.List;
  */
 
 public class ServiceProxyEvent extends PlatformEvent {
-    /** Sequential list of events which executor executed to serve the request. */
+	
+    /** */
+	private static final long serialVersionUID = 1L;
+
+	/** Sequential list of events which executor executed to serve the request. */
     private final List<HystrixEventType> hystrixEventList;
 
     /** In case of failure this field holds the exception which caused the failure otherwise it is {@code null} */
@@ -67,7 +73,10 @@ public class ServiceProxyEvent extends PlatformEvent {
 
     /** Request Id corresponding to which this event is generated. */
     private final String requestId;
-
+    
+    /** The Zipkin span used for tracing */
+    private Span span;
+    
     //Enum just to denote string constants for event status.
     enum EventStatus {
         SUCCESS, FAILURE
@@ -87,6 +96,7 @@ public class ServiceProxyEvent extends PlatformEvent {
         this.requestSentTime = builder.requestSentTime;
         this.requestReceiveTime = builder.requestReceiveTime;
         this.requestExecutionStartTime = builder.requestExecutionStartTime;
+        this.span = builder.span;
 
         /** EventStatus is SUCCESS in case of request TimeOuts see class description for more detail */
         this.eventStatus = exception == null ? EventStatus.SUCCESS.name() : EventStatus.FAILURE.name();
@@ -98,35 +108,30 @@ public class ServiceProxyEvent extends PlatformEvent {
     public Exception getException() {
         return exception;
     }
-
     public List<HystrixEventType> getHystrixEventList() {
         return hystrixEventList;
     }
-
     public String getCommandName() {
         return commandName;
     }
-
     public int getExecutionTime() {
         return executionTime;
     }
-
     public String getRequestId() {
         return requestId;
     }
-
     public long getRequestReceiveTime() {
         return requestReceiveTime;
     }
-
     public long getRequestSentTime() {
         return requestSentTime;
     }
-
     public long getRequestExecutionStartTime() {
         return requestExecutionStartTime;
     }
-
+    public Span getSpan() {
+    	return span;
+    }
     /** End Getter methods */
 
     public static class Builder {
@@ -142,7 +147,8 @@ public class ServiceProxyEvent extends PlatformEvent {
         private long requestExecutionStartTime = -1;
         private Exception exception = null;
         private String eventSource = "unspecified";
-        private List<HystrixEventType> hystrixEventList = Collections.EMPTY_LIST;
+        private List<HystrixEventType> hystrixEventList = Collections.emptyList();
+        private Span span = null;
 
         /**
          * @param commandName Command which executor executed from which this event was generated.
@@ -219,19 +225,28 @@ public class ServiceProxyEvent extends PlatformEvent {
         }
 
         /**
+         * @param span the Span that was linked to this event
+         */
+        public Builder withSpan(Span span) {
+        	this.span = span;
+        	return this;
+        }
+        
+        /**
          * Copies various parameters like execution events,time and any exception after command execution.<br/><br/>
          * <b>Should be called only after execution of command completes</b>
          * @param executor Executor used to execute this request.
          * @return
          */
-        public Builder withCommandData(Executor executor) {
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+		public Builder withCommandData(Executor executor) {
             HystrixCommand command = (HystrixCommand) executor;
             withEventList(command.getExecutionEvents())
                     .withExecutionTime(command.getExecutionTimeInMilliseconds())
                     .withException((Exception) command.getFailedExecutionException());
             return this;
         }
-
+        
         public ServiceProxyEvent build() {
             return new ServiceProxyEvent(this);
         }

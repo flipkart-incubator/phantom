@@ -62,12 +62,28 @@ public abstract class HttpProxy extends AbstractHandler {
     }
 
     /**
+     * Abstract method implementation. Returns the host created for the Http connection pool
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getHost()
+     */
+    public String getHost() {
+    	return this.getPool().getHost();
+    }
+
+    /**
+     * Abstract method implementation. Returns the port of the Http connection pool
+     * @see com.flipkart.phantom.task.spi.AbstractHandler#getPort()
+     */
+    public int getPort() {
+    	return this.getPool().getPort();
+    }
+    
+    /**
      * The main method which makes the HTTP request
      */
     public HttpResponse doRequest(HttpRequestWrapper httpRequestWrapper) throws Exception {
         /** get necessary data required for the output */
         return pool.execute(createRequest(httpRequestWrapper.getMethod(),httpRequestWrapper.getUri(),
-                httpRequestWrapper.getData()), httpRequestWrapper.getHeaders());
+                httpRequestWrapper.getData()), httpRequestWrapper.getHeaders().get());
     }
 
     /**

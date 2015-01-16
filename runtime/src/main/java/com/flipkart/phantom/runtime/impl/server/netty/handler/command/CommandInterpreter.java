@@ -15,8 +15,11 @@
  */
 package com.flipkart.phantom.runtime.impl.server.netty.handler.command;
 
-import com.flipkart.phantom.task.impl.TaskResult;
-import org.codehaus.jackson.map.ObjectMapper;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -27,10 +30,8 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.springframework.util.SerializationUtils;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 
 /**
  * <code>CommandInterpreter</code> interprets a Command from the Netty {@link MessageEvent}
@@ -75,6 +76,7 @@ import java.util.Map;
  * @version 1.0, 22 Mar 2013
  */
 
+@SuppressWarnings("rawtypes")
 public class CommandInterpreter {
 
 	/** Constant for max command input size*/
@@ -182,6 +184,10 @@ public class CommandInterpreter {
 				}
 			}
 		} else {
+            byte[] metaData = result.getMetadata();
+            if(metaData != null && (metaData.length > 0)) {
+               outputStream.write(metaData);
+            }
 			Object data = result.getData();
 			if(data!=null) {
 				if(data instanceof byte[]) {

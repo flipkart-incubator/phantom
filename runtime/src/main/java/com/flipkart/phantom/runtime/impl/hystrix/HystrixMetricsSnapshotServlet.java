@@ -1,18 +1,21 @@
 package com.flipkart.phantom.runtime.impl.hystrix;
 
-import com.netflix.hystrix.*;
-import com.netflix.hystrix.util.HystrixRollingNumberEvent;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.StringWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.StringWriter;
+
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandMetrics;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolMetrics;
+import com.netflix.hystrix.util.HystrixRollingNumberEvent;
 
 /**
  * The HystrixMetricsSnapshotServlet class is a customization of the Hystrix  {@link com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet}.
@@ -25,9 +28,10 @@ import java.io.StringWriter;
 
 public class HystrixMetricsSnapshotServlet extends HttpServlet {
 
-    private static final Logger logger = LoggerFactory.getLogger(HystrixMetricsSnapshotServlet.class);
+    /** */
+	private static final long serialVersionUID = 1L;
 
-    /**
+	/**
      * Handle incoming GETs
      */
     @Override

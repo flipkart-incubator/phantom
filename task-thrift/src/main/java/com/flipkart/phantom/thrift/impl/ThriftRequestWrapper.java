@@ -16,7 +16,12 @@
 
 package com.flipkart.phantom.thrift.impl;
 
+import java.util.List;
+import java.util.Map;
+
 import com.flipkart.phantom.task.spi.RequestWrapper;
+import com.google.common.base.Optional;
+
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -26,18 +31,58 @@ import org.apache.thrift.transport.TTransport;
  * @version : 1.0
  * @date : 28/10/13
  */
-public class ThriftRequestWrapper implements RequestWrapper {
+public class ThriftRequestWrapper extends RequestWrapper {
 
      /** The client socket */
     private TTransport clientSocket;
+    
+    /** The method being invoked */
+    private String methodName;
+    
+    /**
+     * Interface method implementation. Returns the Thrift method name being invoked
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getRequestName()
+     */
+    public String getRequestName() {
+    	return this.getMethodName();
+    }
 
+    /**
+     * Abstract method implementation. Returns the request method name 
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getRequestMetaData()
+     */
+    public Optional<String> getRequestMetaData() {
+    	return Optional.of(getRequestName());
+    }    
+    
+    /**
+     * Abstract method implementation. Ignores the headers as Thrift protocol does not support passing headers
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#setHeaders(java.util.List)
+     */
+    public  void setHeaders(List<Map.Entry<String, String>> headers) {
+    	// no op as we dont have a way to define headers in the Thrift protocol
+    }
+    
+    /**
+     * Abstract method implementation. Returns an absent Optional as headers is not supported by the Thrift protocol
+     * @see com.flipkart.phantom.task.spi.RequestWrapper#getHeaders()
+     */
+    public Optional<List<Map.Entry<String, String>>> getHeaders() {
+        return Optional.absent();
+    }
+    
     /** Start Getter/Setter methods */
     public TTransport getClientSocket(){
         return clientSocket;
     }
-
     public void setClientSocket(TTransport clientSocket){
         this.clientSocket = clientSocket;
     }
-      /**End Getter/Setter methods */
+	public String getMethodName() {
+		return methodName;
+	}
+	public void setMethodName(String methodName) {
+		this.methodName = methodName;
+	}    
+    /**End Getter/Setter methods */
 }

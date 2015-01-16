@@ -15,13 +15,12 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
-import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
+import org.apache.thrift.transport.TTransport;
 
+import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
+import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.thrift.impl.interceptor.ThriftClientResponseInterceptor;
 
 /**
  * <code>ThriftProxyExecutorRepository</code> is a repository of {@link ThriftProxyExecutor} instances. Provides methods to control instantiation of
@@ -30,13 +29,7 @@ import com.flipkart.phantom.thrift.impl.registry.ThriftProxyRegistry;
  * @author Regunath B
  * @version 1.0, 28 March, 2013
  */
-public class ThriftProxyExecutorRepository implements ExecutorRepository{
-
-    /** The TaskContext instance */
-    private TaskContext taskContext;
-
-    /** Thrift Proxy Registry containing the list of Thrift Proxies */
-    private ThriftProxyRegistry registry;
+public class ThriftProxyExecutorRepository extends AbstractExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> {
 
     /**
      *  Returns a {@link ThriftProxyExecutor} for the specified ThriftProxy and command name
@@ -47,35 +40,22 @@ public class ThriftProxyExecutorRepository implements ExecutorRepository{
      * @return  a ThriftProxyExecutor instance
      */
      @Override
-    public Executor getExecutor(String commandName, String proxyName, RequestWrapper requestWrapper)
-    {
-        HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
-        if (proxy.isActive()) { // check if the ThriftProxy is indeed active
-            return new ThriftProxyExecutor(proxy, this.taskContext, commandName, requestWrapper);
-        }
-        throw new RuntimeException("The ThriftProxy is not active.");
-    }
+     public Executor<ThriftRequestWrapper,TTransport> getExecutor(String commandName, String proxyName, ThriftRequestWrapper requestWrapper) {
+    	 HystrixThriftProxy proxy = (HystrixThriftProxy) registry.getHandler(proxyName);
+    	 if (proxy.isActive()) { // check if the ThriftProxy is indeed active
+    		 ThriftProxyExecutor executor = new ThriftProxyExecutor(proxy, this.taskContext, commandName, requestWrapper);
+    		 return this.wrapExecutorWithInterceptors(executor, proxy);
+    	 }
+    	 throw new RuntimeException("The ThriftProxy is not active.");
+     }
 
-    /** Start Getter/Setter methods */
-
-    @Override
-    public TaskContext getTaskContext() {
-        return this.taskContext;
-    }
-
-    @Override
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
-
-    @Override
-    public AbstractHandlerRegistry getRegistry() {
-        return this.registry;
-    }
-
-    @Override
-    public void setRegistry(AbstractHandlerRegistry registry) {
-        this.registry =  (ThriftProxyRegistry) registry;
-    }
-    /** End End Getter/Setter methods */
+     /**
+      * Helper method to wrap the Executor with request and response interceptors 
+      */
+     private Executor<ThriftRequestWrapper,TTransport> wrapExecutorWithInterceptors(Executor<ThriftRequestWrapper,TTransport> executor, HystrixThriftProxy proxy) {
+         ClientRequestInterceptor<ThriftRequestWrapper> tracingRequestInterceptor = new ClientRequestInterceptor<ThriftRequestWrapper>();
+         ThriftClientResponseInterceptor<TTransport> tracingResponseInterceptor = new ThriftClientResponseInterceptor<TTransport>();
+         return this.wrapExecutorWithInterceptors(executor, proxy, tracingRequestInterceptor, tracingResponseInterceptor);
+     }
+     
 }

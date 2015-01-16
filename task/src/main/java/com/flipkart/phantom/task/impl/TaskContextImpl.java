@@ -16,16 +16,24 @@
 
 package com.flipkart.phantom.task.impl;
 
-import com.flipkart.phantom.task.spi.TaskContext;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.spi.RequestContext;
+import com.flipkart.phantom.task.spi.TaskContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
+import com.github.kristofa.brave.Brave;
+import com.github.kristofa.brave.ServerSpan;
+import com.google.common.base.Optional;
 
 /**
  * Default implementation of {@link TaskContext}
@@ -33,6 +41,7 @@ import java.util.concurrent.Future;
  * @author devashishshankar
  * @version 1.0, 20th March, 2013
  */
+@SuppressWarnings("rawtypes")
 public class TaskContextImpl implements TaskContext {
 
     /** Logger for this class */
@@ -47,12 +56,10 @@ public class TaskContextImpl implements TaskContext {
     /** ObjectMapper instance */
     private ObjectMapper objectMapper = new ObjectMapper();
 
-
     /** The TaskHandlerExecutorRepository instance for getting thrift handler executor instances */
     private TaskHandlerExecutorRepository executorRepository;
 
-    static
-    {
+    static {
         try {
             hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
@@ -66,14 +73,15 @@ public class TaskContextImpl implements TaskContext {
      * @param key the primary key
      * @return the config as string, empty string if not found/error
      */
-    public String getConfig(String group, String key, int count) {
+	public String getConfig(String group, String key, int count) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("group", group);
         params.put("key", key);
         params.put("count", Integer.toString(count));
         TaskResult result = this.executeCommand(GET_CONFIG_COMMAND, null, params);
-        if (result == null)
+        if (result == null) {
             return "";
+        }
         return new String((byte[])result.getData());
     }
 
@@ -81,43 +89,45 @@ public class TaskContextImpl implements TaskContext {
      * Executes a command
      */
     public TaskResult executeCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
-        TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
-        taskRequestWrapper.setData(data);
-        taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeCommand(commandName, taskRequestWrapper);
+        return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params));
+    }
+
+    @Override
+    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException {
+        return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
+    }
+
+    @Override
+    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
+        return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
+    }
+
+    @Override
+    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
+        return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
     }
 
     /**
      * Executes a command asynchronously
      */
     public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+        return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params));
+    }
+    
+    /** Creates a TaskRequestWrapper from passed in params and sets the current server span on it*/
+    private TaskRequestWrapper createRequestFromParams(String commandName, byte[] data, Map<String, String> params) {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+        taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);
         taskRequestWrapper.setParams(params);
-        return this.executorRepository.executeAsyncCommand(commandName, taskRequestWrapper);
-    }
-
-    /**
-     * Interface method implementation. Sends the "sendMetric" command for profiling
-     */
-    public void profileCommand(TaskHandler handler, String command, Long diff, String tags) {
-        try {
-            Map<String, String> tsdbDataParams = new HashMap<String, String>();
-            tsdbDataParams.put("key", handler.getName() + "TaskHandler-" + command);
-            tsdbDataParams.put("pool", "agent");
-            tsdbDataParams.put("type", "measure");
-            tsdbDataParams.put("ts", String.valueOf(System.currentTimeMillis() * 1000));
-            if (tags != null) {
-                tsdbDataParams.put("tags", "host=" + this.hostName + " " + tags);
-            } else {
-                tsdbDataParams.put("tags", "host=" + this.hostName);
-            }
-
-            tsdbDataParams.put("value", String.valueOf(diff));
-            this.executeCommand("sendMetric", null, tsdbDataParams);
-        } catch (Exception e) {
-            LOGGER.error("Exception while profiling agent command", e);
-        }
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	if (serverSpan.getSpan() != null) {
+    		// set the request context and the current server span on the received request only if a span exists
+        	RequestContext serverRequestContext = new RequestContext();
+    		serverRequestContext.setCurrentServerSpan(serverSpan); 
+        	taskRequestWrapper.setRequestContext(Optional.of(serverRequestContext));
+    	}
+    	return taskRequestWrapper;
     }
 
     /** Getter/Setter methods */

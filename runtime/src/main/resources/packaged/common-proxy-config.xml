@@ -10,8 +10,55 @@
 	<!-- This event producer bean is declared primarily for publishing Bootstrap lifecycle events -->
 	<bean id="platformEventProducer" class="org.trpr.platform.core.impl.event.PlatformEventProducerImpl"/>
 
-    <!--Three types of subscriptions are supported based on Protocol used by handler.-->
+    <!--Types of subscriptions supported -->
     <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.THRIFT_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.HTTP_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.ASYNC_COMMAND_HANDLER</value>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+
+	<bean id="configService" class="com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl">
+	</bean>
+
+    <bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
+        <property name="executorRepository" ref="taskHandlerRepository" />
+    </bean>
+    
+    <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
+        <property name="taskContext" ref="taskContext" />
+        <property name="registry" ref="taskHandlerRegistry" />
+        <property name="eventProducer"  ref="commonServiceProxyEventProducer" />
+        <property name="eventDispatchingSpanCollector"  ref="eventDispatchingSpanCollector" />
+    </bean>
+
+    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry"/>
+
+    <!-- Task Handler Event Publishers & Consumers-->
+
+    <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
+    <bean id="commonEndpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
+        <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
+    </bean>
+
+    <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
+    <bean id="commonServiceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
+        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
+        <property name="eventProducer" ref="commonEndpointEventProducer"/>
+    </bean>
+    
+    <!-- The EventDispatchingSpanCollector used in tracing -->
+    <bean id="eventDispatchingSpanCollector" class="com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector">
+        <property name="eventProducer" ref="commonServiceProxyEventProducer"/>
+    </bean>    
+
+    <!--This bean corresponds to consumer of Service Proxy Events which listens to all event types and logs errors-->
+    <bean id="commonRequestLogger" class="com.flipkart.phantom.event.consumer.RequestLogger">
         <property name="subscriptions">
             <list>
                 <value>evt://com.flipkart.phantom.events.COMMAND_HANDLER</value>
@@ -21,22 +68,8 @@
             </list>
         </property>
     </bean>
-
-
-	<bean id="configService" class="com.flipkart.phantom.runtime.impl.spring.admin.SPConfigServiceImpl">
-	</bean>
-
-	<bean id="taskContext" class="com.flipkart.phantom.task.impl.TaskContextFactory">
-        <property name="executorRepository" ref="taskHandlerRepository" />
-    </bean>
-
-    <bean id="taskHandlerRepository" class="com.flipkart.phantom.task.impl.TaskHandlerExecutorRepository">
-        <property name="taskContext" ref="taskContext" />
-        <property name="registry" ref="taskHandlerRegistry" />
-    </bean>
-
-    <bean id="taskHandlerRegistry" class="com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry"/>
-
+    <!-- Task Handler Event Publishers & Consumers-->
+		
 	<!-- Netty common beans -->
 	<bean id="defaultChannelGroup" class="org.jboss.netty.channel.group.DefaultChannelGroup">
 		<constructor-arg><value>"NETWORK-SERVER-CHANNELS"</value></constructor-arg>

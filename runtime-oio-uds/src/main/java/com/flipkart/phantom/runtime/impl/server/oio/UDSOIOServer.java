@@ -15,16 +15,20 @@
  */
 package com.flipkart.phantom.runtime.impl.server.oio;
 
-import com.flipkart.phantom.event.ServiceProxyEvent;
-import com.flipkart.phantom.event.ServiceProxyEventProducer;
-import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
-import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
-import com.flipkart.phantom.task.impl.TaskHandler;
-import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
-import com.flipkart.phantom.task.impl.TaskRequestWrapper;
-import com.flipkart.phantom.task.impl.TaskResult;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
@@ -32,12 +36,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.trpr.platform.runtime.impl.config.FileLocator;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.runtime.impl.server.concurrent.NamedThreadFactory;
+import com.flipkart.phantom.runtime.impl.server.netty.handler.command.CommandInterpreter;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandlerExecutor;
+import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
+import com.flipkart.phantom.task.impl.interceptor.ServerRequestInterceptor;
+import com.flipkart.phantom.task.spi.RequestContext;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
+import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
+import com.github.kristofa.brave.Brave;
+import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.ServerSpan;
+import com.github.kristofa.brave.ServerTracer;
+import com.github.kristofa.brave.TraceFilter;
+import com.google.common.base.Optional;
 
 /**
  * <code>UDSOIOServer</code> is a concrete implementation of the {@link AbstractNetworkServer}
@@ -46,6 +63,7 @@ import java.util.concurrent.Executors;
  * @author Regunath B
  * @version 1.0, 25 Jun 2013
  */
+@SuppressWarnings("rawtypes")
 public class UDSOIOServer extends AbstractNetworkServer {
 
     /** Logger for this class*/
@@ -54,6 +72,15 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /** The default counts (invalid one) for worker pool count*/
     private static final int INVALID_POOL_SIZE = -1;
 
+    /** The default name of the server/service this channel handler is serving*/
+    private static final String DEFAULT_SERVICE_NAME = "UDS OIO Server";
+    
+    /** Event Type for publishing all events which are generated here */
+    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
+    
+    /** The default value for tracing frequency. This value indicates that tracing if OFF*/
+    private static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);    
+    
     /** The default timeout for client socket inactivity*/
     private int DEFAULT_CLIENT_TIMEOUT_MILLIS = 300;
 
@@ -63,8 +90,31 @@ public class UDSOIOServer extends AbstractNetworkServer {
     /** The System property to be set with Junix native lib path*/
     private static final String JUNIX_LIB_SYSTEM_PROPERTY = "org.newsclub.net.unix.library.path";
 
+	/** Default host name and port where this ChannelHandler is available */
+	public static final String DEFAULT_HOST = "localhost"; // unresolved local host name
+	public static final int DEFAULT_PORT = -1; // no valid port really
+    
+    /** The local host name value*/
+    private static String hostName = DEFAULT_HOST;
+    static {
+    	try {
+			hostName = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			LOGGER.warn("Unable to resolve local host name. Will use default host name : " + DEFAULT_HOST);
+		}
+    }
+    
+    /** The name for the service/server*/
+    private String serviceName = DEFAULT_SERVICE_NAME;
+    
+    /** The port where the server for this handler is listening on*/
+    private int hostPort;
+    
     /** The worker thread pool sizes*/
     private int workerPoolSize = INVALID_POOL_SIZE;
+
+    /** The worker thread pool executor queue size*/
+    private int executorQueueSize = Runtime.getRuntime().availableProcessors() * 12;
 
     /** The client socket inactivity timeout in millis*/
     private int clientSocketTimeoutMillis = DEFAULT_CLIENT_TIMEOUT_MILLIS;
@@ -88,14 +138,17 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public AFUNIXServerSocket socket;
 
     /** The TaskRepository to lookup TaskHandlerExecutors from */
-    private ExecutorRepository repository;
+	private ExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> repository;
 
-	/** The publisher used to broadcast events to Service Proxy Subscribers */
-	private ServiceProxyEventProducer eventProducer;
+    /** The publisher used to broadcast events to Service Proxy Subscribers */
+    private ServiceProxyEventProducer eventProducer;
 
-    /** Event Type for publishing all events which are generated here */
-    private final static String COMMAND_HANDLER = "COMMAND_HANDLER";
-
+    /** The request tracing frequency for this channel handler*/
+    private TraceFilter traceFilter = NO_TRACING;	
+    
+    /** The EventDispatchingSpanCollector instance used in tracing requests*/
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;    
+    
     /**
      * Interface method implementation. Returns {@link TRANSMISSION_PROTOCOL#UDS} (Unix domain Sockets)
      * @see com.flipkart.phantom.runtime.spi.server.NetworkServer#getTransmissionProtocol()
@@ -118,6 +171,8 @@ public class UDSOIOServer extends AbstractNetworkServer {
         //Required properties
         Assert.notNull(this.socketDir, "socketDir is a required property for UDSNetworkServer");
         Assert.notNull(this.socketName, "socketName is a required property for UDSNetworkServer");
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");
+        
         //Create the socket file
         this.socketFile = new File(new File(this.socketDir), this.socketName);
 
@@ -127,13 +182,20 @@ public class UDSOIOServer extends AbstractNetworkServer {
             this.socketAddress = new AFUNIXSocketAddress(this.socketFile);
             this.socket = AFUNIXServerSocket.newInstance();
             this.socket.bind(this.socketAddress);
+            this.hostPort = this.socketAddress.getPort();
         } catch (IOException e) {
             throw new RuntimeException("Error creating Socket Address. ",e);
         }
         if (this.getWorkerExecutors() == null) {  // no executors have been set for workers
-            if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has been set. create and use a fixed thread pool
-                this.setWorkerExecutors(Executors.newFixedThreadPool(this.getWorkerPoolSize(), new NamedThreadFactory("UDSOIOServer-Worker")));
-            }else { // default behavior of creating and using a cached thread pool
+            if (this.getWorkerPoolSize() != UDSOIOServer.INVALID_POOL_SIZE) { // thread pool size has  been set
+                this.setWorkerExecutors(new ThreadPoolExecutor(this.getWorkerPoolSize(),
+                        this.getWorkerPoolSize(),
+                        60,
+                        TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(this.getExecutorQueueSize()),
+                        new NamedThreadFactory("UDSOIOServer-Worker"),
+                        new ThreadPoolExecutor.CallerRunsPolicy()));
+            }else { //
                 this.setWorkerExecutors(Executors.newCachedThreadPool(new NamedThreadFactory("UDSOIOServer-Worker")));
             }
         }
@@ -194,7 +256,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 try {
                     client = socket.accept();
                     client.setSoTimeout(getClientSocketTimeoutMillis()); // set this timeout to protect server from clients that become inactive
-                    workerExecutors.execute(new CommandProcessor(client));
+                    workerExecutors.submit(new CommandProcessor(client));
                 } catch (IOException e) {
                     throw new RuntimeException("Error accepting client socket connections : " + e.getMessage(), e);
                 }
@@ -214,6 +276,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
             long receiveTime = System.currentTimeMillis();
             TaskHandlerExecutor executor = null;
             CommandInterpreter.ProxyCommand readCommand = null;
+            Optional<RuntimeException> transportError = Optional.absent();
+            TaskResult result = null;
+            ServerRequestInterceptor<TaskRequestWrapper, TaskResult> serverRequestInterceptor = null;
             try {
                 CommandInterpreter commandInterpreter = new CommandInterpreter();
                 readCommand = commandInterpreter.readCommand(client.getInputStream());
@@ -222,8 +287,14 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
                 // Prepare the request Wrapper
                 TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+                taskRequestWrapper.setCommandName(readCommand.getCommand());
                 taskRequestWrapper.setData(readCommand.getCommandData());
                 taskRequestWrapper.setParams(readCommand.getCommandParams());
+                // set the service name for the request
+                taskRequestWrapper.setServiceName(Optional.of(serviceName));
+
+                // Create and process a Server request interceptor. This will initialize the server tracing
+                serverRequestInterceptor = initializeServerTracing(taskRequestWrapper);
 
                 /*Try to execute command using ThreadPool, if "pool" is found in the command, else the command name */
                 if (pool != null) {
@@ -231,7 +302,6 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 } else {
                     executor = (TaskHandlerExecutor) repository.getExecutor(readCommand.getCommand(), readCommand.getCommand(), taskRequestWrapper);
                 }
-                TaskResult result;
                 /* execute */
                 if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
                     result = executor.execute();
@@ -245,24 +315,31 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 // write the results to the socket output
                 commandInterpreter.writeCommandExecutionResponse(client.getOutputStream(), result);
             } catch (Exception e) {
-                throw new RuntimeException("Error in processing command : " + e.getMessage(), e);
+            	RuntimeException runtimeException = new RuntimeException("Error in executing command : " + readCommand, e);
+            	transportError = Optional.of(runtimeException);
+                throw runtimeException;
             } finally {
+            	// finally inform the server request tracer
+            	if (serverRequestInterceptor != null) {
+            		serverRequestInterceptor.process(result, transportError);
+            	}
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
                     final Map<String, String> params = readCommand.getCommandParams();
                     ServiceProxyEvent.Builder eventBuilder;
-                    if(executor==null)
+                    if(executor==null) {
                         eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
-                    else
+                    } else {
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+                    }
                     eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
-                    if(params.containsKey("requestSentTime"))
+                    if(params.containsKey("requestSentTime")) {
                         eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
-
+                    }
                     eventProducer.publishEvent(eventBuilder.build());
-                } else
+                } else {
                     LOGGER.debug("eventProducer not set, not publishing event");
-
+                }
                 if (client != null) {
                     try {
                         client.close();
@@ -274,7 +351,34 @@ public class UDSOIOServer extends AbstractNetworkServer {
         }
     }
 
+    /**
+     * Initializes server tracing for the specified request
+     * @param executorHttpRequest the Http request 
+     * @return the initialized ServerRequestInterceptor
+     */
+    private ServerRequestInterceptor<TaskRequestWrapper, TaskResult> initializeServerTracing(TaskRequestWrapper executorRequest) {
+		// set the server request context on the received request
+    	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
+    	RequestContext serverRequestContext = new RequestContext();
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
+    	executorRequest.setRequestContext(Optional.of(serverRequestContext));
+        ServerRequestInterceptor<TaskRequestWrapper, TaskResult> serverRequestInterceptor = new ServerRequestInterceptor<TaskRequestWrapper, TaskResult>();
+    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
+    	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+    	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
+        serverRequestInterceptor.setServerTracer(serverTracer);
+        serverRequestInterceptor.setServiceHost(UDSOIOServer.hostName);
+        serverRequestInterceptor.setServicePort(this.hostPort);
+        serverRequestInterceptor.setServiceName(this.serviceName);   
+        // now process the request to initialize tracing
+        serverRequestInterceptor.process(executorRequest); 
+        return serverRequestInterceptor;
+    }
+    
     /** Start Getter/Setter methods */
+    public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}	
     public int getWorkerPoolSize() {
         return this.workerPoolSize;
     }
@@ -314,13 +418,24 @@ public class UDSOIOServer extends AbstractNetworkServer {
     public ExecutorRepository getRepository() {
         return this.repository;
     }
-    public void setRepository(ExecutorRepository repository) {
+    public void setRepository(ExecutorRepository<TaskRequestWrapper,TaskResult, TaskHandler> repository) {
         this.repository = repository;
     }
-
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;
     }
+    public int getExecutorQueueSize() {
+        return executorQueueSize;
+    }
+    public void setExecutorQueueSize(int executorQueueSize) {
+        this.executorQueueSize = executorQueueSize;
+    }
+	public void setTraceFilter(TraceFilter traceFilter) {
+		this.traceFilter = traceFilter;
+	}
+	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
+		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
+	}    
     /** End Getter/Setter methods */
 
 }

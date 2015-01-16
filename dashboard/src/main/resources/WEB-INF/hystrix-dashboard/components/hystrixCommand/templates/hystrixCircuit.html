@@ -26,9 +26,6 @@
 	</div>
 
         <div class="circuitStatus">
-        <% if(typeof openCircuitHostNames != 'undefined') { %>
-            <div class="openCircuitHostNames"><%= openCircuitHostNames %></div>
-        <% }%>
         <% if(propertyValue_circuitBreakerForceClosed) { %>
 			<span class="smaller">[ <font color="orange">Forced Closed</font> ]</span>
 		<% } %>
@@ -42,7 +39,17 @@
 			<% } else {
 				/* We have some circuits that are open */
 			%>
-				Circuit <font color="orange"><%= isCircuitBreakerOpen.replace("true", "Open").replace("false", "Closed") %>)</font>
+				Circuit <div class="openCircuitHostNames">
+                        <div class="modalContent hidden"><%= openCircuitHostNames %></div>
+                        <a class="modalClick">
+                            <font color="orange">
+                                <%= isCircuitBreakerOpen
+                                    .replace("true", "Open").replace("false", "Closed")
+                                    .replace("{", "").replace("}", "")
+                                %>
+                            </font>
+                        </a>
+                    </div>
 			<% }  %>
 		<% } %>
 		</div>

@@ -49,7 +49,7 @@ public abstract class AbstractNetworkServer implements NetworkServer, Initializi
 	}
 	
 	/**
-	 * Interface method implementation. Checks if all manadatory properties have been set
+	 * Interface method implementation. Checks if all mandatory properties have been set
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	public void afterPropertiesSet() throws Exception {	}

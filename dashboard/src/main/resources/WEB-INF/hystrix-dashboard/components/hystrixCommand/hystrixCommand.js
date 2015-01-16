@@ -1,4 +1,3 @@
-
 (function(window) {
 
 	// cache the templates we use on this page as global variables (asynchronously)
@@ -19,14 +18,15 @@
 	 * 
 	 * Publish this externally as "HystrixCommandMonitor"
 	 */
-	window.HystrixCommandMonitor = function(containerId, args) {
+	window.HystrixCommandMonitor = function(containerId, args, filter) {
 		
 		var self = this; // keep scope under control
 		self.args = args;
-		if(self.args == undefined) {
+		if (self.args == undefined) {
 			self.args = {};
 		}
-		
+		self.filter = filter ? filter : [];
+
 		this.containerId = containerId;
 		
 		/**
@@ -65,13 +65,13 @@
 		 */
 		/* public */ self.eventSourceMessageListener = function(e) {
 			var data = JSON.parse(e.data);
-			if(data) {
+			if (data) {
 				// check for reportingHosts (if not there, set it to 1 for singleHost vs cluster)
-				if(!data.reportingHosts) {
+				if (!data.reportingHosts) {
 					data.reportingHosts = 1;
 				}
 				
-				if(data && data.type == 'HystrixCommand') {
+				if (data && data.type == 'HystrixCommand') {
 					if (data.deleteData == 'true') {
 						deleteCircuit(data.name);
 					} else {
@@ -203,7 +203,19 @@
 				log("Failed preProcessData: " + err.message);
 				return;
 			}
-			
+
+			// filter based on filters passed
+			if (self.filter.length > 0) {
+			    var found = false;
+				for (var idx in self.filter) {
+					if (self.filter[idx] == data.name) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) return;
+            }
+
 			// add the 'addCommas' function to the 'data' object so the HTML templates can use it
 			data.addCommas = addCommas;
 			// add the 'roundNumber' function to the 'data' object so the HTML templates can use it
@@ -213,7 +225,7 @@
 			
 			var addNew = false;
 			// check if we need to create the container
-			if(!$('#CIRCUIT_' + data.name).length) {
+			if (!$('#CIRCUIT_' + data.name).length) {
 				// args for display
 				if(self.args.includeDetailIcon != undefined && self.args.includeDetailIcon) {
 					data.includeDetailIcon = true;
@@ -554,20 +566,11 @@
 	}
 })(window);
 
-//Register callback function to display host names in case of open circuit.
-(function(w){
-    $(document).bind('click',function(e){
-        var th=$(e.target), offset;
-        if(th.attr('color')=="orange"){
-            $('.showed').remove();
-            $('.openCircuitHostNames').each(function () {
-                $this = $(this).toggle().addClass('showed');
-                offset = $this.offset();
-                $('#dependencyThreadPools').append($this.clone().css('top', offset.top).css('left', offset.left).css('margin-top', 0));
-            })
-        } else if(!th.hasClass('showed')){
-            $('.showed').remove();
-        }
-    });
-})(window);
+$(document).ready(function(){
+	$(document).on("click", ".modalClick", function(){
+		var content =  $(this).parent().find(".modalContent").html();
+		picoModal(content).show();
+		return false;
+	} )
 
+})

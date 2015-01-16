@@ -16,18 +16,15 @@
 
 package com.flipkart.phantom.task.impl.registry;
 
-import com.flipkart.phantom.task.impl.HystrixTaskHandler;
-import com.flipkart.phantom.task.impl.TaskHandler;
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.registry.HandlerConfigInfo;
-import org.trpr.platform.core.PlatformException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.trpr.platform.core.impl.logging.LogFactory;
 import org.trpr.platform.core.spi.logging.Logger;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.flipkart.phantom.task.impl.HystrixTaskHandler;
+import com.flipkart.phantom.task.impl.TaskHandler;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 
 /**
  * <code>TaskHandlerRegistry</code>  maintains a registry of TaskHandlers. Provides lookup 
@@ -36,164 +33,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author devashishshankar
  * @version 1.0, 19th March, 2013
  */
-public class TaskHandlerRegistry implements AbstractHandlerRegistry {
+public class TaskHandlerRegistry extends AbstractHandlerRegistry<TaskHandler> {
 
 	/** Logger for this class*/
 	private static final Logger LOGGER = LogFactory.getLogger(TaskHandlerRegistry.class);
-
-    /** List of TaskHandlers */
-    private Map<String,TaskHandler> taskHandlers = new HashMap<String,TaskHandler>();
 
     /** Map storing the mapping of a commandString to TaskHandler */
 	private Map<String,TaskHandler> commandToTaskHandler = new ConcurrentHashMap<String, TaskHandler>();
 
 	/** Map storing the mapping of pool Name to its core threadpool size */
-	private Map<String,Integer> poolToThreadPoolSize = new ConcurrentHashMap<String, Integer>();
+	private Map<String,Integer> concurrencyPoolSize = new ConcurrentHashMap<String, Integer>();
 
-    /**
-     * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#init(java.util.List, com.flipkart.phantom.task.spi.TaskContext)
-     * Should call init lifecycle methods of task handlers
-     * @param taskContext the TaskContext object
-     * @throws Exception
-     */
-    @Override
-    public AbstractHandlerRegistry.InitedHandlerInfo[] init(List<HandlerConfigInfo> handlerConfigInfoList, TaskContext taskContext) throws Exception {
-    	List<AbstractHandlerRegistry.InitedHandlerInfo> initedHanlderInfos = new LinkedList<AbstractHandlerRegistry.InitedHandlerInfo>();    	
-        for (HandlerConfigInfo handlerConfigInfo : handlerConfigInfoList) {
-            String[] taskHandlerBeanIds = handlerConfigInfo.getProxyHandlerContext().getBeanNamesForType(TaskHandler.class);
-            for (String taskHandlerBeanId : taskHandlerBeanIds) {
-                TaskHandler taskHandler = (TaskHandler) handlerConfigInfo.getProxyHandlerContext().getBean(taskHandlerBeanId);
-                try {
-                    LOGGER.info("Initializing TaskHandler: " + taskHandler.getName());
-                    taskHandler.init(taskContext);
-                    taskHandler.activate();
-                    initedHanlderInfos.add(new AbstractHandlerRegistry.InitedHandlerInfo(taskHandler,handlerConfigInfo));                    
-                } catch (Exception e) {
-                    LOGGER.error("Error initializing TaskHandler {}. Error is: " + e.getMessage(), taskHandler.getName(), e);
-                    throw new PlatformException("Error initializing TaskHandler: " + taskHandler.getName(), e);
-                }
-                // Register the taskHandler for all the commands it handles
-                this.registerTaskHandler(taskHandler);
-            }
-        }
-        return initedHanlderInfos.toArray(new AbstractHandlerRegistry.InitedHandlerInfo[0]);        
-    }
-
-    /**
-     * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#reinitHandler(String, com.flipkart.phantom.task.spi.TaskContext)
-     */
-    @Override
-    public void reinitHandler(String name, TaskContext taskContext) throws Exception {
-        TaskHandler handler = this.taskHandlers.get(name);
-        if (handler != null) {
-            try {
-                handler.deactivate();
-                handler.shutdown(taskContext);
-                handler.init(taskContext);
-                handler.activate();
-            } catch (Exception e) {
-                LOGGER.error("Error initializing TaskHandler {}. Error is: " + e.getMessage(), name, e);
-                throw new PlatformException("Error reinitialising TaskHandler: " + name, e);
-            }
-        }
-    }
-
-    /**
-     * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#shutdown(com.flipkart.phantom.task.spi.TaskContext)
-     * Should call shutdown lifecycle methods of task handlers
-     * @param taskContext the TaskContext object
-     * @throws Exception
-     */
-    @Override
-    public void shutdown(TaskContext taskContext) throws Exception {
-        for (String name : taskHandlers.keySet()) {
-            LOGGER.info("Shutting down task handler: " + name);
-            try {
-                taskHandlers.get(name).shutdown(taskContext);
-                taskHandlers.get(name).deactivate();
-            } catch (Exception e) {
-                LOGGER.warn("Failed to shutdown task handler: " + name, e);
-            }
-        }
-    }
-
-    /**
-     * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandlers()
-     * @return
-     */
-    @Override
-    public List<AbstractHandler> getHandlers() {
-        return new ArrayList<AbstractHandler>(taskHandlers.values());
-    }
-
-    /**
-     * Returns the {@link TaskHandler} instance for the given handler name
-     * @param name The name of the Handler
-     * @return TaskHandler, if found, null otherwise
-     */
-    public AbstractHandler getHandler(String name) {
-        return taskHandlers.get(name);
-    }
-
-	/**
-	 * Register a new TaskHandler. The commandString is defaulted to the name defined
-	 * in {@link TaskHandler}
-	 * @param taskHandler The {@link TaskHandler} instance to be added
-	 */
-	public void registerTaskHandler(TaskHandler taskHandler) {
-
-        // put in all handlers map
-        taskHandlers.put(taskHandler.getName(),taskHandler);
-
-        // register commands
-		for (String commandName:taskHandler.getCommands()) {
-            LOGGER.info("Registering task handler " + taskHandler.getName() + " with command " + commandName);
-            if (!this.commandToTaskHandler.containsValue(taskHandler)) { //Check to make sure initialize threadpool map is only called once
-                this.initializeThreadPoolMap(taskHandler);
-            }
-            if (this.commandToTaskHandler.get(commandName) != null) {
-                throw new IllegalArgumentException("Command " + commandName + " is already registered with handler " + this.commandToTaskHandler.get(commandName).getName());
-            }
-            this.commandToTaskHandler.put(commandName, taskHandler);
-		}
-
-	}
-
-    /**
-     * Helper method to initialize poolToThreadPoolSize from {@link com.flipkart.phantom.task.impl.TaskHandler#getInitializationCommands()} ()}
-     * and {@link com.flipkart.phantom.task.impl.HystrixTaskHandler#getThreadPoolSizeParams()}
-     */
-    private void initializeThreadPoolMap(TaskHandler taskHandler) {
-        if (taskHandler instanceof HystrixTaskHandler) {
-            HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
-            // Thread pool size
-            Map<String, Integer> threadParams = hystrixTaskHandler.getThreadPoolSizeParams();
-            for (String threadParam : threadParams.keySet()) {
-                this.poolToThreadPoolSize.put(threadParam, threadParams.get(threadParam));
-            }
-            // Commands thread pool size
-            Map<String, Integer> commandParams = hystrixTaskHandler.getCommandPoolSizeParams();
-            for (String commandParam : commandParams.keySet()) {
-                this.poolToThreadPoolSize.put(commandParam, commandParams.get(commandParam));
-            }
-        }
-    }
-
-    /**
-     * Abstract method implementation
-     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#unregisterTaskHandler(com.flipkart.phantom.task.spi.AbstractHandler)
-     */
-    @Override
-	public void unregisterTaskHandler(AbstractHandler taskHandler) {    	
-		for (String commandName: ((TaskHandler)taskHandler).getCommands()) {
-			this.commandToTaskHandler.remove(commandName);
-		}
-	}
-	
     /**
      * Returns the {@link TaskHandler} instance for the given Command String
      * @param commandString The command string
@@ -209,7 +59,65 @@ public class TaskHandlerRegistry implements AbstractHandlerRegistry {
      * @return thread pool size, null is pool/command not found
      */
     public Integer getPoolSize(String poolOrCommandName) {
-        return this.poolToThreadPoolSize.get(poolOrCommandName);
+        return this.concurrencyPoolSize.get(poolOrCommandName);
+    }
+    
+	/**
+	 * Abstract method implementation. Returns the type of {@link TaskHandler}
+	 * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#getHandlerType()
+	 */
+	protected Class<TaskHandler> getHandlerType() {
+		return TaskHandler.class;
+	}
+
+    /**
+     * Overridden super class method. 
+     * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#postInitHandler(com.flipkart.phantom.task.spi.AbstractHandler)
+     * Registers mapping for all commands supported by the TaskHandler
+	 */
+	protected void postInitHandler(TaskHandler taskHandler) {
+        // register commands
+		for (String commandName:taskHandler.getCommands()) {
+            LOGGER.info("Registering task handler " + taskHandler.getName() + " with command " + commandName);
+            if (!this.commandToTaskHandler.containsValue(taskHandler)) { //Check to make sure initialize threadpool map is only called once
+                this.initializeConcurrencyPoolMap(taskHandler);
+            }
+            if (this.commandToTaskHandler.get(commandName) != null) {
+                throw new IllegalArgumentException("Command " + commandName + " is already registered with handler " + this.commandToTaskHandler.get(commandName).getName());
+            }
+            this.commandToTaskHandler.put(commandName, taskHandler);
+		}
+	}
+	
+	/**
+	 * Overridden super class method.
+	 * @see com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry#postUnregisterHandler(com.flipkart.phantom.task.spi.AbstractHandler)
+	 * Removes the command names supported by the TaskHandler that was unregistered
+	 */
+    protected void postUnregisterHandler(TaskHandler handler) {
+		for (String commandName: handler.getCommands()) {
+			this.commandToTaskHandler.remove(commandName);
+		}
+	}
+	
+    /**
+     * Helper method to initialize concurrencyPoolSize from {@link com.flipkart.phantom.task.impl.TaskHandler#getInitializationCommands()} ()}
+     * and {@link com.flipkart.phantom.task.impl.HystrixTaskHandler#getConcurrentPoolSizeParams()} ()}
+     */
+    private void initializeConcurrencyPoolMap(TaskHandler taskHandler) {
+        if (taskHandler instanceof HystrixTaskHandler) {
+            HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
+            // Thread pool size
+            Map<String, Integer> threadParams = hystrixTaskHandler.getConcurrentPoolSizeParams();
+            for (String threadParam : threadParams.keySet()) {
+                this.concurrencyPoolSize.put(threadParam, threadParams.get(threadParam));
+            }
+            // Commands thread pool size
+            Map<String, Integer> commandParams = hystrixTaskHandler.getCommandPoolSizeParams();
+            for (String commandParam : commandParams.keySet()) {
+                this.concurrencyPoolSize.put(commandParam, commandParams.get(commandParam));
+            }
+        }
     }
 
 }

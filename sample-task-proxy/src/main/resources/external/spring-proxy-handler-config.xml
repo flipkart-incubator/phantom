@@ -6,6 +6,7 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
     http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
 
-    <bean class="com.flipkart.phantom.sample.handler.ArithmeticTaskHandler"></bean>
+    <bean class="com.flipkart.phantom.sample.handler.ArithmeticTaskHandler">
+    </bean>
 
 </beans>

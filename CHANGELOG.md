@@ -1,3 +1,34 @@
+## 1.3.5-SNAPSHOT (Dec 2, 2014)
+- Added Zipkin distributed tracing support
+
+## 1.3.4-SNAPSHOT (Oct 10, 2014)
+- Added support for parallel init for Task handlers
+- Upgrade to Trooper 1.3.2-SNAPSHOT version
+
+## 1.3.3 (Oct 05, 2014)
+- Bug fix for logging handler execution warnings and errors
+
+## 1.3.2-SNAPSHOT (Sep 21, 2014)
+- RequestCacheableHystrixTaskHandler.getCacheKey() also receives data
+- Handlers can now veto or allow container init to continue
+- Support for re-loading handlers via REST call
+
+## 1.3.0-SNAPSHOT (Sep 10, 2014)
+- Added Request caching support to TaskHandlers
+- Added Decoder for clients to be able to decode the response with default implementation as ByteArrayDecoder
+- Templatized TaskResult
+- Cleanup stupid shitty code of SystemUtils and StringUtils
+- Moved to jackson mapper 2.x
+
+## 1.2.9-SNAPSHOT (Sep 01, 2014)
+- Adding support for setting Max concurrency for semaphore isolated requests
+- exposing timeToLive for socket in HttpConnectionPool
+- Adding empty "openCircuitHostNames" if circuit is closed
+- adding snapshot servlet for service proxy instrumentation
+-  **Bug Fixes:**
+    - Incorrect Logging of failed events in RequestLogged for async commands.
+
+
 ## 1.2.8 (June 05, 2014)
 - Upgrade to Hystrix 1.4.0-RC4
 

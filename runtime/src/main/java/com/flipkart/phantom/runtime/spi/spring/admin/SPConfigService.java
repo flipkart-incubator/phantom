@@ -16,15 +16,16 @@
 
 package com.flipkart.phantom.runtime.spi.spring.admin;
 
-import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
-import com.flipkart.phantom.task.spi.AbstractHandler;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
+import java.io.File;
+import java.util.List;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.trpr.platform.core.PlatformException;
 
-import java.io.File;
-import java.util.List;
+import com.flipkart.phantom.runtime.impl.server.AbstractNetworkServer;
+import com.flipkart.phantom.task.spi.AbstractHandler;
+import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 
 /**
  * <code>SPConfigService</code> provides methods for viewing configurations
@@ -32,10 +33,10 @@ import java.util.List;
  * @author devashishshankar
  * @version 1.0, 2nd May, 2013
  */
-public interface SPConfigService {
+public interface SPConfigService<T extends AbstractHandler> {
 
     /**
-     * Get all the Deployed {@link com.flipkart.phantom.runtime.impl.server.netty.TCPNettyServer} instances
+     * Get all the Deployed {@link AbstractNetworkServer} instances
      * @return List list of network servers
      */
     public List<AbstractNetworkServer> getDeployedNetworkServers();
@@ -50,7 +51,13 @@ public interface SPConfigService {
      * Add an {@link AbstractHandlerRegistry} to the list of handler registries
      * @param registry The {@link AbstractHandlerRegistry} instance
      */
-    public void addHandlerRegistry(AbstractHandlerRegistry registry);
+    public void addHandlerRegistry(AbstractHandlerRegistry<T> registry);
+    
+    /**
+     * Get all the Deployed {@link AbstractHandlerRegistry} instances
+     * @return List list of registry instances
+     */
+    public List<AbstractHandlerRegistry<T>> getDeployedRegistries();
 
 	/**
 	 * Gets the Handler configuration file as a resource
@@ -69,13 +76,19 @@ public interface SPConfigService {
 	/**
 	 * Method to inject TaskHandler file name 
 	 */
-	void addHandlerConfigPath(File taskHandlerFile, AbstractHandler handler);
+	void addHandlerConfigPath(File taskHandlerFile, T handler);
 
     /**
      * Re-initializes a TaskHandler, if found. Calls the destroy() and init() methods.
      * @param taskHandler The name of the TaskHandler to be re-inited
      */
     public void reinitHandler(String taskHandler) throws Exception;
+
+    /**
+     * Reloads a TaskHandler, if found.
+     * @param taskHandler The name of the TaskHandler to be reloaded
+     */
+    public void reloadHandler(String taskHandler) throws Exception;
 
     /**
      * Get all handlers info

@@ -16,12 +16,13 @@
 
 package com.flipkart.phantom.http.impl;
 
-import com.flipkart.phantom.http.impl.registry.HttpProxyRegistry;
+import org.apache.http.HttpResponse;
+
+import com.flipkart.phantom.http.impl.interceptor.HttpClientRequestInterceptor;
+import com.flipkart.phantom.http.impl.interceptor.HttpClientResponseInterceptor;
+import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
+import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
-import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
 
 /**
  * Provides a repository of HttpProxyExecutor classes which execute HTTP requests using Hystrix commands
@@ -30,13 +31,7 @@ import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
  * @created 16/7/13 1:54 AM
  * @version 1.0
  */
-public class HttpProxyExecutorRepository implements ExecutorRepository{
-
-    /** repository */
-    private HttpProxyRegistry registry;
-
-    /** The TaskContext instance */
-    private TaskContext taskContext;
+public class HttpProxyExecutorRepository extends AbstractExecutorRepository<HttpRequestWrapper,HttpResponse, HttpProxy>{
 
     /**
      * Returns {@link Executor} for the specified requestWrapper
@@ -45,34 +40,22 @@ public class HttpProxyExecutorRepository implements ExecutorRepository{
      * @param requestWrapper requestWrapper Object containing requestWrapper Data
      * @return  an {@link HttpProxyExecutor} instance
      */
-    public Executor getExecutor (String commandName, String proxyName, RequestWrapper requestWrapper)  {
+    public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, HttpRequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
         if (proxy.isActive()) {
-            return new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
+        	HttpProxyExecutor executor = new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
+            return this.wrapExecutorWithInterceptors(executor,proxy);
         }
         throw new RuntimeException("The HttpProxy is not active.");
     }
 
-    /** Getter/Setter methods */
-
-    @Override
-    public AbstractHandlerRegistry getRegistry() {
-        return registry;
+    /**
+     * Helper method to wrap the Executor with request and response interceptors 
+     */
+    private Executor<HttpRequestWrapper,HttpResponse> wrapExecutorWithInterceptors(Executor<HttpRequestWrapper,HttpResponse> executor, HttpProxy proxy) {
+        ClientRequestInterceptor<HttpRequestWrapper> tracingRequestInterceptor = new HttpClientRequestInterceptor<HttpRequestWrapper>();
+        HttpClientResponseInterceptor<HttpResponse> tracingResponseInterceptor = new HttpClientResponseInterceptor<HttpResponse>();
+        return this.wrapExecutorWithInterceptors(executor, proxy, tracingRequestInterceptor, tracingResponseInterceptor);
     }
-
-    @Override
-    public void setRegistry(AbstractHandlerRegistry registry) {
-        this.registry = (HttpProxyRegistry)registry;
-    }
-
-    @Override
-    public TaskContext getTaskContext() {
-        return this.taskContext;
-    }
-
-    @Override
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
-    /** End Getter/Setter methods */
+    
 }

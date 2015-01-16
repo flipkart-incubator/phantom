@@ -15,16 +15,25 @@
  */
 package com.flipkart.phantom.event.consumer;
 
-import com.flipkart.phantom.event.ServiceProxyEvent;
-import com.netflix.hystrix.HystrixEventType;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl;
+import org.trpr.platform.core.impl.event.PlatformApplicationEvent;
+import org.trpr.platform.core.spi.event.EndpointEventConsumer;
 import org.trpr.platform.model.event.PlatformEvent;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import com.flipkart.phantom.event.ServiceProxyEvent;
+import com.flipkart.phantom.event.ServiceProxyEventProducer;
+import com.netflix.hystrix.HystrixEventType;
 
 /**
  * ServiceProxyEvent Consumer to log every hystrix command which did not return only SUCCESS as an event.
@@ -49,16 +58,39 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
 
     /** Logger for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestLogger.class);
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss.SSS");
+    private static FastDateFormat dateFormatter = DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+    
+    /** Map of endpoint URIs and their registered consumers*/
+    private Map<String, EndpointEventConsumer> subscriptionConsumers = new HashMap<String, EndpointEventConsumer>();
 
     /** Implementation of {@link org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl#handlePlatformEvent(org.trpr.platform.model.event.PlatformEvent)} */
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected void handlePlatformEvent(final PlatformEvent platformEvent) {
         if (platformEvent instanceof ServiceProxyEvent) {
-            log((ServiceProxyEvent) platformEvent);
-        } else
+        	ServiceProxyEvent serviceProxyEvent = (ServiceProxyEvent)platformEvent;
+        	String subscriptionKey = ServiceProxyEventProducer.EVENT_PUBLISHING_URI + serviceProxyEvent.getEventType();
+        	if (this.subscriptionConsumers.containsKey(subscriptionKey)) {
+        		// we pass on this event to the consumer registered to process the event
+        		this.subscriptionConsumers.get(subscriptionKey).onApplicationEvent(new PlatformApplicationEvent(platformEvent));
+        	} else {
+        		log((ServiceProxyEvent) platformEvent);
+        	}
+        } else {
             LOGGER.warn("Event Not Logged:Non compatible event received. Expecting ServiceProxyEvent Type but received " + platformEvent.getClass());
-
+        }
+    }
+    
+    /**
+     * Adds the specified endpoint URI to the subscriptions list of this consumer. Forwards all received matching callbacks to the specified EndpointEventConsumer
+     * @param endpointURI the subscription to add to the list of subscriptions
+     * @param eventConsumer the EndpointEventConsumer to invoke for all events with matching endpoint URIs.
+     */
+    public void addSubscriptionAndConsumer(String endpointURI, EndpointEventConsumer eventConsumer) {
+    	this.subscriptionConsumers.put(endpointURI, eventConsumer);
+    	List<String> allSubscriptions = new LinkedList<String>(Arrays.asList(this.getSubscriptions()));
+    	allSubscriptions.add(endpointURI);
+    	super.setSubscriptions(allSubscriptions.toArray(new String[0]));
     }
 
     /**
@@ -75,7 +107,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
      */
     private void log(final ServiceProxyEvent event) {
         List<HystrixEventType> events = event.getHystrixEventList();
-        if (events.size() > 1 && !events.contains(HystrixEventType.SUCCESS)) {
+        if (events.size() > 0 && !events.contains(HystrixEventType.SUCCESS)) {
             LOGGER.error(
                     "ClientRequestId=" + event.getRequestId() + " " +
                             "Command=" + event.getCommandName() + " " +
@@ -92,11 +124,15 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
         }
     }
 
+    /**
+     * Helper method to get formatted time stamp 
+     */
     private String getFormattedTimeStamp(final long requestReceiveTime) {
-        if (requestReceiveTime < 0)
+        if (requestReceiveTime < 0) {
             return String.valueOf(requestReceiveTime);
-        else
+        } else {
             return dateFormatter.format(new Date(requestReceiveTime));
+        }
     }
 
     /**

@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.kristofa.brave.FixedSampleRateTraceFilter;
+import com.github.kristofa.brave.TraceFilter;
+
 /**
  * The abstract handler class, which has functions necessary only for basic proxy functions
  * @author kartikbu
@@ -31,21 +34,39 @@ abstract public class AbstractHandler {
     /** Constants to denote command invocation types*/
     public static final int SYNC_CALL = 0;
     public static final int ASYNC_CALL = 1;
+    
+	/**
+	 * Constants that influence continued handler init activity based on the outcome of execution of init on a handler 
+	 */
+	public static final int CONTINUE_INIT = 0;
+	public static final int VETO_INIT = 999999;    
 
     /** The status showing the TaskHandler is inited and ready to use */
-    public static int ACTIVE = 1;
-
+    public static final int ACTIVE = 1;
     /** The status showing the TaskHandler is not inted/has been shutdown and should not be used */
-    public static int INACTIVE = 0;
+    public static final int INACTIVE = 0;
+    
+    /** The default value for tracing frequency. This value indicates that every call is traced if the global tracing is turned on.*/
+    public static final TraceFilter TRACING_ON = new FixedSampleRateTraceFilter(1);
 
     /** The default command invocation type for this AbstractHandler*/
     private int callInvocationType = AbstractHandler.SYNC_CALL;
 
     /** This provides the invocation type for each command in a Task Handler. */
     private Map<String,Integer> callInvocationTypePerCommand = new HashMap<String, Integer>();
+    
+    private int initOutcomeStatus = AbstractHandler.VETO_INIT;
 
-    /** The status of this ThriftProxy (active/inactive) */
+    /** The status of this handler (active/inactive) */
     private AtomicInteger status = new AtomicInteger(INACTIVE);
+    
+    /** The request tracing frequency for this handler. Each handler may override this setting*/
+    private TraceFilter traceFilter = TRACING_ON;
+
+    /**
+     * Version in used for new thread pool name while reload of handler to have new connection pool effective
+     */
+    private int version =0;
 
     /**
      * Method which returns the name of the handler
@@ -59,6 +80,18 @@ abstract public class AbstractHandler {
      * @return String type
      */
     abstract public String getType();
+    
+    /**
+     * Gets the host name that is hosting this handler
+     * @return the host name
+     */
+    abstract public String getHost();
+
+    /**
+     * Gets the port where this handler may be invoked
+     * @return the port
+     */
+    abstract public int getPort();
 
     /**
      * Method which returns a short description of the handler
@@ -132,4 +165,48 @@ abstract public class AbstractHandler {
     public void setCallInvocationTypePerCommand(Map<String, Integer> callInvocationTypePerCommand) {
         this.callInvocationTypePerCommand = callInvocationTypePerCommand;
     }
+
+    /** Getter/Setter methods*/
+	public int getInitOutcomeStatus() {
+		return initOutcomeStatus;
+	}
+	public void setInitOutcomeStatus(int initOutcomeStatus) {
+		this.initOutcomeStatus = initOutcomeStatus;
+	}
+	public TraceFilter getTraceFilter() {
+		return traceFilter;
+	}
+	public void setTraceFilter(TraceFilter traceFilter) {
+		this.traceFilter = traceFilter;
+	}
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    /**
+     * Get a new version number for Handler to have new and unique name
+     * @return Incremented version number from current value
+     */
+    public int getNewVersion() {
+        return ++version;
+    }
+
+    /**
+     * Returns the versioned thread pool name which this handler will handle.
+     * @return commands
+     */
+    public String getVersionedThreadPoolName(String threadPool){
+        int version = getVersion();
+        if(version > 0){
+            return threadPool + "." + getVersion();
+        } else {
+            return threadPool;
+        }
+    }
+
 }
