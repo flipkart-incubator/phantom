@@ -36,13 +36,11 @@ import java.util.Map;
 public class MetricsSnapshotReporterWithAggregation implements Runnable, MetricsSnapshotReporter {
     public Map<String, Map<String, Map<String, Long>>> lastDurationMetrics = new HashMap<String, Map<String, Map<String, Long>>>();
     private Map<String, Map<String, Map<String, Long>>> currentMetrics = new HashMap<String, Map<String, Map<String, Long>>>();
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsSnapshotReporterWithAggregation.class);
 
     private int frequency;
     private int counter = 0;
 
     public MetricsSnapshotReporterWithAggregation(int frequency) {
-        LOGGER.info("starting aggregation snapshot reporter with frequency: "+frequency);
         this.frequency = frequency;
     }
 
@@ -57,7 +55,6 @@ public class MetricsSnapshotReporterWithAggregation implements Runnable, Metrics
         */
     public void run() {
         counter++;
-        LOGGER.info("running next iteration");
 
         for (HystrixCommandMetrics commandMetrics : HystrixCommandMetrics.getInstances()) {
             String commandName = commandMetrics.getCommandGroup().name() + "." + commandMetrics.getCommandKey().name();
@@ -113,7 +110,6 @@ public class MetricsSnapshotReporterWithAggregation implements Runnable, Metrics
             currentMetrics.get("HystrixThreadPool").put(commandName, currStats);
         }
         if (counter == frequency) {
-            LOGGER.info("copying metrics: "+currentMetrics);
                     /* copying metrics to last one min */
             lastDurationMetrics = new HashMap<String, Map<String, Map<String, Long>>>(currentMetrics);
             currentMetrics = new HashMap<String, Map<String, Map<String, Long>>>();
