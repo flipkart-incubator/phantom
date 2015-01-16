@@ -153,7 +153,6 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
      */
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent event) throws Exception {
         super.channelOpen(ctx, event);
-        LOGGER.info("serviceName:" + serviceName);
 		this.defaultChannelGroup.add(event.getChannel());
     }
 
