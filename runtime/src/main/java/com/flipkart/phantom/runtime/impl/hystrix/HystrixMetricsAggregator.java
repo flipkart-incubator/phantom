@@ -17,6 +17,7 @@ package com.flipkart.phantom.runtime.impl.hystrix;
 
 import com.flipkart.phantom.runtime.impl.hystrix.impl.MetricsSnapshotReporterDefault;
 import com.flipkart.phantom.runtime.impl.hystrix.impl.MetricsSnapshotReporterWithAggregation;
+import org.springframework.beans.factory.InitializingBean;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,16 +31,13 @@ import java.util.concurrent.TimeUnit;
  * @author Ishwar Kumar
  * @version 1.0, 15 Jan 2015
  */
-public class HystrixMetricsAggregator {
+public class HystrixMetricsAggregator implements InitializingBean {
 
     /* by default return aggregate of lastDurationMetrics 1 iterations. */
     private Integer frequency = 1;
 
-    /* Can be set from service-proxy in case of custom implementation */ MetricsSnapshotReporter metricsSnapshotReporter = null;
-
-    public HystrixMetricsAggregator() {
-        metricsSnapshotReporter = new MetricsSnapshotReporterDefault();
-    }
+    /* Can be set from service-proxy in case of custom implementation */
+    MetricsSnapshotReporter metricsSnapshotReporter = null;
 
     public MetricsSnapshotReporter getMetricsSnapshotReporter() {
         return metricsSnapshotReporter;
@@ -55,10 +53,16 @@ public class HystrixMetricsAggregator {
         } catch (Exception e) {
             /* consume the exception so that frequency will remain 1(default) so thread wont start */
         }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
         if (frequency > 1) {
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             metricsSnapshotReporter = new MetricsSnapshotReporterWithAggregation(frequency);
             scheduler.scheduleAtFixedRate((Runnable) metricsSnapshotReporter, 10, 10, TimeUnit.SECONDS);
+        } else {
+            metricsSnapshotReporter = new MetricsSnapshotReporterDefault();
         }
     }
 }
