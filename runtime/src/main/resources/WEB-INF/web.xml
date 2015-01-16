@@ -34,14 +34,6 @@
 		<servlet-class>com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsStreamServlet</servlet-class>
 	</servlet>
 
-    <!-- Snapshot -->
-    <servlet>
-		<description></description>
-		<display-name>HystrixMetricsSnapshotServletGlobal</display-name>
-		<servlet-name>HystrixMetricsSnapshotServletGlobal</servlet-name>
-		<servlet-class>com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsSnapshotServlet</servlet-class>
-	</servlet>
-	
 	<!--  Servlet for local Dashboard (thread pool) -->
 	<servlet>
 		<description></description>
@@ -62,10 +54,6 @@
 	<servlet-mapping>
 		<servlet-name>HystrixMetricsStreamServletThreadpoolLocal</servlet-name>
 		<url-pattern>/hystrix.stream.tp.local</url-pattern> <!-- all the hystrix metrics will be streamed to JSON to this URL -->
-	</servlet-mapping>
-    <servlet-mapping>
-		<servlet-name>HystrixMetricsSnapshotServletGlobal</servlet-name>
-		<url-pattern>/hystrix.snapshot.global</url-pattern> <!-- all the hystrix metrics will be streamed to JSON to this URL -->
 	</servlet-mapping>
 	
 	<!-- Spring MVC servlet for ServiceProxy Web Console -->
