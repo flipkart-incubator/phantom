@@ -10,7 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.3.5.1-SNAPSHOT    | Dec 2014      |    Feature release
+| Version 1.3.5-SNAPSHOT    | Dec 2014      |    Feature release
 | Version 1.3.4-SNAPSHOT    | Oct 2014      |    Feature enhancement and bug fix release
 | Version 1.3.3             | Oct 2014      |    Bug fix release
 | Version 1.3.2-SNAPSHOT    | Sep 2014      |    Feature enhancement and bug fix release
