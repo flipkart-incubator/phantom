@@ -1,5 +1,6 @@
-## 1.3.5-SNAPSHOT (Dec 2, 2014)
-- Added Zipkin distributed tracing support
+## 1.3.5 (Jan 16, 2015)
+- Added Zipkin distributed tracing support.
+- Metrics snapshot with configurable frequency. Useful when pushing service metrics to time series databases
 
 ## 1.3.4-SNAPSHOT (Oct 10, 2014)
 - Added support for parallel init for Task handlers
