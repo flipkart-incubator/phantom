@@ -8,12 +8,30 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
 	<context:annotation-config />
-	
+
 	<bean class="com.flipkart.phantom.runtime.impl.spring.web.DefaultController">
 	</bean>
 	<bean class="com.flipkart.phantom.runtime.impl.spring.web.HandlerConfigController">
 	    <property name="configService" ref="configService" />
 	</bean>
+
+    <bean class="com.flipkart.phantom.runtime.impl.spring.web.HystrixMetricsSnapshotController">
+        <property name="hystrixMetricsAggregator">
+            <bean id="hystrixMetricsAggregator"
+                  class="com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsAggregator">
+                <property name="frequency" value="${hystrix.metrics.last.aggregate}"/>
+            </bean>
+        </property>
+    </bean>
+    <bean class="org.trpr.platform.runtime.impl.config.spring.PropertyPlaceholderConfigurer">
+        <property name="defaultPropertiesOnClasspath">
+            <value>packaged/default-proxy-core-config.properties</value>
+        </property>
+        <property name="propertiesOnConfigPath">
+            <value>dashboard-config.properties</value>
+        </property>
+    </bean>
+
     <mvc:interceptors>
         <bean class="com.flipkart.phantom.runtime.impl.spring.web.AppNameAddingInterceptorHandler"/>
     </mvc:interceptors>
