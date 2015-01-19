@@ -264,6 +264,9 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
 	        } else {
 	            result = this.taskHandler.execute(taskContext, command, taskRequestWrapper,decoder);
 	        }
+	        if (result == null) {
+	        	result = new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
+	        }
         } catch (RuntimeException e) {
         	transportException = Optional.of(e);
         	throw e; // rethrow this for it to handled by other layers in the call stack
@@ -271,9 +274,6 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
 	        for (ResponseInterceptor<TaskResult> responseInterceptor : this.responseInterceptors) {
 	        	responseInterceptor.process(result, transportException);
 	        }
-        }
-        if (result == null) {
-        	result = new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
         }
         if (!result.isSuccess()) {
             throw new RuntimeException("Command returned FALSE: " + result.getMessage());
