@@ -161,6 +161,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#handleUpstream(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelEvent)
      */
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent event) throws Exception {
+        LOGGER.info("CheckPoint 0");
         long receiveTime = System.currentTimeMillis();
         if (MessageEvent.class.isAssignableFrom(event.getClass())) {
 
@@ -177,20 +178,25 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
             input.resetReaderIndex();
 
             ThriftRequestWrapper thriftRequestWrapper = new ThriftRequestWrapper();
+            LOGGER.info("CheckPoint 1");
             thriftRequestWrapper.setClientSocket(clientTransport);
             thriftRequestWrapper.setMethodName(message.name);
             // set the service name for the request
+            LOGGER.info("CheckPoint 2");
             thriftRequestWrapper.setServiceName(Optional.of(this.serviceName));
 
             // Create and process a Server request interceptor. This will initialize the server tracing
+            LOGGER.info("CheckPoint 3");
             ServerRequestInterceptor<ThriftRequestWrapper, TTransport> serverRequestInterceptor = this.initializeServerTracing(thriftRequestWrapper);
 
             //Execute
+            LOGGER.info("CheckPoint 4");
             Executor<ThriftRequestWrapper,TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
             // set the service name for the request
             thriftRequestWrapper.setServiceName(executor.getServiceName());
             
-            Optional<RuntimeException> transportError = Optional.absent();            
+            LOGGER.info("CheckPoint 5");
+            Optional<RuntimeException> transportError = Optional.absent();
             try {
                 executor.execute();
             } catch (Exception e) {
@@ -199,25 +205,33 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
                 throw runtimeException;
             } finally {
             	// finally inform the server request tracer
-            	serverRequestInterceptor.process(clientTransport, transportError);            	
+                LOGGER.info("CheckPoint 6");
+            	serverRequestInterceptor.process(clientTransport, transportError);
+                LOGGER.info("CheckPoint 7");
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
                     ServiceProxyEvent.Builder eventBuilder;
+                    LOGGER.info("CheckPoint 8");
                     if (executor == null) {
                         eventBuilder = new ServiceProxyEvent.Builder(thriftProxy + ":" + message.name, THRIFT_HANDLER).withEventSource(getClass().getName());
                     } else {
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     }
+                    LOGGER.info("CheckPoint 9");
                     eventBuilder.withRequestReceiveTime(receiveTime);
+                    LOGGER.info("CheckPoint 10");
                     eventProducer.publishEvent(eventBuilder.build());
                 } else {
                     LOGGER.debug("eventProducer not set, not publishing event");
                 }
             }
             // write the result to the output channel buffer
+            LOGGER.info("CheckPoint 11");
             Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer) clientTransport).getOutputBuffer());
         }
+        LOGGER.info("CheckPoint 12");
         super.handleUpstream(ctx, event);
+        LOGGER.info("CheckPoint 13");
     }
 
     /**
