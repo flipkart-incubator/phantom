@@ -133,7 +133,11 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
      * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
      */
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");        
+        Assert.notNull(this.defaultChannelGroup, "The 'defaultChannelGroup' may not be null");
+        Assert.notNull(this.repository, "The 'repository' may not be null");
+        Assert.notNull(this.thriftProxy, "The 'thriftProxy' may not be null");
+        Assert.notNull(this.eventProducer, "The 'eventProducer' may not be null");
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");
     }
     
     /**
