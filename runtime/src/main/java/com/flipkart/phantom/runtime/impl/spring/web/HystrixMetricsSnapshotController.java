@@ -16,22 +16,22 @@
 
 package com.flipkart.phantom.runtime.impl.spring.web;
 
-import com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsAggregator;
-import com.flipkart.phantom.task.spi.AbstractHandler;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Map;
+import com.flipkart.phantom.runtime.impl.hystrix.HystrixMetricsAggregator;
+import com.flipkart.phantom.task.spi.AbstractHandler;
 
 /**
  * The <code>HystrixMetricsSnapshotController</code> is a controller for providing Hystrix snapshot metrics.
@@ -58,13 +58,10 @@ import java.util.Map;
 @Controller
 public class HystrixMetricsSnapshotController<T extends AbstractHandler> {
 
-    /**
-     * Logger instance for this class
+    /** 
+     * instance of aggregator which can be a thread based implementation in case of frequency > 1
+     * or else a stand alone implementation which just returns current metrics from HystrixCommandMetrics 
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(HystrixMetricsSnapshotController.class);
-
-    /* instance of aggregator which can be a thread based implementation in case of frequency > 1
-     * or else a stand alone implementation which just returns current metrics from HystrixCommandMetrics */
     HystrixMetricsAggregator hystrixMetricsAggregator = null;
 
     /**
