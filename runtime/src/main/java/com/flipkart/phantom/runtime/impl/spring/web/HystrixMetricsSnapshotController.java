@@ -84,20 +84,24 @@ public class HystrixMetricsSnapshotController<T extends AbstractHandler> {
         /* Get the metrics of last duration from Aggregator */
         Map<String, Map<String, Map<String, Long>>> lastOneMinuteMetrics = hystrixMetricsAggregator.getMetricsSnapshotReporter().getMetricsLastDuration();
         /* HystrixCommand value is an array of multiple objects; an object for each command */
-        responseJson.writeArrayFieldStart("HystrixCommand");
+        responseJson.writeObjectFieldStart("HystrixCommand");
 
         if (lastOneMinuteMetrics != null && lastOneMinuteMetrics.get("HystrixCommand") != null) {
             for (String commandName : lastOneMinuteMetrics.get("HystrixCommand").keySet()) {
                 Map<String, Long> commandMetrics = lastOneMinuteMetrics.get("HystrixCommand").get(commandName);
 
                 String a[] = commandName.split("\\.");
-                responseJson.writeStartObject();
+                responseJson.writeObjectFieldStart(commandName);
 
                 responseJson.writeStringField("name", a[1]);
                 responseJson.writeStringField("group", a[0]);
 
                 responseJson.writeNumberField("errorCount", commandMetrics.get("errorCount"));
                 responseJson.writeNumberField("requestCount", commandMetrics.get("requestCount"));
+                if (commandMetrics.get("requestCount") > 0)
+                    responseJson.writeNumberField("errorPercent", 100.0 * commandMetrics.get("errorCount") / commandMetrics.get("requestCount"));
+                else
+                    responseJson.writeNumberField("errorPercent", 0.);
 
                 responseJson.writeNumberField("rollingCountFailure", commandMetrics.get("rollingCountFailure"));
                 responseJson.writeNumberField("rollingCountSemaphoreRejected", commandMetrics.get("rollingCountSemaphoreRejected"));
@@ -122,14 +126,14 @@ public class HystrixMetricsSnapshotController<T extends AbstractHandler> {
                 responseJson.writeEndObject();
             }
         }
-        responseJson.writeEndArray();
+        responseJson.writeEndObject();
 
-        responseJson.writeArrayFieldStart("HystrixThreadPool");
+        responseJson.writeObjectFieldStart("HystrixThreadPool");
         /* thread pool metrics: an array of multiple objects; an object for each method */
 
         if (lastOneMinuteMetrics != null && lastOneMinuteMetrics.get("HystrixThreadPool") != null) {
             for (String commandName : lastOneMinuteMetrics.get("HystrixThreadPool").keySet()) {
-                responseJson.writeStartObject();
+                responseJson.writeObjectFieldStart(commandName);
 
                 responseJson.writeStringField("name", commandName);
 
@@ -138,7 +142,7 @@ public class HystrixMetricsSnapshotController<T extends AbstractHandler> {
                 responseJson.writeEndObject();
             }
         }
-        responseJson.writeEndArray();
+        responseJson.writeEndObject();
 
         responseJson.writeEndObject();
         responseJson.close();
