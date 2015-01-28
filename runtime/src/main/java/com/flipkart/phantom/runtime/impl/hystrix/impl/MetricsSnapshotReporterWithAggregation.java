@@ -19,8 +19,6 @@ import com.flipkart.phantom.runtime.impl.hystrix.MetricsSnapshotReporter;
 import com.netflix.hystrix.HystrixCommandMetrics;
 import com.netflix.hystrix.HystrixThreadPoolMetrics;
 import com.netflix.hystrix.util.HystrixRollingNumberEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,17 +75,18 @@ public class MetricsSnapshotReporterWithAggregation implements Runnable, Metrics
             currStats.put("rollingCountSuccess", commandMetrics.getRollingCount(HystrixRollingNumberEvent.SUCCESS) + zeroIfNull(currStats.get("rollingCountSuccess")));
             currStats.put("rollingCountThreadPoolRejected", commandMetrics.getRollingCount(HystrixRollingNumberEvent.THREAD_POOL_REJECTED) + zeroIfNull(currStats.get("rollingCountThreadPoolRejected")));
             currStats.put("rollingCountTimeout", commandMetrics.getRollingCount(HystrixRollingNumberEvent.TIMEOUT) + zeroIfNull(currStats.get("rollingCountTimeout")));
-            currStats.put("latencyTotal_mean", (long) commandMetrics.getTotalTimeMean() + zeroIfNull(currStats.get("latencyTotal_mean")));
 
-            currStats.put("0", (long) commandMetrics.getTotalTimePercentile(0) + zeroIfNull(currStats.get("0")));
-            currStats.put("25", (long) commandMetrics.getTotalTimePercentile(25) + zeroIfNull(currStats.get("25")));
-            currStats.put("50", (long) commandMetrics.getTotalTimePercentile(50) + zeroIfNull(currStats.get("50")));
-            currStats.put("75", (long) commandMetrics.getTotalTimePercentile(75) + zeroIfNull(currStats.get("75")));
-            currStats.put("90", (long) commandMetrics.getTotalTimePercentile(90) + zeroIfNull(currStats.get("90")));
-            currStats.put("95", (long) commandMetrics.getTotalTimePercentile(95) + zeroIfNull(currStats.get("95")));
-            currStats.put("99", (long) commandMetrics.getTotalTimePercentile(99) + zeroIfNull(currStats.get("99")));
-            currStats.put("99.5", (long) commandMetrics.getTotalTimePercentile(99.5) + zeroIfNull(currStats.get("99.5")));
-            currStats.put("100", (long) commandMetrics.getTotalTimePercentile(100) + zeroIfNull(currStats.get("100")));
+            /* Divide below with frequency as they are latencies */
+            currStats.put("latencyTotal_mean", (long) commandMetrics.getTotalTimeMean()/frequency + zeroIfNull(currStats.get("latencyTotal_mean")));
+            currStats.put("0", (long) commandMetrics.getTotalTimePercentile(0)/frequency + zeroIfNull(currStats.get("0")));
+            currStats.put("25", (long) commandMetrics.getTotalTimePercentile(25)/frequency + zeroIfNull(currStats.get("25")));
+            currStats.put("50", (long) commandMetrics.getTotalTimePercentile(50)/frequency + zeroIfNull(currStats.get("50")));
+            currStats.put("75", (long) commandMetrics.getTotalTimePercentile(75)/frequency + zeroIfNull(currStats.get("75")));
+            currStats.put("90", (long) commandMetrics.getTotalTimePercentile(90)/frequency + zeroIfNull(currStats.get("90")));
+            currStats.put("95", (long) commandMetrics.getTotalTimePercentile(95)/frequency + zeroIfNull(currStats.get("95")));
+            currStats.put("99", (long) commandMetrics.getTotalTimePercentile(99)/frequency + zeroIfNull(currStats.get("99")));
+            currStats.put("99.5", (long) commandMetrics.getTotalTimePercentile(99.5)/frequency + zeroIfNull(currStats.get("99.5")));
+            currStats.put("100", (long) commandMetrics.getTotalTimePercentile(100)/frequency + zeroIfNull(currStats.get("100")));
 
             currentMetrics.get("HystrixCommand").put(commandName, currStats);
         }
