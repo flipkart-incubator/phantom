@@ -16,24 +16,19 @@
 
 package com.flipkart.phantom.task.impl;
 
-import java.util.Map;
-import java.util.concurrent.Future;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
-import com.flipkart.phantom.task.spi.Decoder;
-import com.flipkart.phantom.task.spi.Executor;
-import com.flipkart.phantom.task.spi.RequestWrapper;
-import com.flipkart.phantom.task.spi.TaskRequestWrapper;
-import com.flipkart.phantom.task.spi.TaskResult;
+import com.flipkart.phantom.task.spi.*;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * <code>TaskHandlerExecutorRepository</code> is a repository that searches for a {@link TaskHandler}
@@ -172,16 +167,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
             } finally {
-                if (eventProducer != null) {
-                    // Publishes event both in case of success and failure.
-                    final Map<String, String> params = requestWrapper.getParams();
-                    ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
-                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
-                    if(params.containsKey("requestSentTime"))
-                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
-                    eventProducer.publishEvent(eventBuilder.build());
-                } else
-                    LOGGER.debug("eventProducer not set, not publishing event");
+                publishEvent(command, receiveTime, requestWrapper);
             }
         }
     }
@@ -206,6 +192,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      */
     @SuppressWarnings("unchecked")
     public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+        long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -214,8 +201,29 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
                 return command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
+            } finally {
+                publishEvent(command, receiveTime, requestWrapper);
             }
         }
+    }
+
+    /**
+     * Builds & Publishes Event based using eventProducer
+     * @param command Command under execution
+     * @param receiveTime Time this command has been recieved for execution
+     * @param requestWrapper Request Wrapper to extract request params.
+     */
+    private void publishEvent(final TaskHandlerExecutor command, final long receiveTime, final TaskRequestWrapper requestWrapper) {
+        if (eventProducer != null) {
+            // Publishes event both in case of success and failure.
+            final Map<String, String> params = requestWrapper.getParams();
+            ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
+            eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+            if(params.containsKey("requestSentTime"))
+                eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+            eventProducer.publishEvent(eventBuilder.build());
+        } else
+            LOGGER.debug("eventProducer not set, not publishing event");
     }
 
     /**

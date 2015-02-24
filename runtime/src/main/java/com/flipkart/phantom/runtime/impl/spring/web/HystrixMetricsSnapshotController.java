@@ -95,6 +95,10 @@ public class HystrixMetricsSnapshotController<T extends AbstractHandler> {
 
                 responseJson.writeNumberField("errorCount", commandMetrics.get("errorCount"));
                 responseJson.writeNumberField("requestCount", commandMetrics.get("requestCount"));
+                if (commandMetrics.get("requestCount") > 0)
+                    responseJson.writeNumberField("errorPercent", 100.0 * commandMetrics.get("errorCount") / commandMetrics.get("requestCount"));
+                else
+                    responseJson.writeNumberField("errorPercent", 0.);
 
                 responseJson.writeNumberField("rollingCountFailure", commandMetrics.get("rollingCountFailure"));
                 responseJson.writeNumberField("rollingCountSemaphoreRejected", commandMetrics.get("rollingCountSemaphoreRejected"));
