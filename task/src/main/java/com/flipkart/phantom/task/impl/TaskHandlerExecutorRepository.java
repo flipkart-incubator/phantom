@@ -208,25 +208,6 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
     }
 
     /**
-     * Builds & Publishes Event based using eventProducer
-     * @param command Command under execution
-     * @param receiveTime Time this command has been recieved for execution
-     * @param requestWrapper Request Wrapper to extract request params.
-     */
-    private void publishEvent(final TaskHandlerExecutor command, final long receiveTime, final TaskRequestWrapper requestWrapper) {
-        if (eventProducer != null) {
-            // Publishes event both in case of success and failure.
-            final Map<String, String> params = requestWrapper.getParams();
-            ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
-            eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
-            if(params.containsKey("requestSentTime"))
-                eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
-            eventProducer.publishEvent(eventBuilder.build());
-        } else
-            LOGGER.debug("eventProducer not set, not publishing event");
-    }
-
-    /**
      * Executes a command asynchronously. (Returns a future promise)
      * @param commandName name of the command
      * @param requestWrapper requestWrapper having data,hashmap of parameters
@@ -369,6 +350,27 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         return taskHandler;
     }
 
+    /**
+     * Builds & Publishes Event based using eventProducer
+     * @param command Command under execution
+     * @param receiveTime Time this command has been recieved for execution
+     * @param requestWrapper Request Wrapper to extract request params.
+     */
+    private void publishEvent(final TaskHandlerExecutor command, final long receiveTime, final TaskRequestWrapper requestWrapper) {
+        if (eventProducer != null) {
+            // Publishes event both in case of success and failure.
+            final Map<String, String> params = requestWrapper.getParams();
+            ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
+            eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+            if(params.containsKey("requestSentTime")) {
+                eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+            }
+            eventProducer.publishEvent(eventBuilder.build());
+        } else {
+            LOGGER.debug("eventProducer not set, not publishing event");
+        }
+    }
+    
     /** Getter/Setter methods*/
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;
