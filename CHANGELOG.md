@@ -1,3 +1,8 @@
+## 1.3.6-SNAPSHOT (Feb 26, 2015)
+- Bug fix for service request logger
+- Dependencies claenup
+- Hystrix metrics snapshot servlet enhancements
+
 ## 1.3.5 (Jan 16, 2015)
 - Added Zipkin distributed tracing support.
 - Metrics snapshot with configurable frequency. Useful when pushing service metrics to time series databases
