@@ -1,3 +1,5 @@
+## 1.3.7-SNAPSHOT (Feb 26, 2015)
+- Upgrade to Jetty 9
 
 ## 1.3.6 (Mar 30, 2015)
 - Upgrading snapshot to release version
