@@ -1,3 +1,7 @@
+
+## 1.3.6 (Mar 30, 2015)
+- Upgrading snapshot to release version
+
 ## 1.3.6-SNAPSHOT (Feb 26, 2015)
 - Bug fix for service request logger
 - Dependencies cleanup
