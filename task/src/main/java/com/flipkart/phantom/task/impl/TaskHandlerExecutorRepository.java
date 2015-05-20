@@ -16,13 +16,6 @@
 
 package com.flipkart.phantom.task.impl;
 
-import java.util.Map;
-import java.util.concurrent.Future;
-
-import com.google.common.util.concurrent.MoreExecutors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
@@ -30,6 +23,7 @@ import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseIntercept
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.*;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
