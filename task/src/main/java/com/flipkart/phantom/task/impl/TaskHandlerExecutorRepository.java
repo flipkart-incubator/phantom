@@ -23,6 +23,7 @@ import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseIntercept
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
 import com.flipkart.phantom.task.spi.*;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,6 +132,28 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         return this.getExecutor(commandName, commandName, requestWrapper);
     }
 
+    private Future<TaskResult> executeAsyncCommand(final long receiveTime, final TaskHandlerExecutor command,
+                                                   final String commandName, final TaskRequestWrapper requestWrapper) {
+        if(command==null) {
+            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
+        } else {
+            final Future<TaskResult> future = command.queue();
+            MoreExecutors.sameThreadExecutor().submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        future.get();
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error in processing command " + command.getServiceName() + ": " + e.getMessage(), e);
+                    } finally {
+                        publishEvent(command, receiveTime, requestWrapper);
+                    }
+                }
+            });
+            return future;
+        }
+    }
+
     /**
      * Executes a command asynchronously. (Returns a future promise)
      * @param commandName name of the command
@@ -139,13 +162,10 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
-        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
-        if(command==null) {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        } else {
-            return command.queue();
-        }
+    public Future<TaskResult> executeAsyncCommand(final String commandName, String proxyName, final TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
+        final long receiveTime = System.currentTimeMillis();
+        final TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
+        return executeAsyncCommand(receiveTime, command, commandName, requestWrapper);
     }
 
     /**
@@ -215,12 +235,9 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @throws UnsupportedOperationException if no handler found for command
      */
     public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper requestWrapper, Decoder decoder) throws UnsupportedOperationException {
+        final long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
-        if(command==null) {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        } else {
-            return command.queue();
-        }
+        return executeAsyncCommand(receiveTime, command, commandName, requestWrapper);
     }
 
     /**
