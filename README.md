@@ -10,11 +10,11 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.3.7             | May 2015      |    Upgrading to Trooper 1.3.2 release
 | Version 1.3.6             | Mar 2015      |    Upgrading snapshot to release
 | Version 1.3.6-SNAPSHOT    | Feb 2015      |    Feature enhancement and bug fix release
 | Version 1.3.5             | Jan 2015      |    Feature release
 | Version 1.3.4-SNAPSHOT    | Oct 2014      |    Feature enhancement and bug fix release
-| Version 1.3.3             | Oct 2014      |    Bug fix release
 
 ## Changelog
 

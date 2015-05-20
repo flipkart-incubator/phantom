@@ -1,3 +1,7 @@
+## 1.3.7 (May 20, 2015)
+- Upgrade snapshot to release
+- Upgrading to Trooper 1.3.2 release
+
 ## 1.3.7-SNAPSHOT (Mar 31, 2015)
 - Upgrade to Jetty 9
 
