@@ -1,3 +1,18 @@
+## 1.3.8 (May 20, 2015)
+- Upgrade snapshot to release
+- Upgrading to Trooper 1.3.2 release
+
+## 1.3.7-SNAPSHOT (Mar 31, 2015)
+- Upgrade to Jetty 9
+
+## 1.3.6 (Mar 30, 2015)
+- Upgrading snapshot to release version
+
+## 1.3.6-SNAPSHOT (Feb 26, 2015)
+- Bug fix for service request logger
+- Dependencies cleanup
+- Hystrix metrics snapshot servlet enhancements
+
 ## 1.3.5 (Jan 16, 2015)
 - Added Zipkin distributed tracing support.
 - Metrics snapshot with configurable frequency. Useful when pushing service metrics to time series databases
