@@ -1,5 +1,5 @@
-<!-- Sample beans for integrating with distributed tracing. -->
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample beans for integrating with distributed tracing. -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="
@@ -41,10 +41,10 @@
 
     <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
         <property name="requestLogger" ref="commonRequestLogger"/>
-        <property name="zipkinSpanCollector">
-            <bean class="com.github.kristofa.brave.zipkin.ZipkinSpanCollector">
-				<constructor-arg index="0" value="localhost"/>
-      			<constructor-arg index="1" value="9410"/>                
+        <property name="spanCollector">
+            <bean class="com.flipkart.phantom.task.impl.collector.DelegatingZipkinSpanCollector">
+				<property name="zipkinCollectorHost" value="localhost"/>
+      			<property name="zipkinCollectorPort" value="9410"/>                
             </bean>
         </property>
         <property name="subscriptions">
