@@ -1,0 +1,58 @@
+<!-- Sample beans for integrating with distributed tracing. -->
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd	
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+
+    <!-- The tracing servlet filter -->
+    <bean id="ServletTraceFilter" class="com.flipkart.phantom.runtime.impl.jetty.filter.ServletTraceFilter">
+        <property name="eventDispatchingSpanCollector" ref="eventDispatchingSpanCollector"/>
+        <property name="traceFilter">
+            <bean class="com.github.kristofa.brave.FixedSampleRateTraceFilter">
+				<constructor-arg index="0" value="1"/>                
+            </bean>
+        </property>        
+    </bean>
+    
+    <!-- Tracing Publishers & Consumers-->
+    
+    <!--Types of subscriptions supported -->
+    <bean id="applicationEventMulticaster" class="org.trpr.platform.core.impl.event.PlatformEventMulticaster">
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--This event producer bean is declared primarily for using in ServiceProxyEvent Producer-->
+    <bean id="servletEndpointEventProducer" class="org.trpr.platform.core.impl.event.EndpointEventProducerImpl">
+        <property name="defaultEndpointURI" value="evt://com.flipkart.phantom.events.ALL"/>
+    </bean>
+
+    <!--This event producer bean is declared primarily for publishing Service Proxy Events-->
+    <bean id="servletServiceProxyEventProducer" class="com.flipkart.phantom.event.ServiceProxyEventProducer">
+        <!--Current implementation publishes events to endpoints based on Handlers. Nothing is published to ALL-->
+        <property name="eventProducer" ref="servletEndpointEventProducer"/>
+    </bean>
+
+    <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
+        <property name="requestLogger" ref="commonRequestLogger"/>
+        <property name="zipkinSpanCollector">
+            <bean class="com.github.kristofa.brave.zipkin.ZipkinSpanCollector">
+				<constructor-arg index="0" value="localhost"/>
+      			<constructor-arg index="1" value="9410"/>                
+            </bean>
+        </property>
+        <property name="subscriptions">
+            <list>
+                <value>evt://com.flipkart.phantom.events.TRACING_COLLECTOR</value>
+            </list>
+        </property>
+    </bean>
+    <!-- Tracing Event Publishers & Consumers-->
+	
+</beans>
