@@ -58,6 +58,12 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	 * @see com.flipkart.phantom.task.spi.interceptor.RequestInterceptor#process(com.flipkart.phantom.task.spi.RequestWrapper)
 	 */
 	public void process(T request) {
+		// we let trace filter decide if client request tracing is needed. Handler level config takes precedence even if global trace is on.
+		for (final TraceFilter traceFilter : traceFilters) {
+			if (!traceFilter.trace(request.getRequestName())) { 
+				return;
+			}
+		}
     	ClientTracer clientTracer = Brave.getClientTracer(this.eventDispatchingSpanCollector, this.traceFilters);
 		String spanName = this.getSpanName(request);
 		SpanId newSpanId = clientTracer.startNewSpan(spanName);
