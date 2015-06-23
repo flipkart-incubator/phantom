@@ -92,10 +92,10 @@
     <!-- Enable this bean only when distributed tracing is needed
     <bean id="zipkinCollector" class="com.flipkart.phantom.event.consumer.PushToZipkinEventConsumer">
         <property name="requestLogger" ref="commonRequestLogger"/>
-        <property name="zipkinSpanCollector">
-            <bean class="com.github.kristofa.brave.zipkin.ZipkinSpanCollector">
-				<constructor-arg index="0" value="localhost"/>
-      			<constructor-arg index="1" value="9410"/>                
+        <property name="spanCollector">
+            <bean class="com.flipkart.phantom.task.impl.collector.DelegatingZipkinSpanCollector">
+				<property name="zipkinCollectorHost" value="localhost"/>
+      			<property name="zipkinCollectorPort" value="9410"/>                
             </bean>
         </property>
         <property name="subscriptions">
