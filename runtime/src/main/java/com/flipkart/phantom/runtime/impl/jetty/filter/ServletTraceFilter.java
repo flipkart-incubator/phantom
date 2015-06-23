@@ -85,7 +85,6 @@ public class ServletTraceFilter implements Filter, InitializingBean  {
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
 	public void init(FilterConfig filterConfig) throws ServletException {
-		System.out.println("Inited config");
 		// no op
 	}
 	/**
