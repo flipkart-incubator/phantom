@@ -10,11 +10,11 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 1.4.0-SNAPSHOT    | Jun 2015      |    Bug fixes
 | Version 1.3.9             | May 2015      |    Upgrading to Jetty 9.x, bug fixes
 | Version 1.3.8             | May 2015      |    Upgrading to Trooper 1.3.2 release
 | Version 1.3.6             | Mar 2015      |    Upgrading snapshot to release
 | Version 1.3.6-SNAPSHOT    | Feb 2015      |    Feature enhancement and bug fix release
-| Version 1.3.5             | Jan 2015      |    Feature release
 
 ## Changelog
 
