@@ -92,15 +92,17 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
 	        	requestContextOptional = Optional.of(newRequestContext);
 	        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
 	        }
-        	final String serviceName = executor.getServiceName().isPresent() ? executor.getServiceName().get() : Executor.DEFAULT_SERVICE_NAME;
-	        // Set the client endpoint on the request context
-        	requestContextOptional.get().setCurrentClientEndpoint(new RequestContext.ServiceEndpoint(handler.getHost(), handler.getPort(), serviceName));
-	    	tracingRequestInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
-	    	tracingRequestInterceptor.setTraceFilters(traceFilters);
-	        executor.addRequestInterceptor(tracingRequestInterceptor);
-	        tracingResponseInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
-	    	tracingResponseInterceptor.setTraceFilters(traceFilters);
-	        executor.addResponseInterceptor(tracingResponseInterceptor);
+	        if (requestContextOptional.get().getCurrentServerSpan() == null) { // dont wrap the tracing interceptors if trace is not on
+	        	final String serviceName = executor.getServiceName().isPresent() ? executor.getServiceName().get() : Executor.DEFAULT_SERVICE_NAME;
+		        // Set the client endpoint on the request context
+	        	requestContextOptional.get().setCurrentClientEndpoint(new RequestContext.ServiceEndpoint(handler.getHost(), handler.getPort(), serviceName));
+		    	tracingRequestInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
+		    	tracingRequestInterceptor.setTraceFilters(traceFilters);
+		        executor.addRequestInterceptor(tracingRequestInterceptor);
+		        tracingResponseInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
+		    	tracingResponseInterceptor.setTraceFilters(traceFilters);
+		        executor.addResponseInterceptor(tracingResponseInterceptor);
+	        }
         }
         return executor;
     }
