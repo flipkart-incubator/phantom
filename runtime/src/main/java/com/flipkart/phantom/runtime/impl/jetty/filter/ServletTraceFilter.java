@@ -70,6 +70,9 @@ public class ServletTraceFilter implements Filter, InitializingBean  {
     /** The EndPointSubmitter used for submitting service endpoint details*/
     private EndPointSubmitter endPointSubmitter;
     
+    /** The context path override, if any*/
+    private String appContextPath;
+    
     /**
      * Interface method implementation. Checks if all mandatory properties have been set
      * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -131,7 +134,8 @@ public class ServletTraceFilter implements Filter, InitializingBean  {
 	 */
     private void submitEndpoint(HttpServletRequest request) {
         if (!endPointSubmitter.endPointSubmitted()) {
-            String contextPath = request.getContextPath();
+        	// prefer the app specified override, else use context path from Http request
+            String contextPath = this.getAppContextPath() != null ? this.getAppContextPath() : request.getContextPath(); 
             String localAddr = request.getLocalAddr();
             int localPort = request.getLocalPort();
             endPointSubmitter.submit(localAddr, localPort, contextPath);
@@ -180,6 +184,12 @@ public class ServletTraceFilter implements Filter, InitializingBean  {
 	}
 	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
 		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
+	}
+	public String getAppContextPath() {
+		return appContextPath;
+	}
+	public void setAppContextPath(String appContextPath) {
+		this.appContextPath = appContextPath;
 	}
     /** End Getter/Setter methods */
 	
