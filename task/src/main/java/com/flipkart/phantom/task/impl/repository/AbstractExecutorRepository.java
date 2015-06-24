@@ -23,7 +23,6 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import com.flipkart.phantom.task.impl.TaskHandler;
 import com.flipkart.phantom.task.impl.collector.EventDispatchingSpanCollector;
 import com.flipkart.phantom.task.impl.interceptor.AbstractClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
@@ -36,8 +35,6 @@ import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.flipkart.phantom.task.spi.registry.AbstractHandlerRegistry;
 import com.flipkart.phantom.task.spi.repository.ExecutorRepository;
-import com.github.kristofa.brave.Brave;
-import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 
@@ -96,18 +93,6 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
 	        	executor.getRequestWrapper().setRequestContext(requestContextOptional);
 	        }
         	final String serviceName = executor.getServiceName().isPresent() ? executor.getServiceName().get() : Executor.DEFAULT_SERVICE_NAME;
-	        if (requestContextOptional.get().getCurrentServerSpan() == null) {
-	        	// submit a server span only if the handler has not specified a trace filter override
-	        	if (handler.getTraceFilter().trace(serviceName)) {
-		        	final ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-		        	// we dont know what server trace this request was part of, so set it to unknown 
-		        	serverTracer.setStateUnknown(handler.getName());
-		        	// set the endpoint to default
-		        	Brave.getEndPointSubmitter().submit(TaskHandler.DEFAULT_HOST, TaskHandler.DEFAULT_PORT, serviceName);
-		        	// Set the current server span on the request context 
-		        	requestContextOptional.get().setCurrentServerSpan(Brave.getServerSpanThreadBinder().getCurrentServerSpan());
-	        	}
-	        }
 	        // Set the client endpoint on the request context
         	requestContextOptional.get().setCurrentClientEndpoint(new RequestContext.ServiceEndpoint(handler.getHost(), handler.getPort(), serviceName));
 	    	tracingRequestInterceptor.setEventDispatchingSpanCollector(this.eventDispatchingSpanCollector);
