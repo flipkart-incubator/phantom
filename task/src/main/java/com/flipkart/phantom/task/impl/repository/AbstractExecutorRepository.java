@@ -97,13 +97,16 @@ public abstract class AbstractExecutorRepository<T extends RequestWrapper,S, R e
 	        }
         	final String serviceName = executor.getServiceName().isPresent() ? executor.getServiceName().get() : Executor.DEFAULT_SERVICE_NAME;
 	        if (requestContextOptional.get().getCurrentServerSpan() == null) {
-	        	final ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
-	        	// we dont know what server trace this request was part of, so set it to unknown 
-	        	serverTracer.setStateUnknown(handler.getName());
-	        	// set the endpoint to default
-	        	Brave.getEndPointSubmitter().submit(TaskHandler.DEFAULT_HOST, TaskHandler.DEFAULT_PORT, serviceName);
-	        	// Set the current server span on the request context 
-	        	requestContextOptional.get().setCurrentServerSpan(Brave.getServerSpanThreadBinder().getCurrentServerSpan());
+	        	// submit a server span only if the handler has not specified a trace filter override
+	        	if (handler.getTraceFilter().trace(serviceName)) {
+		        	final ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
+		        	// we dont know what server trace this request was part of, so set it to unknown 
+		        	serverTracer.setStateUnknown(handler.getName());
+		        	// set the endpoint to default
+		        	Brave.getEndPointSubmitter().submit(TaskHandler.DEFAULT_HOST, TaskHandler.DEFAULT_PORT, serviceName);
+		        	// Set the current server span on the request context 
+		        	requestContextOptional.get().setCurrentServerSpan(Brave.getServerSpanThreadBinder().getCurrentServerSpan());
+	        	}
 	        }
 	        // Set the client endpoint on the request context
         	requestContextOptional.get().setCurrentClientEndpoint(new RequestContext.ServiceEndpoint(handler.getHost(), handler.getPort(), serviceName));
