@@ -1,5 +1,5 @@
-## 1.4.0-SNAPSHOT (Jun 23, 2015)
-- Permit handlers to override globally enabled distributed trace setting
+## 1.4.0 (Jun 25, 2015)
+- Fixes related to distributed tracing
 
 ## 1.3.9 (May 21, 2015)
 - Upgrade to Jetty 9.x
