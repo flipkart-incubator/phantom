@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.flipkart</groupId>
         <artifactId>phantom</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1-SNAPSHOT</version>
     </parent>
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>task</artifactId>
     <name>Task</name>
-    <version>1.4.0</version>
+    <version>1.4.1-SNAPSHOT</version>
     <description>Task Framework</description>
 
     <licenses>

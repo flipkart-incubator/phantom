@@ -138,6 +138,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
             final Future<TaskResult> future = command.queue();
+            /*
             MoreExecutors.sameThreadExecutor().submit(new Runnable() {
                 @Override
                 public void run() {
@@ -150,6 +151,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
                     }
                 }
             });
+            */
             return future;
         }
     }
