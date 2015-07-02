@@ -170,7 +170,21 @@ pip-log.txt
 
 *.class
 target
+.recommenders
 bin
 .svn/README.md~
 /README.md~
 /CHANGELOG.md~
+/channel-handler-http/
+/channel-handler-thrift/
+/dashboard/
+/netty-uds/
+/runtime/
+/runtime-netty-uds/
+/runtime-oio-uds/
+/sample-http-proxy/
+/sample-task-proxy/
+/sample-thrift-proxy/
+/task/
+/task-http/
+/task-thrift/
