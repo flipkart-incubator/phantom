@@ -1,3 +1,6 @@
+## 1.4.1 (Jul 2, 2015)
+- Fixed bug in async execution that was causing sync execution
+
 ## 1.4.0 (Jun 25, 2015)
 - Fixes related to distributed tracing
 
