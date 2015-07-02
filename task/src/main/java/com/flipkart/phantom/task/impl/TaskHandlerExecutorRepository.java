@@ -16,20 +16,24 @@
 
 package com.flipkart.phantom.task.impl;
 
+import java.util.Map;
+import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.event.ServiceProxyEventProducer;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.CommandClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.registry.TaskHandlerRegistry;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
-import com.flipkart.phantom.task.spi.*;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.flipkart.phantom.task.spi.Decoder;
+import com.flipkart.phantom.task.spi.Executor;
+import com.flipkart.phantom.task.spi.RequestWrapper;
+import com.flipkart.phantom.task.spi.TaskRequestWrapper;
+import com.flipkart.phantom.task.spi.TaskResult;
 import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.Future;
 
 /**
  * <code>TaskHandlerExecutorRepository</code> is a repository that searches for a {@link TaskHandler}
@@ -137,22 +141,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
-            final Future<TaskResult> future = command.queue();
-            /*
-            MoreExecutors.sameThreadExecutor().submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        future.get();
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error in processing command " + command.getServiceName() + ": " + e.getMessage(), e);
-                    } finally {
-                        publishEvent(command, receiveTime, requestWrapper);
-                    }
-                }
-            });
-            */
-            return future;
+            return command.queue();
         }
     }
 
