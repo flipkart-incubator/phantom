@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:context="http://www.springframework.org/schema/context"
-	xsi:schemaLocation="
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
     http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd	
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
     http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
 
 	<!-- The Jetty server beans  -->
     <bean id="jettyServer" class="org.eclipse.jetty.server.Server" init-method="start"> <!-- Dont specify destroy-method attribute here as it shutsdown the JVM -->
-		<property name="threadPool">  
-		     <bean id="ThreadPool" class="org.eclipse.jetty.util.thread.QueuedThreadPool" destroy-method="stop"> <!-- Specify the destroy-method here to close the thread pool-->
-		     	<property name="name" value="Jetty-Listener"/>
-		        <property name="minThreads" value="${proxy.dashboard.minThreads}"/>
-		        <property name="maxThreads" value="${proxy.dashboard.maxThreads}"/>
-		     </bean>
-		</property>   
+        <constructor-arg>
+            <bean class="org.eclipse.jetty.util.thread.QueuedThreadPool" destroy-method="stop"> <!-- Specify the destroy-method here to close the thread pool-->
+                <property name="name" value="Jetty-Listener"/>
+                <property name="minThreads" value="${proxy.dashboard.minThreads}"/>
+                <property name="maxThreads" value="${proxy.dashboard.maxThreads}"/>
+            </bean>
+        </constructor-arg>
         <property name="connectors">
             <list>
-                <bean id="Connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector" destroy-method="stop"> <!-- Specify the destroy-method here to close the server socket -->
+                <bean id="connector" class="org.eclipse.jetty.server.ServerConnector" destroy-method="stop"> <!-- Specify the destroy-method here to close the server socket -->
+                    <constructor-arg ref="jettyServer"/>
+                    <constructor-arg value="${proxy.dashboard.acceptors}"/>
+                    <constructor-arg value="0"/>
                     <property name="port" value="${proxy.core.jetty.admin.port}"/>
-                    <property name="acceptors" value="${proxy.dashboard.acceptors}"/>
                 </bean>
             </list>
         </property>
-       <property name="handler">
-            <bean id="handlers"
-                  class="org.eclipse.jetty.server.handler.HandlerCollection">
+        <property name="handler">
+            <bean class="org.eclipse.jetty.server.handler.HandlerCollection">
                 <property name="handlers">
                     <list>
                         <bean id="contexts"
@@ -34,9 +34,10 @@
                             <property name="handlers">
                                 <list>
                                     <bean class="com.flipkart.phantom.runtime.impl.jetty.JettyWebAppContextFactory">
-										<property name="contextName" value="/admin"/>
-										<property name="contextPath" value="WEB-INF"/>	
-										<property name="maxFormContentSize" value="${proxy.core.jetty.maxFormContentSize}"/>                                    	
+                                        <property name="contextName" value="/admin"/>
+                                        <property name="contextPath" value="WEB-INF"/>
+                                        <property name="maxFormContentSize"
+                                                  value="${proxy.core.jetty.maxFormContentSize}"/>
                                     </bean>
                                 </list>
                             </property>
@@ -47,11 +48,7 @@
         </property>
     </bean>
 	<bean class="org.trpr.platform.runtime.impl.config.spring.PropertyPlaceholderConfigurer">
-        <property name="defaultPropertiesOnClasspath">
-            <value>packaged/default-proxy-core-config.properties</value>
-        </property>
-        <property name="propertiesOnConfigPath">
-            <value>dashboard-config.properties</value>
-        </property>
-	</bean>    
+        <property name="defaultPropertiesOnClasspath" value="packaged/default-proxy-core-config.properties"/>
+        <property name="propertiesOnConfigPath" value="dashboard-config.properties"/>
+	</bean>
 </beans>

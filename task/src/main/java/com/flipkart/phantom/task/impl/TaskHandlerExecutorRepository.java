@@ -136,6 +136,15 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         return this.getExecutor(commandName, commandName, requestWrapper);
     }
 
+    private Future<TaskResult> executeAsyncCommand(final long receiveTime, final TaskHandlerExecutor command,
+                                                   final String commandName, final TaskRequestWrapper requestWrapper) {
+        if(command==null) {
+            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
+        } else {
+            return command.queue();
+        }
+    }
+
     /**
      * Executes a command asynchronously. (Returns a future promise)
      * @param commandName name of the command
@@ -144,13 +153,10 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public Future<TaskResult> executeAsyncCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
-        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
-        if(command==null) {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        } else {
-            return command.queue();
-        }
+    public Future<TaskResult> executeAsyncCommand(final String commandName, String proxyName, final TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
+        final long receiveTime = System.currentTimeMillis();
+        final TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
+        return executeAsyncCommand(receiveTime, command, commandName, requestWrapper);
     }
 
     /**
@@ -172,16 +178,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
             } finally {
-                if (eventProducer != null) {
-                    // Publishes event both in case of success and failure.
-                    final Map<String, String> params = requestWrapper.getParams();
-                    ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
-                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
-                    if(params.containsKey("requestSentTime"))
-                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
-                    eventProducer.publishEvent(eventBuilder.build());
-                } else
-                    LOGGER.debug("eventProducer not set, not publishing event");
+                publishEvent(command, receiveTime, requestWrapper);
             }
         }
     }
@@ -206,6 +203,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      */
     @SuppressWarnings("unchecked")
     public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+        long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
@@ -214,6 +212,8 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
                 return command.execute();
             } catch (Exception e) {
                 throw new RuntimeException("Error in processing command "+commandName+": " + e.getMessage(), e);
+            } finally {
+                publishEvent(command, receiveTime, requestWrapper);
             }
         }
     }
@@ -226,12 +226,9 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @throws UnsupportedOperationException if no handler found for command
      */
     public Future<TaskResult> executeAsyncCommand(String commandName, TaskRequestWrapper requestWrapper, Decoder decoder) throws UnsupportedOperationException {
+        final long receiveTime = System.currentTimeMillis();
         TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
-        if(command==null) {
-            throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
-        } else {
-            return command.queue();
-        }
+        return executeAsyncCommand(receiveTime, command, commandName, requestWrapper);
     }
 
     /**
@@ -361,6 +358,27 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         return taskHandler;
     }
 
+    /**
+     * Builds & Publishes Event based using eventProducer
+     * @param command Command under execution
+     * @param receiveTime Time this command has been recieved for execution
+     * @param requestWrapper Request Wrapper to extract request params.
+     */
+    private void publishEvent(final TaskHandlerExecutor command, final long receiveTime, final TaskRequestWrapper requestWrapper) {
+        if (eventProducer != null) {
+            // Publishes event both in case of success and failure.
+            final Map<String, String> params = requestWrapper.getParams();
+            ServiceProxyEvent.Builder eventBuilder = command.getEventBuilder().withCommandData(command).withEventSource(command.getClass().getName());
+            eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+            if(params.containsKey("requestSentTime")) {
+                eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+            }
+            eventProducer.publishEvent(eventBuilder.build());
+        } else {
+            LOGGER.debug("eventProducer not set, not publishing event");
+        }
+    }
+    
     /** Getter/Setter methods*/
     public void setEventProducer(ServiceProxyEventProducer eventProducer) {
         this.eventProducer = eventProducer;

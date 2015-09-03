@@ -21,7 +21,7 @@ import org.trpr.platform.core.impl.event.AbstractEndpointEventConsumerImpl;
 import org.trpr.platform.model.event.PlatformEvent;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
-import com.github.kristofa.brave.zipkin.ZipkinSpanCollector;
+import com.github.kristofa.brave.SpanCollector;
 
 /**
  * <code>PushToZipkinEventConsumer</code> is a sub-type of {@link AbstractEndpointEventConsumerImpl} that pushes consumed events to a Zipkin collector.
@@ -31,8 +31,8 @@ import com.github.kristofa.brave.zipkin.ZipkinSpanCollector;
  */
 public class PushToZipkinEventConsumer extends AbstractEndpointEventConsumerImpl implements InitializingBean {
 
-    /** The ZipkinSpanCollector instance*/
-    private ZipkinSpanCollector zipkinSpanCollector;
+    /** The SpanCollector instance*/
+    private SpanCollector spanCollector;
     
     /** The RequestLogger to registered tracing subscription with*/
     private RequestLogger requestLogger;
@@ -55,13 +55,13 @@ public class PushToZipkinEventConsumer extends AbstractEndpointEventConsumerImpl
      */
 	protected void handlePlatformEvent(PlatformEvent platformEvent) {
         if (platformEvent instanceof ServiceProxyEvent) {
-        	this.zipkinSpanCollector.collect(((ServiceProxyEvent)platformEvent).getSpan());
+        	this.spanCollector.collect(((ServiceProxyEvent)platformEvent).getSpan());
         }		
 	}
 
 	/** Getter/Setter methods */
-	public void setZipkinSpanCollector(ZipkinSpanCollector zipkinSpanCollector) {
-		this.zipkinSpanCollector = zipkinSpanCollector;
+	public void setSpanCollector(SpanCollector spanCollector) {
+		this.spanCollector = spanCollector;
 	}
 	public void setRequestLogger(RequestLogger requestLogger) {
 		this.requestLogger = requestLogger;

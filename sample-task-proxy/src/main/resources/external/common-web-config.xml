@@ -1,13 +1,5 @@
-<!--  
-
-NOTE : This is a sample file that may be included in Phantom deployments (in the config deployment location /resources/external) to initiate tracing of requests originating 
-from servlets or other web components.
-
-This file is not loaded in the "runtime" module as the module is shipped as a binary that only included configuration files available in /resources/packaged 
-
--->
-
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample beans for integrating with distributed tracing. -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="
