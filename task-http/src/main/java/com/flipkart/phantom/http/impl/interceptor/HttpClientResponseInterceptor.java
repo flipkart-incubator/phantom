@@ -34,6 +34,9 @@ public class HttpClientResponseInterceptor<T extends HttpResponse> extends Abstr
 	 * @see com.flipkart.phantom.task.impl.interceptor.AbstractClientResponseInterceptor#isResponseSuccess(java.lang.Object)
 	 */
 	protected boolean isResponseSuccess(T response) {
+		if (response == null || response.getStatusLine() == null) {
+			return false;
+		}		
 		return (response.getStatusLine().getStatusCode() >= 200 && response.getStatusLine().getStatusCode() <= 299);
 	}
 
