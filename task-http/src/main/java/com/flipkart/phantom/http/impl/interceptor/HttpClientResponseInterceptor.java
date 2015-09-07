@@ -42,6 +42,9 @@ public class HttpClientResponseInterceptor<T extends HttpResponse> extends Abstr
 	 * @see com.flipkart.phantom.task.impl.interceptor.AbstractClientResponseInterceptor#getResponseStatusCode(java.lang.Object)
 	 */
 	protected Optional<Integer> getResponseStatusCode(T response) {
+		if (response == null || response.getStatusLine() == null) {
+			return Optional.absent();
+		}
 		return Optional.of(response.getStatusLine().getStatusCode());
 	}
 
