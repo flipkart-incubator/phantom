@@ -58,7 +58,7 @@ public class RequestLogger extends AbstractEndpointEventConsumerImpl {
 
     /** Logger for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestLogger.class);
-    private static FastDateFormat dateFormatter = DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+    private static FastDateFormat dateFormatter = FastDateFormat.getInstance("dd-MMM-yyyy_HH:mm:ss.SSS");
     
     /** Map of endpoint URIs and their registered consumers*/
     private Map<String, EndpointEventConsumer> subscriptionConsumers = new HashMap<String, EndpointEventConsumer>();
