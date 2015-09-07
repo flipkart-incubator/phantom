@@ -251,7 +251,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
      * @see org.jboss.netty.channel.SimpleChannelHandler#exceptionCaught(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ExceptionEvent)
      */
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent event) throws Exception {
-        LOGGER.warn("Exception {} thrown on Channel {}. Disconnect initiated", event, event.getChannel());
+        LOGGER.error("Exception thrown on Channel. Disconnect initiated : " + event.getCause(), event.getCause());
         event.getChannel().close();
     }
 
@@ -305,7 +305,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
      */
     private void writeCommandExecutionResponse(ChannelHandlerContext ctx, ChannelEvent event, HttpRequest request, HttpResponse response) throws Exception {
         // Don't write anything if the response is null
-        if (response == null) {
+        if (response == null || response.getEntity() == null) {
             // write empty response
             event.getChannel().write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NO_CONTENT)).addListener(ChannelFutureListener.CLOSE);
             return;
