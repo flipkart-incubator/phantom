@@ -8,13 +8,13 @@
     <parent>
         <artifactId>phantom</artifactId>
         <groupId>com.flipkart</groupId>
-        <version>1.4.1</version>
+        <version>1.4.2-SNAPSHOT</version>
     </parent>
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>task-http</artifactId>
     <name>HTTP Task</name>
-    <version>1.4.1</version>
+    <version>1.4.2-SNAPSHOT</version>
     <description>HTTP Task Framework</description>
 
     <licenses>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>task</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.netflix.hystrix</groupId>
