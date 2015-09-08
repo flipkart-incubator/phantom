@@ -1,3 +1,6 @@
+## 1.4.2-SNAPSHOT (Sep 8, 2015)
+- Upgrade to Spring 4.x
+
 ## 1.4.1 (Jul 2, 2015)
 - Fixed bug in async execution that was causing sync execution
 
