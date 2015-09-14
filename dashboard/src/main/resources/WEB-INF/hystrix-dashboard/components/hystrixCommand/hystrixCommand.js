@@ -93,6 +93,7 @@
             //Pretty format open circuit hostnames from json.
             var openCircuitHostNames = data['openCircuitHostNames'];
             if (openCircuitHostNames!=null) data['openCircuitHostNames'] = formatHostNames(data['name'],openCircuitHostNames);
+            else data['openCircuitHostNames'] = "";
 
 			// do math
 			converAllAvg(data);
