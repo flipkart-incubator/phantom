@@ -185,7 +185,11 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent messageEvent) throws Exception {
         long receiveTime = System.currentTimeMillis();
         HttpRequest request = (HttpRequest) messageEvent.getMessage();
-        LOGGER.debug("Request is: " + request.getMethod() + " " + request.getUri());
+        
+        if (LOGGER.isDebugEnabled()) {
+	        LOGGER.debug("Http Request is: " + request.getMethod() + " " + request.getUri());
+	        LOGGER.debug("Http Headers : " + request.getHeaders().toString());
+        }
 
         this.processRequestHeaders(request);
 
@@ -321,6 +325,12 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         // write entity
         HttpEntity responseEntity = response.getEntity();
         byte[] responseData = EntityUtils.toByteArray(responseEntity);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Http Response status : " + response.getStatusLine().toString());
+        	LOGGER.debug("Http Response : " + new String(responseData));
+        }
+        
         httpResponse.setContent(ChannelBuffers.copiedBuffer(responseData));
         // write response
         boolean keepAlive = HttpHeaders.isKeepAlive(request);

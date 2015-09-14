@@ -117,7 +117,12 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	 * @param spanName the name of the span
 	 */
 	protected void addTracingHeaders(T request, SpanId spanId, String spanName) {
-		Map<String, String> headers = new HashMap<String, String>();
+		List<Map.Entry<String, String>> existingHeaders = request.getHeaders().get();
+		// get all existing headers and then add the trace headers
+		Map<String, String> headers = new HashMap<String,String>();
+		for(Map.Entry<String, String> e: existingHeaders) {
+			headers.put(e.getKey(), e.getValue());
+		}
         if (spanId != null) {
         	headers.put(BraveHttpHeaders.Sampled.getName(), TRUE);
         	headers.put(BraveHttpHeaders.TraceId.getName(), Long.toString(spanId.getTraceId(), 16));

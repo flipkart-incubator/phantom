@@ -16,6 +16,13 @@
 
 package com.flipkart.phantom.http.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -32,13 +39,6 @@ import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
 /**
  * <code>HttpConnectionPool</code> does the connection pool management for HTTP proxy requests
  *
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class HttpConnectionPool {
 
     /** Default settings for forwarding Http headers*/
-    public static final boolean FORWARD_HEADERS = false;
+    public static final boolean FORWARD_HEADERS = true;
 
     /** Set of Http headers that we want to remove */
     public static final Set<String> REMOVE_HEADERS = new HashSet<String>();
@@ -82,7 +82,7 @@ public class HttpConnectionPool {
     private int timeToLiveInSecs = -1;
 
     /** max number of connections allowed */
-    private int maxConnections = 20;
+    private int maxConnections = 500;
 
     /** max size of request queue */
     private int requestQueueSize = 0;
@@ -144,7 +144,10 @@ public class HttpConnectionPool {
      */
     public HttpResponse execute(HttpRequestBase request, List<Map.Entry<String,String>> headers) throws Exception {
         setRequestHeaders(request, headers);
-        logger.debug("Sending request: "+request.getURI());
+        if (logger.isDebugEnabled()) {
+	        logger.debug("Sending Http request: " + request.getURI());
+	        logger.debug("Sending Http headers: " + headers.toString());
+        }
         if (processQueue.tryAcquire()) {
             HttpResponse response;
             try {

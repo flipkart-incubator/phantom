@@ -32,7 +32,7 @@ import org.apache.http.entity.ByteArrayEntity;
 public abstract class HttpProxy extends AbstractHandler {
 
     /** The default thread pool size*/
-    public static final int DEFAULT_THREAD_POOL_SIZE = 10;
+    public static final int DEFAULT_THREAD_POOL_SIZE = 500;
     
     /** Name of the proxy */
     private String name;
