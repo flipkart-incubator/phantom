@@ -49,7 +49,7 @@ import com.netflix.hystrix.HystrixThreadPoolProperties;
  * @version 1.0, 19th March, 2013
  */
 @SuppressWarnings("rawtypes")
-public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements Executor<TaskRequestWrapper, TaskResult> {
+public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implements Executor<TaskRequestWrapper<S>, TaskResult> {
 
     /** Log instance for this class */
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
@@ -83,10 +83,10 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected Map<String,String> params;
 
     /** Data which is utilized by the task for execution */
-    protected byte[] data;
+    protected S data;
 
     /* Task Request Wrapper */
-    protected TaskRequestWrapper taskRequestWrapper;
+    protected TaskRequestWrapper<S> taskRequestWrapper;
 
     /* Decoder to decode requests */
     protected Decoder decoder;
@@ -95,7 +95,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
     protected ServiceProxyEvent.Builder eventBuilder;
     
     /** List of request and response interceptors */
-    private List<RequestInterceptor<TaskRequestWrapper>> requestInterceptors = new LinkedList<RequestInterceptor<TaskRequestWrapper>>();
+    private List<RequestInterceptor<TaskRequestWrapper<S>>> requestInterceptors = new LinkedList<RequestInterceptor<TaskRequestWrapper<S>>>();
     private List<ResponseInterceptor<TaskResult>> responseInterceptors = new LinkedList<ResponseInterceptor<TaskResult>>();
 
     /**
@@ -111,7 +111,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
-                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper ) {
+                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper<S> taskRequestWrapper ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
@@ -140,7 +140,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param decoder Decoder sent by the Client
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
-                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper taskRequestWrapper , Decoder decoder ) {
+                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper<S> taskRequestWrapper , Decoder decoder ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
@@ -167,7 +167,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param concurrentRequestSize no of Max Concurrent requests which can be served
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,
-                                  TaskRequestWrapper taskRequestWrapper , int concurrentRequestSize ) {
+                                  TaskRequestWrapper<S> taskRequestWrapper , int concurrentRequestSize ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
@@ -195,7 +195,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * @param concurrentRequestSize no of Max Concurrent requests which can be served
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName,
-                                  TaskRequestWrapper taskRequestWrapper , int concurrentRequestSize, Decoder decoder ) {
+                                  TaskRequestWrapper<S> taskRequestWrapper , int concurrentRequestSize, Decoder decoder ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
@@ -253,7 +253,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
         if (this.taskRequestWrapper.getRequestContext().isPresent() && this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan() != null) {
         	Brave.getServerSpanThreadBinder().setCurrentSpan(this.taskRequestWrapper.getRequestContext().get().getCurrentServerSpan());
         }
-        for (RequestInterceptor<TaskRequestWrapper> requestInterceptor : this.requestInterceptors) {
+        for (RequestInterceptor<TaskRequestWrapper<S>> requestInterceptor : this.requestInterceptors) {
         	requestInterceptor.process(this.taskRequestWrapper);
         }        
         Optional<RuntimeException> transportException = Optional.absent();
@@ -303,7 +303,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * Interface method implementation. Adds the RequestInterceptor to the list of request interceptors that will be invoked
      * @see com.flipkart.phantom.task.spi.Executor#addRequestInterceptor(com.flipkart.phantom.task.spi.interceptor.RequestInterceptor)
      */
-    public void addRequestInterceptor(RequestInterceptor<TaskRequestWrapper> requestInterceptor) {    	
+    public void addRequestInterceptor(RequestInterceptor<TaskRequestWrapper<S>> requestInterceptor) {
     	this.requestInterceptors.add(requestInterceptor);
     }
 
@@ -327,7 +327,7 @@ public class TaskHandlerExecutor extends HystrixCommand<TaskResult> implements E
      * Interface method implementation. Returns the TaskRequestWrapper instance that this Executor was created with
      * @see com.flipkart.phantom.task.spi.Executor#getRequestWrapper()
      */
-    public TaskRequestWrapper getRequestWrapper() {
+    public TaskRequestWrapper<S> getRequestWrapper() {
     	return this.taskRequestWrapper;
     }
     

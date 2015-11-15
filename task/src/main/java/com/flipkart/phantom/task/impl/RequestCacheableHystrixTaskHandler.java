@@ -15,7 +15,7 @@ public abstract class RequestCacheableHystrixTaskHandler extends HystrixTaskHand
      * @param data
      * @return String cache key
      */
-    public String getCacheKey(Map<String,String> params, byte[] data){
+    public <S> String getCacheKey(Map<String,String> params, S data){
         return null;
     }
 
