@@ -92,7 +92,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     static {
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TRANSFER_ENCODING);    	
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_DIRECTIVE);
-    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_KEEP_ALIVE);
+//    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_KEEP_ALIVE);
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TARGET_HOST);
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add("Proxy-Authenticate");
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add("TE");
