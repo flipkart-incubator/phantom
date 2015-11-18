@@ -135,7 +135,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * @return response the TaskResult from thrift execution
      * @throws RuntimeException runTimeException
      */
-    public abstract TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String,String> params, byte[] data) throws RuntimeException;
+    public abstract <S> TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String,String> params, S data) throws RuntimeException;
 
     /**
      * This is a over-loaded method that needs to be implemented by sub-classes. The default implementation
@@ -149,8 +149,8 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * @return response the TaskResult from thrift execution
      * @throws RuntimeException runTimeException
      */
-    public <T> TaskResult<T> execute(TaskContext taskContext, String command,
-                                     TaskRequestWrapper taskRequestWrapper,Decoder<T> decoder) throws RuntimeException {
+    public <T, S> TaskResult<T> execute(TaskContext taskContext, String command,
+                                     TaskRequestWrapper<S> taskRequestWrapper,Decoder<T> decoder) throws RuntimeException {
         throw new UnsupportedOperationException("Not Supported. It has to be implemented by sub-classes");
     }
 

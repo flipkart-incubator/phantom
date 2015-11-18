@@ -167,9 +167,9 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @return thrift result
      * @throws UnsupportedOperationException if no handler found for command
      */
-    public TaskResult executeCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
+    public <S> TaskResult executeCommand(String commandName, String proxyName, TaskRequestWrapper requestWrapper) throws UnsupportedOperationException {
         long receiveTime = System.currentTimeMillis();
-        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
+        TaskHandlerExecutor<S> command = (TaskHandlerExecutor) getExecutor(commandName, proxyName, requestWrapper);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {
@@ -202,9 +202,9 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
      * @throws UnsupportedOperationException if no handler found for command
      */
     @SuppressWarnings("unchecked")
-    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
+    public <T, S> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper requestWrapper,Decoder<T> decoder) throws UnsupportedOperationException {
         long receiveTime = System.currentTimeMillis();
-        TaskHandlerExecutor command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
+        TaskHandlerExecutor<S> command = (TaskHandlerExecutor) getExecutor(commandName, commandName, requestWrapper, decoder);
         if(command==null) {
             throw new UnsupportedOperationException("Invoked unsupported command : " + commandName);
         } else {

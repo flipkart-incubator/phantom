@@ -88,34 +88,33 @@ public class TaskContextImpl implements TaskContext {
     /**
      * Executes a command
      */
-    public TaskResult executeCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+    @Override
+    public <S> TaskResult executeCommand(String commandName, S data, Map<String, String> params) throws UnsupportedOperationException {
         return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params));
     }
 
     @Override
-    public <T> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException {
+    public <T, S> TaskResult<T> executeCommand(String commandName, TaskRequestWrapper<S> taskRequestWrapper, Decoder<T> decoder) throws UnsupportedOperationException {
         return this.executorRepository.executeCommand(commandName, taskRequestWrapper,decoder);
     }
 
     @Override
-    public <T> TaskResult<T> executeCommand(String commandName, byte[] data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
+    public <T, S> TaskResult<T> executeCommand(String commandName, S data, Map<String, String> params, Decoder<T> decoder) throws UnsupportedOperationException {
         return this.executorRepository.executeCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
     }
 
     @Override
-    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
+    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String, String> params, Decoder decoder) throws UnsupportedOperationException {
         return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params),decoder);
     }
 
-    /**
-     * Executes a command asynchronously
-     */
-    public Future<TaskResult> executeAsyncCommand(String commandName, byte[] data, Map<String, String> params) throws UnsupportedOperationException {
+    @Override
+    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String, String> params) throws UnsupportedOperationException {
         return this.executorRepository.executeAsyncCommand(commandName, this.createRequestFromParams(commandName, data, params));
     }
     
     /** Creates a TaskRequestWrapper from passed in params and sets the current server span on it*/
-    private TaskRequestWrapper createRequestFromParams(String commandName, byte[] data, Map<String, String> params) {
+    private <S> TaskRequestWrapper createRequestFromParams(String commandName, S data, Map<String, String> params) {
         TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
         taskRequestWrapper.setCommandName(commandName);
         taskRequestWrapper.setData(data);

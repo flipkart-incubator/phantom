@@ -155,7 +155,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             TaskHandlerExecutor executor;
 
             // Prepare the request Wrapper
-            TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+            TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
             taskRequestWrapper.setCommandName(readCommand.getCommand());
             taskRequestWrapper.setData(readCommand.getCommandData());
             taskRequestWrapper.setParams(readCommand.getCommandParams());
@@ -178,7 +178,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             Optional<RuntimeException> transportError = Optional.absent();
             try {
                 if (executor.getCallInvocationType() == TaskHandler.SYNC_CALL) {
-                    result = executor.execute();
+                    result = (TaskResult) executor.execute();
                 } else {
                     executor.queue(); // dont wait for the result. send back a response that the call has been dispatched for async execution
                     result = new TaskResult(true, TaskHandlerExecutor.ASYNC_QUEUED);

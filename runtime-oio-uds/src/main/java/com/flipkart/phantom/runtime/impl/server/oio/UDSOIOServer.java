@@ -274,7 +274,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
         }
         public void run() {
             long receiveTime = System.currentTimeMillis();
-            TaskHandlerExecutor executor = null;
+            TaskHandlerExecutor<byte[]> executor = null;
             CommandInterpreter.ProxyCommand readCommand = null;
             Optional<RuntimeException> transportError = Optional.absent();
             TaskResult result = null;
@@ -286,7 +286,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 String pool = readCommand.getCommandParams().get("pool");
 
                 // Prepare the request Wrapper
-                TaskRequestWrapper taskRequestWrapper = new TaskRequestWrapper();
+                TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
                 taskRequestWrapper.setCommandName(readCommand.getCommand());
                 taskRequestWrapper.setData(readCommand.getCommandData());
                 taskRequestWrapper.setParams(readCommand.getCommandParams());

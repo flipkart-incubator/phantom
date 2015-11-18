@@ -37,10 +37,10 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
+     * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, Object)
      */
     @Override
-    public TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String, String> params, byte[] data) throws RuntimeException {
+    public <S> TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String, String> params, S data) throws RuntimeException {
 
         float num1 = Float.parseFloat(params.get("num1"));
         float num2 = Float.parseFloat(params.get("num2"));
@@ -88,10 +88,10 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
 
     /**
      * Abstract method implementations.
-     * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, byte[])
+     * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, Object)
      */
     @Override
-    public TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String, String> params, byte[] data) {
+    public <S> TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String, String> params, S data) {
         return null;
     }
 

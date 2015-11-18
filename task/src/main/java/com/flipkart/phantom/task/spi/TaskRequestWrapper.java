@@ -30,10 +30,10 @@ import com.google.common.base.Optional;
  * @version : 1.0
  * @date : 28/10/13
  */
-public class TaskRequestWrapper extends RequestWrapper {
+public class TaskRequestWrapper<S> extends RequestWrapper {
 
     /** Data bytes */
-    private byte[] data;
+    private S data;
 
     /** Map of parameters */
     private Map<String,String> params;
@@ -74,10 +74,10 @@ public class TaskRequestWrapper extends RequestWrapper {
     }
     
     /**Start Getter/Setter methods */
-    public byte[] getData(){
+    public S getData(){
         return data;
     }
-    public void setData(byte[] data){
+    public void setData(S data){
         this.data = data;
     }
     public Map<String, String> getParams(){
