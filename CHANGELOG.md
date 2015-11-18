@@ -1,3 +1,8 @@
+## 1.4.2 (Nov 18, 2015)
+- Upgrade to Spring 4.x
+- Bug fix to Http proxy to return response content length
+- Task interface change to support generic return type, not just byte array
+
 ## 1.4.2-SNAPSHOT (Sep 8, 2015)
 - Upgrade to Spring 4.x
 

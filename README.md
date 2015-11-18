@@ -10,7 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.4.2-SNAPSHOT    | Sep 2015      |    Upgrade to Spring 4.x
+| Version 1.4.2             | Nov 2015      |    Upgrade to Spring 4.x, Http proxy, Task interface
 | Version 1.4.1             | Jul 2015      |    Bug fix in async task execution
 | Version 1.4.0             | Jun 2015      |    Bug fixes for distributed tracing
 | Version 1.3.9             | May 2015      |    Upgrading to Jetty 9.x, bug fixes
