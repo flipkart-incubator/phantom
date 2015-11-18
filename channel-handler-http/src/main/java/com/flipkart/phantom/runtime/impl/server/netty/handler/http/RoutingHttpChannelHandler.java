@@ -321,10 +321,13 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
                 httpResponse.setHeader(header.getName(),header.getValue());
             }
         }
-        
+                
         // write entity
         HttpEntity responseEntity = response.getEntity();
         byte[] responseData = EntityUtils.toByteArray(responseEntity);
+        
+        // add the content length response header since we send the complete response body
+        httpResponse.setHeader(HTTP.CONTENT_LEN,responseData.length);        
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Http Response status : " + response.getStatusLine().toString());
