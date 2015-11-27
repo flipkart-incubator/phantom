@@ -103,7 +103,11 @@ public class TCPNettyServer extends AbstractNettyNetworkServer {
      * @see com.flipkart.phantom.runtime.impl.server.netty.AbstractNettyNetworkServer#createServerBootstrap()
      */
     protected Bootstrap createServerBootstrap() throws RuntimeException {
-        return new ServerBootstrap(new NioServerSocketChannelFactory(this.getServerExecutors(), this.getWorkerExecutors()));
+    	if (this.getWorkerPoolSize() != TCPNettyServer.INVALID_POOL_SIZE) { // specify the worker count if it has been set, else use defaults (Netty uses 2 * no. of cores)
+    		return new ServerBootstrap(new NioServerSocketChannelFactory(this.getServerExecutors(), this.getWorkerExecutors(), this.getWorkerPoolSize()));    		
+    	} else {
+    		return new ServerBootstrap(new NioServerSocketChannelFactory(this.getServerExecutors(), this.getWorkerExecutors()));
+    	}
     }
 
     /**
