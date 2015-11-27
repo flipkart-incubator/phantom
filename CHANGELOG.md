@@ -1,3 +1,6 @@
+## 1.4.3-SNAPSHOT (Nov 27, 2015)
+- Fixed TCPNettyServer to use worker thread count, if specified
+
 ## 1.4.2 (Nov 18, 2015)
 - Upgrade to Spring 4.x
 - Bug fix to Http proxy to return response content length
