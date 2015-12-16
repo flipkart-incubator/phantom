@@ -10,7 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 1.4.3-SNAPSHOT    | Nov 2015      |    Bug fix in TCPNettyServer
+| Version 1.4.3             | Dec 2015      |    Bug fixes in TCPNettyServer, Distributed tracing
 | Version 1.4.2             | Nov 2015      |    Upgrade to Spring 4.x, Http proxy, Task interface
 | Version 1.4.1             | Jul 2015      |    Bug fix in async task execution
 | Version 1.4.0             | Jun 2015      |    Bug fixes for distributed tracing

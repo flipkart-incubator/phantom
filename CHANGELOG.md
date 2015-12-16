@@ -1,3 +1,8 @@
+## 1.4.3  (Dec 16, 2015)
+- Included snapshot version fixes
+- Bug fix: Fix for IllegalStateException in ClientRequestInterceptor
+- Bug fix: Trace/span ids in hex are now reliably converted to 64 bits 
+
 ## 1.4.3-SNAPSHOT (Nov 27, 2015)
 - Fixed TCPNettyServer to use worker thread count, if specified
 
