@@ -258,6 +258,13 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
 	        } else {
 	            result = this.taskHandler.execute(taskContext, command, taskRequestWrapper,decoder);
 	        }
+	        if (result == null) {
+	        	result = new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
+	        }
+        } catch (RuntimeException e) {
+        	transportException = Optional.of(e);
+        	throw e; // rethrow this for it to handled by other layers in the call stack
+        } finally {
         	// signal to the handler to release resources if the command timed out
         	if (this.isResponseTimedOut()) {
         		if(result!= null ) {
@@ -266,13 +273,6 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
         			}
         		}
         	}      	
-	        if (result == null) {
-	        	result = new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
-	        }
-        } catch (RuntimeException e) {
-        	transportException = Optional.of(e);
-        	throw e; // rethrow this for it to handled by other layers in the call stack
-        } finally {
 	        for (ResponseInterceptor<TaskResult> responseInterceptor : this.responseInterceptors) {
 	        	responseInterceptor.process(result, transportException);
 	        }

@@ -94,16 +94,16 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         HttpResponse response = null;
         try {
         	response = this.proxy.doRequest(this.httpRequestWrapper);
+        } catch (RuntimeException e) {
+        	transportException = Optional.of(e);
+        	throw e; // rethrow this for it to handled by other layers in the call stack
+        } finally {
         	// close the response if the command timed out
         	if (this.isResponseTimedOut()) {
         		if( response!= null ) {
         			HttpClientUtils.closeQuietly(response);
         		}
         	}      	
-        } catch (RuntimeException e) {
-        	transportException = Optional.of(e);
-        	throw e; // rethrow this for it to handled by other layers in the call stack
-        } finally {
 	        for (ResponseInterceptor<HttpResponse> responseInterceptor : this.responseInterceptors) {
 	        	responseInterceptor.process(response, transportException);
 	        }
