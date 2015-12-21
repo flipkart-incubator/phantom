@@ -172,6 +172,7 @@ pip-log.txt
 target
 .recommenders
 bin
+.versionsBackup
 .svn/README.md~
 /README.md~
 /CHANGELOG.md~
