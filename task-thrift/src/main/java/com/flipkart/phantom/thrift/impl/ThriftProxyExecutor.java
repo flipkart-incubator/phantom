@@ -106,6 +106,12 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
         Optional<RuntimeException> transportException = Optional.absent();
         try {
         	response = thriftProxy.doRequest(this.clientTransport);
+        	// close the response if the command timed out
+        	if (this.isResponseTimedOut()) {
+        		if( response!= null ) {
+        			response.close();
+        		}
+        	}      	
         }  catch (RuntimeException e) {
         	transportException = Optional.of(e);
         	throw e; // rethrow this for it to handled by other layers in the call stack
