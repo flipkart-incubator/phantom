@@ -19,9 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Decoder;
 import com.flipkart.phantom.task.spi.Executor;
@@ -50,9 +47,6 @@ import com.netflix.hystrix.HystrixThreadPoolProperties;
  */
 @SuppressWarnings("rawtypes")
 public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implements Executor<TaskRequestWrapper<S>, TaskResult> {
-
-    /** Log instance for this class */
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerExecutor.class);
 
     /** TaskResult message constants */
     public static final String NO_RESULT = "The command returned no result";
@@ -221,7 +215,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
     public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
-                               TaskRequestWrapper taskRequestWrapper) {
+                               TaskRequestWrapper<S> taskRequestWrapper) {
         this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper);
     }
 
@@ -235,7 +229,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
     public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
-                               TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
+                               TaskRequestWrapper<S> taskRequestWrapper, Decoder decoder) {
         this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,
                 DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper, decoder);
     }
@@ -264,6 +258,14 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
 	        } else {
 	            result = this.taskHandler.execute(taskContext, command, taskRequestWrapper,decoder);
 	        }
+        	// signal to the handler to release resources if the command timed out
+        	if (this.isResponseTimedOut()) {
+        		if(result!= null ) {
+        			if (HystrixTaskHandler.class.isAssignableFrom(this.taskHandler.getClass())) {
+        				((HystrixTaskHandler)this.taskHandler).releaseResources(result);        			
+        			}
+        		}
+        	}      	
 	        if (result == null) {
 	        	result = new TaskResult<byte[]>(true, TaskHandlerExecutor.NO_RESULT);
 	        }

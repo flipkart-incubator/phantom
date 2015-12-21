@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.utils.HttpClientUtils;
 
 import com.flipkart.phantom.event.ServiceProxyEvent;
 import com.flipkart.phantom.task.spi.Executor;
@@ -93,6 +94,12 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
         HttpResponse response = null;
         try {
         	response = this.proxy.doRequest(this.httpRequestWrapper);
+        	// close the response if the command timed out
+        	if (this.isResponseTimedOut()) {
+        		if( response!= null ) {
+        			HttpClientUtils.closeQuietly(response);
+        		}
+        	}      	
         } catch (RuntimeException e) {
         	transportException = Optional.of(e);
         	throw e; // rethrow this for it to handled by other layers in the call stack

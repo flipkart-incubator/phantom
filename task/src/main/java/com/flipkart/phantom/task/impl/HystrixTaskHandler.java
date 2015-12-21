@@ -89,6 +89,15 @@ public abstract class HystrixTaskHandler extends TaskHandler {
     }
 
     /**
+     * Call to optionally release any resources used to create the specified response. Useful when Hystrix command
+     * timeouts result in the call being aborted. This callback is intended to be used for freeing up underlying connections/resources.  
+     * @param taskResult
+     */
+    public <T> void releaseResources(TaskResult<T> taskResult) {
+    	// do nothing
+    }
+
+    /**
      * Return the ExecutionIsolationStrategy. Thread is the default.
      */
     public ExecutionIsolationStrategy getIsolationStrategy() {
