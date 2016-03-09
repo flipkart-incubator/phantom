@@ -135,7 +135,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * @return response the TaskResult from thrift execution
      * @throws RuntimeException runTimeException
      */
-    public abstract <S> TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String,String> params, S data) throws RuntimeException;
+    public abstract <T, S> TaskResult<T> execute(TaskContext taskContext, String command, Map<String,String> params, S data) throws RuntimeException;
 
     /**
      * This is a over-loaded method that needs to be implemented by sub-classes. The default implementation

@@ -40,19 +40,19 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
      * @see com.flipkart.phantom.task.impl.TaskHandler#execute(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, Object)
      */
     @Override
-    public <S> TaskResult<byte[]> execute(TaskContext taskContext, String command, Map<String, String> params, S data) throws RuntimeException {
+    public <T, S> TaskResult<T> execute(TaskContext taskContext, String command, Map<String, String> params, S data) throws RuntimeException {
 
         float num1 = Float.parseFloat(params.get("num1"));
         float num2 = Float.parseFloat(params.get("num2"));
 
         if (CMD_ADD.equals(command)) {
-            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+            return new TaskResult(true, null, num1+num2);
         } else if (CMD_SUB.equals(command)) {
-            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+            return new TaskResult(true, null, num1-num2);
         } else if (CMD_MUL.equals(command)) {
-            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+            return new TaskResult(true, null, num1*num2);
         } else if (CMD_DIV.equals(command)) {
-            return new TaskResult<byte[]>(true, Float.toString(num1+num2));
+            return new TaskResult(true, null, num1/num2);
         } else {
             return null;
         }
@@ -91,7 +91,7 @@ public class ArithmeticTaskHandler extends HystrixTaskHandler {
      * @see com.flipkart.phantom.task.impl.HystrixTaskHandler#getFallBack(com.flipkart.phantom.task.spi.TaskContext, String, java.util.Map, Object)
      */
     @Override
-    public <S> TaskResult<byte[]> getFallBack(TaskContext taskContext, String command, Map<String, String> params, S data) {
+    public <T, S> TaskResult<T> getFallBack(TaskContext taskContext, String command, Map<String, String> params, S data) {
         return null;
     }
 

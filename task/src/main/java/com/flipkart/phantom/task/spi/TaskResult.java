@@ -155,7 +155,7 @@ public class TaskResult<T> {
     public String getMessage() {
         return message;
     }
-    public Object getData() {
+    public T getData() {
         return data;
     }
     public List<T> getDataArray() {
