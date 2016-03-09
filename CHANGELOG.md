@@ -1,3 +1,7 @@
+## 1.4.4  (Mar 9, 2016)
+- Support generic return type in TaskHandler's execute
+- Bug fix: Fix for closing connection/release resources in case of Hystrix timeouts
+
 ## 1.4.3  (Dec 16, 2015)
 - Included snapshot version fixes
 - Bug fix: Fix for IllegalStateException in ClientRequestInterceptor
