@@ -179,7 +179,7 @@ public class CommandInterpreter {
 					if(object instanceof byte[]) {
 						outputStream.write((byte[]) object);
 					} else {
-						outputStream.write(SerializationUtils.serialize(object));
+						OBJECT_MAPPER.writeValue(outputStream, object);
 					}
 				}
 			}
@@ -196,7 +196,7 @@ public class CommandInterpreter {
 						outputStream.write(byteData);
 					}
 				} else {
-					outputStream.write(SerializationUtils.serialize(data));
+					OBJECT_MAPPER.writeValue(outputStream, data);
 				}
 			}
 		}					
