@@ -1,3 +1,6 @@
+## 2.0.0-SNAPSHOT (May 18, 2016)
+- JSON serialization of TaskResult data in command protocol
+
 ## 1.4.4  (Mar 9, 2016)
 - Support generic return type in TaskHandler's execute
 - Bug fix: Fix for closing connection/release resources in case of Hystrix timeouts
