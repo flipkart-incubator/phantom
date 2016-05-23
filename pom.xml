@@ -52,10 +52,12 @@
     </developers>
 
     <properties>
-        <org.trpr.version>1.3.3</org.trpr.version>
+        <org.trpr.version>2.0.0</org.trpr.version>
         <org.springframework.version>4.2.0.RELEASE</org.springframework.version>
+		<slf4j.version>1.7.6</slf4j.version>
+		<log4j2.version>2.5</log4j2.version>
         <com.netflix.hystrix.version>1.4.0-RC5</com.netflix.hystrix.version>
-        <jdk.version>1.6</jdk.version>
+        <jdk.version>1.8</jdk.version>
         <maven-antrun-plugin.version>1.3</maven-antrun-plugin.version>
         <maven-compiler-plugin.version>2.0.2</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.2</maven-jar-plugin.version>
