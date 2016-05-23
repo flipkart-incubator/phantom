@@ -6,10 +6,14 @@
         <property name="applicationName" value="Phantom Sample TCP Server" />
         <property name="runtimeNature" value="server" />
         <property name="container" ref="containerImpl" />
-        <property name="componentContainerClassName" value="com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer" />
     </bean>
 
     <bean id="containerImpl" class="org.trpr.platform.runtime.impl.container.spring.SpringContainerImpl">
+	    <property name="componentContainers">
+		    <list>
+		        <bean id="proxyComponentContainer" class="com.flipkart.phantom.runtime.impl.spring.ServiceProxyComponentContainer"/>
+		    </list>
+		</property>
     </bean>
 
 </beans>

@@ -55,7 +55,7 @@
     </developers>
 
     <dependencies>
-        <!-- ServiceProxy dependencies -->
+        <!-- Phantom dependencies -->
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>

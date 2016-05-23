@@ -8,7 +8,11 @@
 		<property name="container" ref="containerImpl" />
 	</bean>
 
-	<bean id="containerImpl" class="org.trpr.platform.runtime.impl.container.spring.SpringContainerImpl">
-	</bean>
+    <bean id="containerImpl" class="org.trpr.platform.runtime.impl.container.spring.SpringContainerImpl">
+	    <property name="componentContainers">
+		    <list>
+		    </list>
+		</property>
+    </bean>
  
 </beans>

@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.6.4</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.trpr</groupId>
@@ -109,16 +109,38 @@
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
                 </exclusion>
-                <exclusion>
+                <exclusion> <!-- Remove slf4j-log4j12 as we use slf4j as the facade -->
                     <artifactId>slf4j-log4j12</artifactId>
                     <groupId>org.slf4j</groupId>
                 </exclusion>
+	        	<exclusion> <!-- Remove JCL bridge as it conflicts with slf4j 1.7.6 -->
+		      	  <groupId>org.slf4j</groupId> 
+		          <artifactId>jcl-over-slf4j</artifactId>
+		        </exclusion>
+	        	<exclusion> <!-- Remove old log4j we want to use log4j2 -->
+		      	  <groupId>log4j</groupId> 
+		          <artifactId>log4j</artifactId>
+		        </exclusion>
         	</exclusions>
 		</dependency>
 		<dependency>
 		    <groupId>com.github.kristofa</groupId>
 		    <artifactId>brave-zipkin-spancollector</artifactId>
 		    <version>${brave.version}</version>
+            <exclusions>
+                <exclusion> <!-- Remove slf4j-log4j12 as we use slf4j as the facade -->
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+	        	<exclusion> <!-- Remove JCL bridge as it conflicts with slf4j 1.7.6 -->
+		      	  <groupId>org.slf4j</groupId> 
+		          <artifactId>jcl-over-slf4j</artifactId>
+		        </exclusion>
+	        	<exclusion> <!-- Remove old log4j we want to use log4j2 -->
+		      	  <groupId>log4j</groupId> 
+		          <artifactId>log4j</artifactId>
+		        </exclusion>
+        	</exclusions>
 		</dependency>            				            
 		<!-- Add back the Http client and components dependencies with the correct version -->
         <dependency>
