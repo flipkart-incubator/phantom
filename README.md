@@ -10,6 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 2.0.0             | May 2016      |    Upgrade to Trooper 2.0.0
 | Version 1.4.4             | Mar 2016      |    Bug fixes in Thrift proxy, API interface generalization
 | Version 1.4.3             | Dec 2015      |    Bug fixes in TCPNettyServer, Distributed tracing
 | Version 1.4.2             | Nov 2015      |    Upgrade to Spring 4.x, Http proxy, Task interface

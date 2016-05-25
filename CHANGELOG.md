@@ -1,5 +1,9 @@
-## 2.0.0-SNAPSHOT (May 18, 2016)
+## 2.0.0  (May 25, 2015)
+- Included snapshot version fixes
+
+## 2.0.0-SNAPSHOT (May 23, 2016)
 - JSON serialization of TaskResult data in command protocol
+- Upgrade to Trooper 2.0.0
 
 ## 1.4.4  (Mar 9, 2016)
 - Support generic return type in TaskHandler's execute
