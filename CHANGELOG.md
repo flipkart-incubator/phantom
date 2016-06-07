@@ -1,3 +1,6 @@
+## 2.0.1-SNAPSHOT (Jun 7, 2016)
+- ZipkinSpanCollectorParams failOnSetup is configurable
+
 ## 2.0.0  (May 25, 2015)
 - Included snapshot version fixes
 
