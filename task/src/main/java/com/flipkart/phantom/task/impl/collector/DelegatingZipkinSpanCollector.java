@@ -107,5 +107,6 @@ public class DelegatingZipkinSpanCollector implements SpanCollector,Initializing
 	public void setBatchSize(final int batchSize) {this.zipkinSpanCollectorParams.setBatchSize(batchSize);}
 	public void setNrOfThreads(final int nrOfThreads) {this.zipkinSpanCollectorParams.setNrOfThreads(nrOfThreads);}
 	public void setSocketTimeout(final int socketTimeout) {this.zipkinSpanCollectorParams.setSocketTimeout(socketTimeout);}
+	public void setFailOnSetup(final boolean failOnSetup) {this.zipkinSpanCollectorParams.setFailOnSetup(failOnSetup);}
 
 }
