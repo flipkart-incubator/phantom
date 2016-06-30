@@ -277,7 +277,7 @@ public class ServiceProxyComponentContainer<T extends AbstractHandler> implement
             try {
                 registry.shutdown(taskContext);
             } catch (Exception e) {
-                LOGGER.warn("Error shutting down registry: " + registry.getClass().getName());
+                LOGGER.warn("Error shutting down registry: {}", registry.getClass().getName(), e);
             }
         }
         // finally close the context

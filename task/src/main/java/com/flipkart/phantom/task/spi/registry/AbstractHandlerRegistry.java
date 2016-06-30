@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -125,13 +126,17 @@ public abstract class AbstractHandlerRegistry<T extends AbstractHandler> {
      * @throws Exception
      */
     public void shutdown(TaskContext taskContext) throws Exception {
-        for (String name : this.handlers.keySet()) {
+		Iterator<String> iterator = this.handlers.keySet().iterator();
+		while (iterator.hasNext()) {
+			String name = iterator.next();
             LOGGER.info("Shutting down {}: " + name, this.getHandlerType().getName());
             try {
             	this.handlers.get(name).shutdown(taskContext);
             	this.handlers.get(name).deactivate();
-            	this.unregisterTaskHandler(this.handlers.get(name));
-            } catch (Exception e) {
+				this.traceFilters.remove(name);
+				this.postUnregisterHandler(this.handlers.get(name));
+				iterator.remove();
+			} catch (Exception e) {
                 LOGGER.warn("Failed to shutdown {}: " + name, this.getHandlerType().getName(), e);
             }
         }    	

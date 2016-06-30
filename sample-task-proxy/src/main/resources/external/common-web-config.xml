@@ -44,7 +44,8 @@
         <property name="spanCollector">
             <bean class="com.flipkart.phantom.task.impl.collector.DelegatingZipkinSpanCollector">
 				<property name="zipkinCollectorHost" value="localhost"/>
-      			<property name="zipkinCollectorPort" value="9410"/>                
+      			<property name="zipkinCollectorPort" value="9410"/>
+                <property name="failOnSetup" value="false"/>
             </bean>
         </property>
         <property name="subscriptions">
