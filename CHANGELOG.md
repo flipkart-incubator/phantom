@@ -1,3 +1,6 @@
+## 2.0.1  (Jul 1, 2015)
+- Included snapshot version fixes
+
 ## 2.0.1-SNAPSHOT (Jun 30, 2016)
 - ZipkinSpanCollectorParams failOnSetup is configurable
 - Bug fix: Fix for ConcurrentModificationException during shutdown
