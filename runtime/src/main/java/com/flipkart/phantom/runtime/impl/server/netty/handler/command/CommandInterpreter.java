@@ -264,7 +264,7 @@ public class CommandInterpreter {
 		int fragmentIndex = this.getNextCommandFragmentPosition(readBytes, fragmentStart, commandEndIndex, delimiter);
 		readCommand = new ProxyCommand(new String(readBytes, fragmentStart, fragmentIndex-fragmentStart));
 
-		Map<String,String> commandParams = new HashMap<String, String>();
+		Map<String, Object> commandParams = new HashMap<>();
 		// gather params
 		while(fragmentIndex < commandEndIndex) {
 			// skip initial delims
@@ -355,7 +355,7 @@ public class CommandInterpreter {
 		private String readFailureDescription;
 
 		/** The command parameters*/
-		private Map<String, String> commandParams = new HashMap<String, String>();
+		private Map<String, Object> commandParams = new HashMap<>();
 
 		/** The command data*/
 		private byte[] commandData;
@@ -402,10 +402,10 @@ public class CommandInterpreter {
 		public String getReadFailureDescription() {
 			return readFailureDescription;
 		}
-		public Map<String, String> getCommandParams() {
+		public Map<String, Object> getCommandParams() {
 			return commandParams;
 		}
-		public void setCommandParams(Map<String, String> commandParams) {
+		public void setCommandParams(Map<String, Object> commandParams) {
 			this.commandParams = commandParams;
 		}
 		public byte[] getCommandData() {

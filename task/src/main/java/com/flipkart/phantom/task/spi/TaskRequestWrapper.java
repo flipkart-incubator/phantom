@@ -36,7 +36,7 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
     private S data;
 
     /** Map of parameters */
-    private Map<String,String> params;
+    private Map<String, Object> params;
     
     /** The command name being executed */
     private String commandName;
@@ -80,10 +80,10 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
     public void setData(S data){
         this.data = data;
     }
-    public Map<String, String> getParams(){
+    public Map<String, Object> getParams(){
         return params;
     }
-    public void setParams(Map<String, String> params){
+    public void setParams(Map<String, Object> params){
         this.params = params;
     }
 	public String getCommandName() {

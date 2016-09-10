@@ -118,7 +118,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
                     LOGGER.error("Fatal error. commandName not specified in initializationCommands for TaskHandler: " + this.getName());
                     throw new UnsupportedOperationException("Fatal error. commandName not specified in initializationCommands of TaskHandler: "+this.getName());
                 }
-                TaskResult result = this.execute(taskContext, commandName, new HashMap<String, String>(initParam), null);
+                TaskResult result = this.execute(taskContext, commandName, new HashMap<>(initParam), null);
                 if (result != null && !result.isSuccess()) {
                     throw new PlatformException("Initialization command: "+commandName+" failed for TaskHandler: "+this.getName()+" The params were: "+initParam);
                 }
@@ -135,7 +135,7 @@ public abstract class TaskHandler extends AbstractHandler implements DisposableB
      * @return response the TaskResult from thrift execution
      * @throws RuntimeException runTimeException
      */
-    public abstract <T, S> TaskResult<T> execute(TaskContext taskContext, String command, Map<String,String> params, S data) throws RuntimeException;
+    public abstract <T, S> TaskResult<T> execute(TaskContext taskContext, String command, Map<String, Object> params, S data) throws RuntimeException;
 
     /**
      * This is a over-loaded method that needs to be implemented by sub-classes. The default implementation

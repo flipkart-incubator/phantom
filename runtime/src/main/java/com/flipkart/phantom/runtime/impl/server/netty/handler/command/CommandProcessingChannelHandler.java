@@ -151,7 +151,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             CommandInterpreter commandInterpreter = new CommandInterpreter();
             CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent) event);
             LOGGER.debug("Read Command : " + readCommand);
-            String pool = readCommand.getCommandParams().get("pool");
+            String pool = readCommand.getCommandParams().get("pool").toString();
             TaskHandlerExecutor executor;
 
             // Prepare the request Wrapper
@@ -195,7 +195,7 @@ public class CommandProcessingChannelHandler extends SimpleChannelUpstreamHandle
             	serverRequestInterceptor.process(result, transportError);
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
-                    final String requestID = readCommand.getCommandParams().get("requestID");
+                    final String requestID = readCommand.getCommandParams().get("requestID").toString();
                     ServiceProxyEvent.Builder eventBuilder;
                     if (executor == null) {
                         eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());

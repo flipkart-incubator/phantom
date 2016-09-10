@@ -52,7 +52,7 @@ public interface TaskContext {
      * @return a TaskResult instance with the execution outcome
      * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
      */
-	public <S> TaskResult executeCommand(String commandName, S data, Map<String,String> params) throws UnsupportedOperationException;
+	public <S> TaskResult executeCommand(String commandName, S data, Map<String,Object> params) throws UnsupportedOperationException;
 
     /**
      * Executes a task identified by the specified command name. This command executes synchronously.
@@ -77,7 +77,7 @@ public interface TaskContext {
      * @return a TaskResult instance with the execution outcome
      * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
      */
-    public <T, S> TaskResult<T> executeCommand(String commandName, S data, Map<String,String> params, Decoder<T> decoder) throws UnsupportedOperationException;
+    public <T, S> TaskResult<T> executeCommand(String commandName, S data, Map<String, Object> params, Decoder<T> decoder) throws UnsupportedOperationException;
 
     /**
      * Executes a task asynchronously identified by the specified command name.
@@ -90,13 +90,13 @@ public interface TaskContext {
      * @return a TaskResult instance with the execution outcome
      * @throws UnsupportedOperationException in case none of the registered TaskHandler instances support the specified command
      */
-    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String,String> params, Decoder decoder) throws UnsupportedOperationException;
+    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String, Object> params, Decoder decoder) throws UnsupportedOperationException;
 
     /**
      * Executes a command asynchronously and returns a {@link Future} to get the {@link TaskResult} from
      * @see TaskContext#executeCommand(String, java.lang.Object, java.util.Map)
      */
-    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String, String> params) throws UnsupportedOperationException;
+    public <S> Future<TaskResult> executeAsyncCommand(String commandName, S data, Map<String, Object> params) throws UnsupportedOperationException;
 
     /** Gets the ObjectMapper instance for result serialization to JSON*/
     public ObjectMapper getObjectMapper();
