@@ -283,7 +283,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 CommandInterpreter commandInterpreter = new CommandInterpreter();
                 readCommand = commandInterpreter.readCommand(client.getInputStream());
                 LOGGER.debug("Read Command : " + readCommand);
-                String pool = readCommand.getCommandParams().get("pool").toString();
+                String pool = (String) readCommand.getCommandParams().get("pool");
 
                 // Prepare the request Wrapper
                 TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
@@ -332,9 +332,9 @@ public class UDSOIOServer extends AbstractNetworkServer {
                     } else {
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     }
-                    eventBuilder.withRequestId(params.get("requestID").toString()).withRequestReceiveTime(receiveTime);
+                    eventBuilder.withRequestId((String) params.get("requestID")).withRequestReceiveTime(receiveTime);
                     if(params.containsKey("requestSentTime")) {
-                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime").toString()));
+                        eventBuilder.withRequestSentTime(Long.valueOf((String) params.get("requestSentTime")));
                     }
                     eventProducer.publishEvent(eventBuilder.build());
                 } else {
