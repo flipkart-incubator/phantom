@@ -74,7 +74,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
     protected String command;
 
     /** The parameters which are utilized by the task for execution */
-    protected Map<String,String> params;
+    protected Map<String, Object> params;
 
     /** Data which is utilized by the task for execution */
     protected S data;

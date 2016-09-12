@@ -283,7 +283,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
                 CommandInterpreter commandInterpreter = new CommandInterpreter();
                 readCommand = commandInterpreter.readCommand(client.getInputStream());
                 LOGGER.debug("Read Command : " + readCommand);
-                String pool = readCommand.getCommandParams().get("pool");
+                String pool = (String) readCommand.getCommandParams().get("pool");
 
                 // Prepare the request Wrapper
                 TaskRequestWrapper<byte[]> taskRequestWrapper = new TaskRequestWrapper<byte[]>();
@@ -325,16 +325,16 @@ public class UDSOIOServer extends AbstractNetworkServer {
             	}
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
-                    final Map<String, String> params = readCommand.getCommandParams();
+                    final Map<String, Object> params = readCommand.getCommandParams();
                     ServiceProxyEvent.Builder eventBuilder;
                     if(executor==null) {
                         eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), COMMAND_HANDLER).withEventSource(getClass().getName());
                     } else {
                         eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
                     }
-                    eventBuilder.withRequestId(params.get("requestID")).withRequestReceiveTime(receiveTime);
+                    eventBuilder.withRequestId((String) params.get("requestID")).withRequestReceiveTime(receiveTime);
                     if(params.containsKey("requestSentTime")) {
-                        eventBuilder.withRequestSentTime(Long.valueOf(params.get("requestSentTime")));
+                        eventBuilder.withRequestSentTime(Long.valueOf((String) params.get("requestSentTime")));
                     }
                     eventProducer.publishEvent(eventBuilder.build());
                 } else {
@@ -353,7 +353,7 @@ public class UDSOIOServer extends AbstractNetworkServer {
 
     /**
      * Initializes server tracing for the specified request
-     * @param executorHttpRequest the Http request 
+     * @param executorRequest the Http request
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<TaskRequestWrapper, TaskResult> initializeServerTracing(TaskRequestWrapper executorRequest) {

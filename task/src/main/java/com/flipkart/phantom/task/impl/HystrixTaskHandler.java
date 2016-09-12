@@ -72,7 +72,7 @@ public abstract class HystrixTaskHandler extends TaskHandler {
      * @param data extra data if any
      * @return response
      */
-    public abstract <T, S> TaskResult<T> getFallBack(TaskContext taskContext, String command, Map<String,String> params, S data);
+    public abstract <T, S> TaskResult<T> getFallBack(TaskContext taskContext, String command, Map<String, Object> params, S data);
 
     /**
      * Returns null. Sub-Classes should override it, if they need fallback functionality.

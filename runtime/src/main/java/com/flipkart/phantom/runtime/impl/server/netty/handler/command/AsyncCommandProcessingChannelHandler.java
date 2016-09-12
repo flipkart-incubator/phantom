@@ -148,7 +148,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             CommandInterpreter commandInterpreter = new CommandInterpreter();
             CommandInterpreter.ProxyCommand readCommand = commandInterpreter.readCommand((MessageEvent) event);
             LOGGER.debug("Read Command : " + readCommand);
-            String pool = readCommand.getCommandParams().get("pool");
+            String pool = (String) readCommand.getCommandParams().get("pool");
             String commandName = readCommand.getCommand();
             String poolName;
             if (pool != null) {
@@ -184,7 +184,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
             	serverRequestInterceptor.process(new TaskResult(true, TaskHandlerExecutor.ASYNC_QUEUED), transportError);
                 if (eventProducer != null) {
                     // Publishes event both in case of success and failure.
-                    final String requestID = readCommand.getCommandParams().get("requestID");
+                    final String requestID = (String) readCommand.getCommandParams().get("requestID");
                     ServiceProxyEvent.Builder eventBuilder;
                     if (executor == null) {
                         eventBuilder = new ServiceProxyEvent.Builder(readCommand.getCommand(), ASYNC_COMMAND_HANDLER).withEventSource(getClass().getName());
@@ -212,7 +212,7 @@ public class AsyncCommandProcessingChannelHandler extends SimpleChannelUpstreamH
 
     /**
      * Initializes server tracing for the specified request
-     * @param executorHttpRequest the Http request 
+     * @param executorRequest the Http request
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<TaskRequestWrapper, TaskResult> initializeServerTracing(TaskRequestWrapper executorRequest) {
