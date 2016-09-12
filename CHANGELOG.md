@@ -1,3 +1,6 @@
+## 3.0.0-SNAPSHOT (Sep 13, 2016)
+- Generic params in TaskHandler's execute
+
 ## 2.0.1  (Jul 1, 2015)
 - Included snapshot version fixes
 
