@@ -38,6 +38,9 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
     /** Map of parameters */
     private Map<String, Object> params;
     
+    /** All header names and values of this task request.*/
+    private List<Map.Entry<String, String>> headers;
+    
     /** The command name being executed */
     private String commandName;
     
@@ -58,25 +61,27 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
     }    
     
     /**
-     * Abstract method implementation. Ignores the headers as Command protocol does not support passing headers
+     * Abstract method implementation. Stores the headers in a local variable for use by respective handler, if the transport
+     * can support it.
      * @see com.flipkart.phantom.task.spi.RequestWrapper#setHeaders(java.util.List)
      */
     public  void setHeaders(List<Map.Entry<String, String>> headers) {
-    	// no op as we dont have a way to define headers in the Command protocol
+        this.headers = headers;
     }
 
     /**
-     * Abstract method implementation. Returns an absent Optional as headers is not supported by the Command protocol
+     * Abstract method implementation. Returns the stored headers, if any that has been set.
      * @see com.flipkart.phantom.task.spi.RequestWrapper#getHeaders()
      */
     public Optional<List<Map.Entry<String, String>>> getHeaders() {
-        return Optional.absent();
+        return Optional.of(headers);
     }
     
     /**Start Getter/Setter methods */
     public S getData(){
         return data;
     }
+    
     public void setData(S data){
         this.data = data;
     }
