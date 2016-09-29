@@ -100,12 +100,17 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	}
 	
 	/**
-	 * Gets a span name from the request. This implementation returns that it is absent. Subtypes of this class may return appropriate implementations,
-	 * if relevant
+	 * Gets a span name from the request. This implementation returns the span name from request headers, if it exists.
 	 * @return an optional span name from the request
 	 */
     protected Optional<String> getSpanNameFromRequest(T request) {
         Optional<String> spanName = Optional.absent();
+        for (Map.Entry<String, String> entry : request.getHeaders().get()) {
+        	if (entry.getKey().equalsIgnoreCase(BraveHttpHeaders.SpanName.getName())) {
+        		spanName = Optional.of(entry.getValue());
+        		break;
+        	}
+        }
         return spanName;
     }	
 	

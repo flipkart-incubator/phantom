@@ -18,7 +18,6 @@ package com.flipkart.phantom.http.impl;
 
 import org.apache.http.HttpResponse;
 
-import com.flipkart.phantom.http.impl.interceptor.HttpClientRequestInterceptor;
 import com.flipkart.phantom.http.impl.interceptor.HttpClientResponseInterceptor;
 import com.flipkart.phantom.task.impl.interceptor.ClientRequestInterceptor;
 import com.flipkart.phantom.task.impl.repository.AbstractExecutorRepository;
@@ -53,7 +52,7 @@ public class HttpProxyExecutorRepository extends AbstractExecutorRepository<Http
      * Helper method to wrap the Executor with request and response interceptors 
      */
     private Executor<HttpRequestWrapper,HttpResponse> wrapExecutorWithInterceptors(Executor<HttpRequestWrapper,HttpResponse> executor, HttpProxy proxy) {
-        ClientRequestInterceptor<HttpRequestWrapper> tracingRequestInterceptor = new HttpClientRequestInterceptor<HttpRequestWrapper>();
+        ClientRequestInterceptor<HttpRequestWrapper> tracingRequestInterceptor = new ClientRequestInterceptor<HttpRequestWrapper>();
         HttpClientResponseInterceptor<HttpResponse> tracingResponseInterceptor = new HttpClientResponseInterceptor<HttpResponse>();
         return this.wrapExecutorWithInterceptors(executor, proxy, tracingRequestInterceptor, tracingResponseInterceptor);
     }
