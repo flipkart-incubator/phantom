@@ -105,12 +105,14 @@ public class ClientRequestInterceptor<T extends RequestWrapper> implements Reque
 	 */
     protected Optional<String> getSpanNameFromRequest(T request) {
         Optional<String> spanName = Optional.absent();
-        for (Map.Entry<String, String> entry : request.getHeaders().get()) {
-        	if (entry.getKey().equalsIgnoreCase(BraveHttpHeaders.SpanName.getName())) {
-        		spanName = Optional.of(entry.getValue());
-        		break;
-        	}
-        }
+		if (request.getHeaders().isPresent()) {
+			for (Map.Entry<String, String> entry : request.getHeaders().get()) {
+				if (entry.getKey().equalsIgnoreCase(BraveHttpHeaders.SpanName.getName())) {
+					spanName = Optional.of(entry.getValue());
+					break;
+				}
+			}
+		}
         return spanName;
     }	
 	

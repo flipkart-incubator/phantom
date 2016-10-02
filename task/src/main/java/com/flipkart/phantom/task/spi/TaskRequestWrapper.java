@@ -39,7 +39,7 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
     private Map<String, Object> params;
     
     /** All header names and values of this task request.*/
-    private List<Map.Entry<String, String>> headers;
+    private Optional<List<Map.Entry<String, String>>> headers = Optional.absent();
     
     /** The command name being executed */
     private String commandName;
@@ -66,7 +66,7 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
      * @see com.flipkart.phantom.task.spi.RequestWrapper#setHeaders(java.util.List)
      */
     public  void setHeaders(List<Map.Entry<String, String>> headers) {
-        this.headers = headers;
+        this.headers = Optional.of(headers);
     }
 
     /**
@@ -74,7 +74,7 @@ public class TaskRequestWrapper<S> extends RequestWrapper {
      * @see com.flipkart.phantom.task.spi.RequestWrapper#getHeaders()
      */
     public Optional<List<Map.Entry<String, String>>> getHeaders() {
-        return Optional.of(headers);
+        return headers;
     }
     
     /**Start Getter/Setter methods */

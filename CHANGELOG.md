@@ -1,5 +1,6 @@
-## 3.0.0-SNAPSHOT (Sep 12, 2016)
+## 3.0.0-SNAPSHOT (Oct 2, 2016)
 - Generic params in TaskHandler's execute
+- Zipkin headers ingestion for TaskHandlers
 
 ## 2.0.1  (Jul 1, 2015)
 - Included snapshot version fixes
