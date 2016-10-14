@@ -1,6 +1,7 @@
-## 3.0.0-SNAPSHOT (Oct 2, 2016)
+## 3.0.0-SNAPSHOT (Oct 14, 2016)
 - Generic params in TaskHandler's execute
 - Zipkin headers ingestion for TaskHandlers
+- Upgrade to Trooper 2.0.1 to remove a bottleneck in event publishing
 
 ## 2.0.1  (Jul 1, 2015)
 - Included snapshot version fixes
