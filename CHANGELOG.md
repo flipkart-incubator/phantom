@@ -1,3 +1,6 @@
+## 3.0.1  (Oct 18, 2015)
+- Using fasterxml jackson consistently
+
 ## 3.0.0  (Oct 14, 2015)
 - Included snapshot version fixes
 - Upgrade to Trooper 2.0.1 to remove a bottleneck in event publishing

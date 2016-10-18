@@ -10,11 +10,11 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 3.0.0             | May 2016      |    Generic params in TaskHandler's execute, zipkin fixes, Upgrade to Trooper 2.0.1
+| Version 3.0.1             | Oct 2016      |    Using fasterxml jackson everywhere
+| Version 3.0.0             | Oct 2016      |    Generic params in TaskHandler's execute, zipkin fixes, Upgrade to Trooper 2.0.1
 | Version 2.0.1             | Jul 2016      |    Bug fix in shutdown sequence, zipkin span collector
 | Version 2.0.0             | May 2016      |    Upgrade to Trooper 2.0.0
 | Version 1.4.4             | Mar 2016      |    Bug fixes in Thrift proxy, API interface generalization
-| Version 1.4.3             | Dec 2015      |    Bug fixes in TCPNettyServer, Distributed tracing
 
 ## Changelog
 
