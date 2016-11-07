@@ -21,6 +21,8 @@ import com.flipkart.phantom.task.spi.interceptor.RequestInterceptor;
 import com.flipkart.phantom.task.spi.interceptor.ResponseInterceptor;
 import com.google.common.base.Optional;
 
+import rx.Observable;
+
 /**
  * <code>Executor</code> is an interface which executes any task with request of type RequestWrapper and returns the result of Type S.
  * This interface provides a way of decoupling task submission from the mechanics of how each task will be run.
@@ -42,7 +44,9 @@ public interface Executor<T extends RequestWrapper,S> {
 	 */
     public S execute();
 
-    /**
+    Observable<S> observe();
+
+  /**
      * Gets the ServiceProxyEvent builder implementation
      * @return the ServiceProxyEvent builder implementation
      */
