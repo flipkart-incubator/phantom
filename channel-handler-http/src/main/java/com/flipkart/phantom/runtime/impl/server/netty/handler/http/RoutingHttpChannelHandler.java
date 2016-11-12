@@ -219,7 +219,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
       proxy = this.proxyMap.get(RoutingHttpChannelHandler.ALL_ROUTES);
             LOGGER.info("Routing key for : " + request.getUri() + " returned null. Using default proxy instead.");
     }
-        Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
+
+    Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
 
     Observable<HttpResponse> observableResponse;
     try {
@@ -240,9 +241,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         (response) -> {
           try {
             writeCommandExecutionResponse(ctx, messageEvent, request, response);
-            Optional<RuntimeException> newTransportError = Optional.absent();
             informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
-                            newTransportError, response);
+                            Optional.absent(), response);
           } catch (Exception e) {
             LOGGER.error("Error while writing response", e);
             throw  new RuntimeException(
@@ -255,14 +255,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
               new RuntimeException(
                   "Error in executing HTTP request:" + finalProxy + " URI:" + request.getUri(),
                   exception);
-          Optional<RuntimeException> newTransportError = Optional.absent();
-          newTransportError = Optional.of(runtimeException);
           informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
-                          newTransportError, null);
+                          Optional.of(runtimeException), null);
 
-          messageEvent.getChannel()
-              .write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN))
-              .addListener(ChannelFutureListener.CLOSE);
+          messageEvent.getChannel().close();
         });
   }
 
