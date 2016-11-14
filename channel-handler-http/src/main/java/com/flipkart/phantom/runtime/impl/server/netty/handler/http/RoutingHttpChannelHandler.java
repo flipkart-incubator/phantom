@@ -82,7 +82,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
     /** Logger for this class*/
     private static final Logger LOGGER = LoggerFactory.getLogger(RoutingHttpChannelHandler.class);
-
+    
     /** The default name of the server/service this channel handler is serving*/
     private static final String DEFAULT_SERVICE_NAME = "Http Proxy";
 
@@ -92,7 +92,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     /** Set of Http headers that we want to remove */
     public static final Set<String> REMOVE_HEADERS = new HashSet<String>();
     static {
-    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TRANSFER_ENCODING);
+    	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TRANSFER_ENCODING);    	
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.CONN_DIRECTIVE);
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add(HTTP.TARGET_HOST);
     	RoutingHttpChannelHandler.REMOVE_HEADERS.add("Proxy-Authenticate");
@@ -103,14 +103,14 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
     /** Event Type for publishing all events which are generated here */
     private final static String HTTP_HANDLER = "HTTP_HANDLER";
-
+    
     /** The default value for tracing frequency. This value indicates that tracing if OFF*/
-    private static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);
-
+    private static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);    
+    
 	/** Default host name and port where this ChannelHandler is available */
 	public static final String DEFAULT_HOST = "localhost"; // unresolved local host name
 	public static final int DEFAULT_PORT = -1; // no valid port really
-
+    
     /** The local host name value*/
     private static String hostName = DEFAULT_HOST;
     static {
@@ -120,10 +120,10 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 			LOGGER.warn("Unable to resolve local host name. Will use default host name : " + DEFAULT_HOST);
 		}
     }
-
+    
     /** The name for the service/server*/
     private String serviceName = DEFAULT_SERVICE_NAME;
-
+    
     /** The port where the server for this handler is listening on*/
     private int hostPort;
 
@@ -141,13 +141,13 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
 	/** The publisher used to broadcast events to Service Proxy Subscribers */
 	private ServiceProxyEventProducer eventProducer;
-
+	
     /** The request tracing frequency for this channel handler*/
-    private TraceFilter traceFilter = NO_TRACING;
-
+    private TraceFilter traceFilter = NO_TRACING;	
+    
     /** The EventDispatchingSpanCollector instance used in tracing requests*/
-    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
-
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;    
+	
     /**
      * Interface method implementation. Checks if all mandatory properties have been set
      * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -156,7 +156,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         Assert.notNull(this.defaultProxy, "The 'defaultProxy' may not be null");
         // add the default proxy for all routes i.e. default
         this.proxyMap.put(RoutingHttpChannelHandler.ALL_ROUTES, defaultProxy);
-        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");
+        Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");        
     }
 
     /**
@@ -169,7 +169,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     		this.hostPort = ((InetSocketAddress)event.getValue()).getPort();
     	}
     }
-
+        
     /**
      * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelOpen(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)
@@ -186,7 +186,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent messageEvent) throws Exception {
         long receiveTime = System.currentTimeMillis();
         HttpRequest request = (HttpRequest) messageEvent.getMessage();
-
+        
         if (LOGGER.isDebugEnabled()) {
 	        LOGGER.debug("Http Request is: " + request.getMethod() + " " + request.getUri());
 	        LOGGER.debug("Http Headers : " + request.getHeaders().toString());
@@ -212,7 +212,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
 
         // Create and process a Server request interceptor. This will initialize the server tracing
         ServerRequestInterceptor<HttpRequestWrapper, HttpResponse> serverRequestInterceptor = this.initializeServerTracing(executorHttpRequest);
-
+        
         // executor
         String proxy = this.proxyMap.get(this.getRoutingKey(request));
         if (proxy == null) {
@@ -304,40 +304,40 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     /**
      * Helper method to remove or otherwise modify Http request headers that we dont want to propagate. This implementation removes all headers specified
      * under {@link RoutingHttpChannelHandler#REMOVE_HEADERS}. Sub-types may override this method to change this behavior
-     * @param request the HttpRequest that needs to be processed for remove headers
+     * @param request the HttpRequest that needs to be processed for remove headers 
      */
     protected void processRequestHeaders(HttpRequest request) {
         for (String header : RoutingHttpChannelHandler.REMOVE_HEADERS) {
         	request.removeHeader(header);
-        }
+        }    	
     }
-
+    
     /**
      * Initializes server tracing for the specified request
-     * @param executorHttpRequest the Http request
+     * @param executorHttpRequest the Http request 
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<HttpRequestWrapper, HttpResponse> initializeServerTracing(HttpRequestWrapper executorRequest) {
         ServerRequestInterceptor<HttpRequestWrapper, HttpResponse> serverRequestInterceptor = new ServerRequestInterceptor<HttpRequestWrapper, HttpResponse>();
-    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);
+    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
     	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
     	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
         serverRequestInterceptor.setServerTracer(serverTracer);
         serverRequestInterceptor.setServiceHost(RoutingHttpChannelHandler.hostName);
         serverRequestInterceptor.setServicePort(this.hostPort);
-        serverRequestInterceptor.setServiceName(this.serviceName);
+        serverRequestInterceptor.setServiceName(this.serviceName);   
         // now process the request to initialize tracing
-        serverRequestInterceptor.process(executorRequest);
+        serverRequestInterceptor.process(executorRequest); 
 		// set the server request context on the received request
     	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
     	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setCurrentServerSpan(serverSpan);
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
     	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         return serverRequestInterceptor;
     }
 
     /**
-     * Writes the specified TaskResult data to the channel output. Only the raw output data is written and rest of the TaskResult fields are ignored
+     * Writes the specified TaskResult data to the channel output. Only the raw output data is written and rest of the TaskResult fields are ignored 
      * @param ctx the ChannelHandlerContext
      * @param event the ChannelEvent
      * @throws Exception in case of any errors
@@ -356,19 +356,19 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
                 httpResponse.setHeader(header.getName(),header.getValue());
             }
         }
-
+                
         // write entity
         HttpEntity responseEntity = response.getEntity();
         byte[] responseData = EntityUtils.toByteArray(responseEntity);
-
+        
         // add the content length response header since we send the complete response body
-        httpResponse.setHeader(HTTP.CONTENT_LEN,responseData.length);
+        httpResponse.setHeader(HTTP.CONTENT_LEN,responseData.length);        
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Http Response status : " + response.getStatusLine().toString());
         	LOGGER.debug("Http Response : " + new String(responseData));
         }
-
+        
         httpResponse.setContent(ChannelBuffers.copiedBuffer(responseData));
         // write response
         boolean keepAlive = HttpHeaders.isKeepAlive(request);
@@ -377,7 +377,7 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         	channelFuture.addListener(ChannelFutureListener.CLOSE);
         }
     }
-
+    
     /** Start Getter/Setter methods */
     public ChannelGroup getDefaultChannelGroup() {
         return this.defaultChannelGroup;

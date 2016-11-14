@@ -76,7 +76,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
 
     /** The default name of the server/service this channel handler is serving*/
     private static final String DEFAULT_SERVICE_NAME = "Thrift Proxy";
-
+    
     /** Event Type for publishing all events which are generated here */
     private final static String THRIFT_HANDLER = "THRIFT_HANDLER";
 
@@ -84,12 +84,12 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
     private static final int DEFAULT_RESPONSE_SIZE = 4096;
 
     /** The default value for tracing frequency. This value indicates that tracing if OFF*/
-    private static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);
-
+    private static final TraceFilter NO_TRACING = new FixedSampleRateTraceFilter(-1);    
+    
 	/** Default host name and port where this ChannelHandler is available */
 	public static final String DEFAULT_HOST = "localhost"; // unresolved local host name
 	public static final int DEFAULT_PORT = -1; // no valid port really
-
+    
     /** The local host name value*/
     private static String hostName = DEFAULT_HOST;
     static {
@@ -99,16 +99,16 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
 			LOGGER.warn("Unable to resolve local host name. Will use default host name : " + DEFAULT_HOST);
 		}
     }
-
+    
     /** The name for the service/server*/
     private String serviceName = DEFAULT_SERVICE_NAME;
-
+    
     /** The port where the server for this handler is listening on*/
     private int hostPort;
-
+    
 	/** The default channel group*/
 	private ChannelGroup defaultChannelGroup;
-
+    
     /** The Thrift TaskRepository to lookup ThriftServiceProxyClient from */
     private ExecutorRepository<ThriftRequestWrapper, TTransport, ThriftProxy> repository;
 
@@ -125,10 +125,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
 	private ServiceProxyEventProducer eventProducer;
 
     /** The request tracing frequency for this channel handler*/
-    private TraceFilter traceFilter = NO_TRACING;
-
+    private TraceFilter traceFilter = NO_TRACING;	
+    
     /** The EventDispatchingSpanCollector instance used in tracing requests*/
-    private EventDispatchingSpanCollector eventDispatchingSpanCollector;
+    private EventDispatchingSpanCollector eventDispatchingSpanCollector;    
 
     /**
      * Interface method implementation. Checks if all mandatory properties have been set
@@ -141,7 +141,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
         Assert.notNull(this.eventProducer, "The 'eventProducer' may not be null");
         Assert.notNull(this.eventDispatchingSpanCollector, "The 'eventDispatchingSpanCollector' may not be null");
     }
-
+    
     /**
      * Overriden superclass method. Stores the host port that this handler's server is listening on
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelBound(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)
@@ -152,7 +152,7 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
     		this.hostPort = ((InetSocketAddress)event.getValue()).getPort();
     	}
     }
-
+    
     /**
      * Overriden superclass method. Adds the newly created Channel to the default channel group and calls the super class {@link #channelOpen(ChannelHandlerContext, ChannelStateEvent)} method
      * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#channelOpen(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ChannelStateEvent)
@@ -258,41 +258,41 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
         event.getChannel().close();
         super.exceptionCaught(ctx, event);
     }
-
+    
     /**
      * Initializes server tracing for the specified request
-     * @param executorHttpRequest the Http request
+     * @param executorHttpRequest the Http request 
      * @return the initialized ServerRequestInterceptor
      */
     private ServerRequestInterceptor<ThriftRequestWrapper, TTransport> initializeServerTracing(ThriftRequestWrapper executorRequest) {
         ServerRequestInterceptor<ThriftRequestWrapper, TTransport> serverRequestInterceptor = new ServerRequestInterceptor<ThriftRequestWrapper, TTransport>();
-    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);
+    	List<TraceFilter> traceFilters = Arrays.<TraceFilter>asList(this.traceFilter);    
     	ServerTracer serverTracer = Brave.getServerTracer(this.eventDispatchingSpanCollector, traceFilters);
     	serverRequestInterceptor.setEndPointSubmitter(Brave.getEndPointSubmitter());
         serverRequestInterceptor.setServerTracer(serverTracer);
         serverRequestInterceptor.setServiceHost(ThriftChannelHandler.hostName);
         serverRequestInterceptor.setServicePort(this.hostPort);
-        serverRequestInterceptor.setServiceName(this.serviceName);
+        serverRequestInterceptor.setServiceName(this.serviceName);   
         // now process the request to initialize tracing
-        serverRequestInterceptor.process(executorRequest);
+        serverRequestInterceptor.process(executorRequest); 
 		// set the server request context on the received request
     	ServerSpan serverSpan = Brave.getServerSpanThreadBinder().getCurrentServerSpan();
     	RequestContext serverRequestContext = new RequestContext();
-    	serverRequestContext.setCurrentServerSpan(serverSpan);
+    	serverRequestContext.setCurrentServerSpan(serverSpan);	
     	executorRequest.setRequestContext(Optional.of(serverRequestContext));
         return serverRequestInterceptor;
     }
-
+    
     /** Start Getter/Setter methods*/
 	public ChannelGroup getDefaultChannelGroup() {
 		return this.defaultChannelGroup;
 	}
     public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
-	}
+	}	
 	public void setDefaultChannelGroup(ChannelGroup defaultChannelGroup) {
 		this.defaultChannelGroup = defaultChannelGroup;
-	}
+	}    
     public ExecutorRepository<ThriftRequestWrapper,TTransport, ThriftProxy> getRepository() {
         return this.repository;
     }
@@ -319,6 +319,6 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
 	}
 	public void setEventDispatchingSpanCollector(EventDispatchingSpanCollector eventDispatchingSpanCollector) {
 		this.eventDispatchingSpanCollector = eventDispatchingSpanCollector;
-	}
+	}    
     /** End Getter/Setter methods */
 }
