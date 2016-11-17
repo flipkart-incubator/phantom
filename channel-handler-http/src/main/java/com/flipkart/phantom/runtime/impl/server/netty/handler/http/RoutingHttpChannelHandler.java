@@ -69,6 +69,8 @@ import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 
+import rx.Observable;
+
 /**
  * <code>RoutingHttpChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that routes Http requests to one or more {@link HttpProxy} instances.
  *
@@ -216,38 +218,74 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
         if (proxy == null) {
             proxy = this.proxyMap.get(RoutingHttpChannelHandler.ALL_ROUTES);
             LOGGER.info("Routing key for : " + request.getUri() + " returned null. Using default proxy instead.");
-        }
-        Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
-        
-        // execute
-        HttpResponse response = null;
-        Optional<RuntimeException> transportError = Optional.absent();
-        try {
-            response = (HttpResponse) executor.execute();
-        } catch (Exception e) {
-        	RuntimeException runtimeException = new RuntimeException("Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
-        	transportError = Optional.of(runtimeException);
-            throw runtimeException;
-        } finally {
-        	// finally inform the server request tracer
-        	serverRequestInterceptor.process(response, transportError);
-            if (eventProducer != null) {
-                // Publishes event both in case of success and failure.
-                ServiceProxyEvent.Builder eventBuilder;
-                if (executor == null) {
-                    eventBuilder = new ServiceProxyEvent.Builder(request.getUri(), HTTP_HANDLER).withEventSource(getClass().getName());
-                } else {
-                    eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
-                }
-                eventBuilder.withRequestReceiveTime(receiveTime);
-                eventProducer.publishEvent(eventBuilder.build());
-            } else {
-                LOGGER.debug("eventProducer not set, not publishing event");
-            }
-        }
-        // send response
-        writeCommandExecutionResponse(ctx, messageEvent, request, response);
     }
+
+    Executor<HttpRequestWrapper,HttpResponse> executor = this.repository.getExecutor(proxy, proxy, executorHttpRequest);
+
+    Observable<HttpResponse> observableResponse;
+    try {
+      observableResponse = executor.observe();
+    } catch (Exception e) {
+      RuntimeException
+          runtimeException =
+          new RuntimeException(
+              "Error in executing HTTP request:" + proxy + " URI:" + request.getUri(), e);
+      informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
+                      Optional.of(runtimeException), null);
+
+      throw runtimeException;
+    }
+
+    final String finalProxy = proxy;
+    observableResponse.subscribe(
+        (response) -> {
+          try {
+            informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
+                            Optional.absent(), response);
+            writeCommandExecutionResponse(ctx, messageEvent, request, response);
+          } catch (Exception e) {
+            LOGGER.error("Error while writing response", e.getMessage());
+            throw  new RuntimeException(
+                "Error in executing HTTP request:" + finalProxy + " URI:" + request.getUri(), e);
+          }
+        },
+        (exception) -> {
+          RuntimeException  
+              runtimeException =
+              new RuntimeException(
+                  "Error in executing HTTP request:" + finalProxy + " URI:" + request.getUri(),
+                  exception);
+          informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
+                          Optional.of(runtimeException), null);
+
+          //since the callback is handled by hystrix thread, we need to close the channel explicitly.
+          //This ensures that the connection is closed at client side, however we need to throw a relevant http error msg 
+          messageEvent.getChannel().close();
+        });
+  }
+
+
+  private void informReqTracer(long receiveTime, HttpRequest request,
+                               ServerRequestInterceptor<HttpRequestWrapper, HttpResponse> serverRequestInterceptor,
+                               Executor<HttpRequestWrapper, HttpResponse> executor,
+                               Optional<RuntimeException> transportError,HttpResponse response) {
+
+    // finally inform the server request tracer
+    serverRequestInterceptor.process(response, transportError);
+    if (eventProducer != null) {
+      // Publishes event both in case of success and failure.
+      ServiceProxyEvent.Builder eventBuilder;
+      if (executor == null) {
+                    eventBuilder = new ServiceProxyEvent.Builder(request.getUri(), HTTP_HANDLER).withEventSource(getClass().getName());
+      } else {
+                    eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+      }
+      eventBuilder.withRequestReceiveTime(receiveTime);
+      eventProducer.publishEvent(eventBuilder.build());
+    } else {
+      LOGGER.debug("eventProducer not set, not publishing event");
+    }
+  }
 
     /**
      * Interface method implementation. Closes the underlying channel after logging a warning message

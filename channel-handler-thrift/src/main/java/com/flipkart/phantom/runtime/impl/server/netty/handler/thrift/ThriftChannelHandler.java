@@ -60,6 +60,8 @@ import com.github.kristofa.brave.ServerTracer;
 import com.github.kristofa.brave.TraceFilter;
 import com.google.common.base.Optional;
 
+import rx.Observable;
+
 /**
  * <code>ThriftChannelHandler</code> is a sub-type of {@link SimpleChannelHandler} that acts as a proxy for Apache Thrift calls using the binary protocol.
  * It wraps the Thrift call using a {@link ThriftProxyExecutor} that provides useful features like monitoring, fallback etc.
@@ -189,40 +191,63 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
             // Create and process a Server request interceptor. This will initialize the server tracing
             ServerRequestInterceptor<ThriftRequestWrapper, TTransport> serverRequestInterceptor = this.initializeServerTracing(thriftRequestWrapper);
 
-            //Execute
-            Executor<ThriftRequestWrapper,TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
-            // set the service name for the request
-            thriftRequestWrapper.setServiceName(executor.getServiceName());
-            
-            Optional<RuntimeException> transportError = Optional.absent();            
-            try {
-                executor.execute();
-            } catch (Exception e) {
-            	RuntimeException runtimeException = new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
-            	transportError = Optional.of(runtimeException);
-                throw runtimeException;
-            } finally {
-            	// finally inform the server request tracer
-            	serverRequestInterceptor.process(clientTransport, transportError);            	
-                if (eventProducer != null) {
-                    // Publishes event both in case of success and failure.
-                    ServiceProxyEvent.Builder eventBuilder;
-                    if (executor == null) {
-                        eventBuilder = new ServiceProxyEvent.Builder(thriftProxy + ":" + message.name, THRIFT_HANDLER).withEventSource(getClass().getName());
-                    } else {
-                        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
-                    }
-                    eventBuilder.withRequestReceiveTime(receiveTime);
-                    eventProducer.publishEvent(eventBuilder.build());
-                } else {
-                    LOGGER.debug("eventProducer not set, not publishing event");
-                }
-            }
+      //Execute
+      Executor<ThriftRequestWrapper,TTransport> executor = this.repository.getExecutor(message.name, this.thriftProxy, thriftRequestWrapper);
+      // set the service name for the request
+      thriftRequestWrapper.setServiceName(executor.getServiceName());
+
+
+      Observable<TTransport> observableResponse;
+      try {
+        observableResponse = executor.observe();
+      } catch (Exception e) {
+        RuntimeException runtimeException = new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, e);
+        informReqTracer(receiveTime, clientTransport, message, serverRequestInterceptor,
+                        executor, Optional.of(runtimeException));
+        throw runtimeException;
+      }
+
+      observableResponse.subscribe(
+          (response) -> {
+            informReqTracer(receiveTime, clientTransport, message, serverRequestInterceptor,
+                            executor, Optional.absent());
             // write the result to the output channel buffer
             Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer) clientTransport).getOutputBuffer());
-        }
-        super.handleUpstream(ctx, event);
+          },
+          (exception) -> {
+            RuntimeException runtimeException = new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, exception);
+            informReqTracer(receiveTime, clientTransport, message, serverRequestInterceptor,
+                            executor, Optional.of(runtimeException));
+
+            event.getChannel().close();
+          }
+
+      );
+    }else {
+      super.handleUpstream(ctx, event);
     }
+  }
+
+  private void informReqTracer(long receiveTime, TTransport clientTransport, TMessage message,
+                               ServerRequestInterceptor<ThriftRequestWrapper, TTransport> serverRequestInterceptor,
+                               Executor<ThriftRequestWrapper, TTransport> executor,
+                               Optional<RuntimeException> transportError) {
+    // finally inform the server request tracer
+    serverRequestInterceptor.process(clientTransport, transportError);
+    if (eventProducer != null) {
+      // Publishes event both in case of success and failure.
+      ServiceProxyEvent.Builder eventBuilder;
+      if (executor == null) {
+        eventBuilder = new ServiceProxyEvent.Builder(thriftProxy + ":" + message.name, THRIFT_HANDLER).withEventSource(getClass().getName());
+      } else {
+        eventBuilder = executor.getEventBuilder().withCommandData(executor).withEventSource(executor.getClass().getName());
+      }
+      eventBuilder.withRequestReceiveTime(receiveTime);
+      eventProducer.publishEvent(eventBuilder.build());
+    } else {
+      LOGGER.debug("eventProducer not set, not publishing event");
+    }
+  }
 
     /**
      * Interface method implementation. Closes the underlying channel after logging a warning message

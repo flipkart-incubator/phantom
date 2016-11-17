@@ -41,7 +41,7 @@ public class HttpProxyExecutorRepository extends AbstractExecutorRepository<Http
      */
     public Executor<HttpRequestWrapper,HttpResponse> getExecutor (String commandName, String proxyName, HttpRequestWrapper requestWrapper)  {
         HttpProxy proxy = (HttpProxy) registry.getHandler(proxyName);
-        if (proxy.isActive()) {
+        if (proxy != null && proxy.isActive()) {
         	HttpProxyExecutor executor = new HttpProxyExecutor(proxy, this.taskContext, requestWrapper);
             return this.wrapExecutorWithInterceptors(executor,proxy);
         }
