@@ -1,3 +1,6 @@
+## 3.1.0-SNAPSHOT (Nov 17, 2016)
+- Non blocking http and thrift proxy
+
 ## 3.0.1  (Oct 18, 2015)
 - Using fasterxml jackson consistently
 
