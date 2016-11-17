@@ -240,17 +240,17 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
     observableResponse.subscribe(
         (response) -> {
           try {
-            writeCommandExecutionResponse(ctx, messageEvent, request, response);
             informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
                             Optional.absent(), response);
+            writeCommandExecutionResponse(ctx, messageEvent, request, response);
           } catch (Exception e) {
-            LOGGER.error("Error while writing response", e);
+            LOGGER.error("Error while writing response", e.getMessage());
             throw  new RuntimeException(
                 "Error in executing HTTP request:" + finalProxy + " URI:" + request.getUri(), e);
           }
         },
         (exception) -> {
-          RuntimeException
+          RuntimeException  
               runtimeException =
               new RuntimeException(
                   "Error in executing HTTP request:" + finalProxy + " URI:" + request.getUri(),
@@ -258,6 +258,8 @@ public abstract class RoutingHttpChannelHandler extends SimpleChannelUpstreamHan
           informReqTracer(receiveTime, request, serverRequestInterceptor, executor,
                           Optional.of(runtimeException), null);
 
+          //since the callback is handled by hystrix thread, we need to close the channel explicitly.
+          //This ensures that the connection is closed at client side, however we need to throw a relevant http error msg 
           messageEvent.getChannel().close();
         });
   }

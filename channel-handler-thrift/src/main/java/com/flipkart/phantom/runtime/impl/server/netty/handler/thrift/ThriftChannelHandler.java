@@ -209,10 +209,10 @@ public class ThriftChannelHandler extends SimpleChannelUpstreamHandler implement
 
       observableResponse.subscribe(
           (response) -> {
-            // write the result to the output channel buffer
-            Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer) clientTransport).getOutputBuffer());
             informReqTracer(receiveTime, clientTransport, message, serverRequestInterceptor,
                             executor, Optional.absent());
+            // write the result to the output channel buffer
+            Channels.write(ctx, event.getFuture(), ((ThriftNettyChannelBuffer) clientTransport).getOutputBuffer());
           },
           (exception) -> {
             RuntimeException runtimeException = new RuntimeException("Error in executing Thrift request: " + thriftProxy + ":" + message.name, exception);
