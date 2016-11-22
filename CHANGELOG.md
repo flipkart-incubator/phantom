@@ -1,10 +1,13 @@
+## 3.1.0  (Nov 22, 2016)
+- Included snapshot version fixes
+
 ## 3.1.0-SNAPSHOT (Nov 17, 2016)
 - Non blocking http and thrift proxy
 
-## 3.0.1  (Oct 18, 2015)
+## 3.0.1  (Oct 18, 2016)
 - Using fasterxml jackson consistently
 
-## 3.0.0  (Oct 14, 2015)
+## 3.0.0  (Oct 14, 2016)
 - Included snapshot version fixes
 - Upgrade to Trooper 2.0.1 to remove a bottleneck in event publishing
 
@@ -12,14 +15,14 @@
 - Generic params in TaskHandler's execute
 - Zipkin headers ingestion for TaskHandlers
 
-## 2.0.1  (Jul 1, 2015)
+## 2.0.1  (Jul 1, 2016)
 - Included snapshot version fixes
 
 ## 2.0.1-SNAPSHOT (Jun 30, 2016)
 - ZipkinSpanCollectorParams failOnSetup is configurable
 - Bug fix: Fix for ConcurrentModificationException during shutdown
 
-## 2.0.0  (May 25, 2015)
+## 2.0.0  (May 25, 2016)
 - Included snapshot version fixes
 
 ## 2.0.0-SNAPSHOT (May 23, 2016)
