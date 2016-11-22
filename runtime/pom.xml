@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.flipkart</groupId>
         <artifactId>phantom</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0-SNAPSHOT</version>
     </parent>
 
     <groupId>com.flipkart.phantom</groupId>
     <artifactId>runtime</artifactId>
     <name>Phantom Runtime</name>
-    <version>3.1.0</version>
+    <version>3.2.0-SNAPSHOT</version>
     <description>Phantom Runtime</description>
 
     <licenses>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>task</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.0-SNAPSHOT</version>
         </dependency>
         <!-- Trooper dependencies -->
         <dependency>

@@ -101,23 +101,13 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      * @param commandName name of the command
      * @param timeout the timeout for the Hystrix thread
      * @param threadPoolName Name of the thread pool
-     * @param threadPoolSize core size of the thread pool
+     * @param coreThreadPoolSize core size of the thread pool
+     * @param maxThreadPoolSize max size of the thread pool
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
-                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper<S> taskRequestWrapper ) {
-        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
-                .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
-                .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
-                .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
-        this.taskHandler = taskHandler;
-        this.taskContext = taskContext;
-        this.command = commandName;
-        this.data = taskRequestWrapper.getData();
-        this.params = taskRequestWrapper.getParams();
-        this.taskRequestWrapper = taskRequestWrapper;
-        this.eventBuilder = new ServiceProxyEvent.Builder(commandName, COMMAND_HANDLER);
+                                  String threadPoolName, int coreThreadPoolSize, int maxThreadPoolSize, TaskRequestWrapper<S> taskRequestWrapper ) {
+        this(taskHandler, taskContext, commandName, timeout, threadPoolName, coreThreadPoolSize, maxThreadPoolSize, taskRequestWrapper, null);
     }
 
     /**
@@ -129,17 +119,18 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      * @param commandName name of the command
      * @param timeout the timeout for the Hystrix thread
      * @param threadPoolName Name of the thread pool
-     * @param threadPoolSize core size of the thread pool
+     * @param coreThreadPoolSize core size of the thread pool
+     * @param maxThreadPoolSize max size of the thread pool
      * @param taskRequestWrapper requestWrapper containing the data and the parameters
      * @param decoder Decoder sent by the Client
      */
     protected TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int timeout,
-                                  String threadPoolName, int threadPoolSize, TaskRequestWrapper<S> taskRequestWrapper , Decoder decoder ) {
+                                  String threadPoolName, int coreThreadPoolSize, int maxThreadPoolSize, TaskRequestWrapper<S> taskRequestWrapper , Decoder decoder ) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(taskHandler.getName()))
                 .andCommandKey(HystrixCommandKey.Factory.asKey(commandName))
                 .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(taskHandler.getVersionedThreadPoolName(threadPoolName)))
-                .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(threadPoolSize))
-                .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds(timeout)));
+                .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withAllowMaximumSizeToDivergeFromCoreSize(true).withCoreSize(coreThreadPoolSize >= 0 ? coreThreadPoolSize : maxThreadPoolSize).withMaximumSize(maxThreadPoolSize))
+                .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionTimeoutInMilliseconds(timeout)));
         this.taskHandler = taskHandler;
         this.taskContext = taskContext;
         this.command = commandName;
@@ -216,7 +207,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      */
     public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
                                TaskRequestWrapper<S> taskRequestWrapper) {
-        this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper);
+        this(taskHandler,taskContext,commandName,executorTimeout, DEFAULT_HYSTRIX_THREAD_POOL, DEFAULT_HYSTRIX_THREAD_POOL_SIZE,DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper);
     }
 
     /**
@@ -230,7 +221,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
      */
     public TaskHandlerExecutor(TaskHandler taskHandler, TaskContext taskContext, String commandName, int executorTimeout,
                                TaskRequestWrapper<S> taskRequestWrapper, Decoder decoder) {
-        this(taskHandler,taskContext,commandName,executorTimeout,DEFAULT_HYSTRIX_THREAD_POOL,
+        this(taskHandler,taskContext,commandName,executorTimeout, DEFAULT_HYSTRIX_THREAD_POOL, DEFAULT_HYSTRIX_THREAD_POOL_SIZE,
                 DEFAULT_HYSTRIX_THREAD_POOL_SIZE,taskRequestWrapper, decoder);
     }
 

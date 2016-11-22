@@ -34,16 +34,16 @@ import com.flipkart.phantom.task.spi.TaskRequestWrapper;
 public class RequestCacheableTaskHandlerExecutor extends TaskHandlerExecutor{
 
     protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
-                                                  String commandName, int timeout, String threadPoolName, int threadPoolSize,
-                                                  TaskRequestWrapper taskRequestWrapper) {
-        super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper);
+                                                  String commandName, int timeout, String threadPoolName, int coreThreadPoolSize,
+                                                  int maxThreadPoolSize, TaskRequestWrapper taskRequestWrapper) {
+        super(taskHandler, taskContext, commandName, timeout, threadPoolName, coreThreadPoolSize, maxThreadPoolSize, taskRequestWrapper);
     }
 
     @SuppressWarnings("rawtypes")
 	protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
-                                                  String commandName, int timeout, String threadPoolName, int threadPoolSize,
-                                                  TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
-        super(taskHandler, taskContext, commandName, timeout, threadPoolName, threadPoolSize, taskRequestWrapper, decoder);
+                                                  String commandName, int timeout, String threadPoolName, int coreThreadPoolSize,
+                                                  int maxThreadPoolSize, TaskRequestWrapper taskRequestWrapper, Decoder decoder) {
+        super(taskHandler, taskContext, commandName, timeout, threadPoolName, coreThreadPoolSize, maxThreadPoolSize, taskRequestWrapper, decoder);
     }
 
     protected RequestCacheableTaskHandlerExecutor(RequestCacheableHystrixTaskHandler taskHandler, TaskContext taskContext,
