@@ -41,8 +41,13 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry<TaskHandler> {
     /** Map storing the mapping of a commandString to TaskHandler */
 	private Map<String,TaskHandler> commandToTaskHandler = new ConcurrentHashMap<String, TaskHandler>();
 
-	/** Map storing the mapping of pool Name to its core threadpool size */
-	private Map<String,Integer> concurrencyPoolSize = new ConcurrentHashMap<String, Integer>();
+	/** Map storing the mapping of pool Name to its max threadpool size */
+	private Map<String,Integer> maxPoolSize = new ConcurrentHashMap<String, Integer>();
+
+    /**
+     * Map storing the mapping of pool Name to its core threadpool size
+     */
+	private Map<String,Integer> corePoolSize = new ConcurrentHashMap<>();
 
     /**
      * Returns the {@link TaskHandler} instance for the given Command String
@@ -58,8 +63,12 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry<TaskHandler> {
      * @param poolOrCommandName the pool or command name for which thread pool size is required
      * @return thread pool size, null is pool/command not found
      */
-    public Integer getPoolSize(String poolOrCommandName) {
-        return this.concurrencyPoolSize.get(poolOrCommandName);
+    public Integer getMaxPoolSize(String poolOrCommandName) {
+        return this.maxPoolSize.get(poolOrCommandName);
+    }
+
+    public Integer getCorePoolSize(String poolOrCommandName) {
+        return this.corePoolSize.get(poolOrCommandName);
     }
     
 	/**
@@ -101,7 +110,7 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry<TaskHandler> {
 	}
 	
     /**
-     * Helper method to initialize concurrencyPoolSize from {@link com.flipkart.phantom.task.impl.TaskHandler#getInitializationCommands()} ()}
+     * Helper method to initialize maxPoolSize and corePoolSize from {@link com.flipkart.phantom.task.impl.TaskHandler#getInitializationCommands()} ()}
      * and {@link com.flipkart.phantom.task.impl.HystrixTaskHandler#getConcurrentPoolSizeParams()} ()}
      */
     private void initializeConcurrencyPoolMap(TaskHandler taskHandler) {
@@ -110,12 +119,24 @@ public class TaskHandlerRegistry extends AbstractHandlerRegistry<TaskHandler> {
             // Thread pool size
             Map<String, Integer> threadParams = hystrixTaskHandler.getConcurrentPoolSizeParams();
             for (String threadParam : threadParams.keySet()) {
-                this.concurrencyPoolSize.put(threadParam, threadParams.get(threadParam));
+                this.maxPoolSize.put(threadParam, threadParams.get(threadParam));
             }
             // Commands thread pool size
             Map<String, Integer> commandParams = hystrixTaskHandler.getCommandPoolSizeParams();
             for (String commandParam : commandParams.keySet()) {
-                this.concurrencyPoolSize.put(commandParam, commandParams.get(commandParam));
+                this.maxPoolSize.put(commandParam, commandParams.get(commandParam));
+            }
+
+            // Core thread pool size
+            Map<String, Integer> corePoolSizeParams = hystrixTaskHandler.getCoreConcurrentPoolSizeParams();
+            for (String corePoolSizeParam : corePoolSizeParams.keySet()) {
+                this.corePoolSize.put(corePoolSizeParam, corePoolSizeParams.get(corePoolSizeParam));
+            }
+
+            // Core commands thread pool size
+            Map<String, Integer> coreCommandPoolSizeParams = hystrixTaskHandler.getCoreCommandPoolSizeParams();
+            for (String coreCommandPoolSizeParam : coreCommandPoolSizeParams.keySet()) {
+                this.corePoolSize.put(coreCommandPoolSizeParam, coreCommandPoolSizeParams.get(coreCommandPoolSizeParam));
             }
         }
     }

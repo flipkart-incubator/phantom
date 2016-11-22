@@ -76,6 +76,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
     	String refinedProxyName = this.getRefinedName(proxyName);
     	TaskHandler taskHandler = this.getTaskHandler(commandName, refinedCommandName, proxyName, refinedProxyName, requestWrapper);
     	int maxConcurrency = this.getMaxConcurrency(taskHandler, proxyName);
+    	int minConcurrency = this.getMinConcurrency(taskHandler, proxyName);
     	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
         if(taskHandler instanceof HystrixTaskHandler) {
 	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
@@ -83,11 +84,11 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
 	        			taskHandler, maxConcurrency);
 	        } else {
 	        	executor = getTaskHandlerExecutor(requestWrapper, refinedCommandName,
-	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler);
+	                refinedProxyName, minConcurrency, maxConcurrency,executionTimeout, taskHandler);
 	        }
         } else { 
         	executor = getTaskHandlerExecutor(requestWrapper, refinedCommandName, refinedProxyName,
-        			maxConcurrency, executionTimeout, taskHandler);
+                    minConcurrency, maxConcurrency, executionTimeout, taskHandler);
         }
         return this.wrapExecutorWithInterceptors(executor, taskHandler);
     }
@@ -109,6 +110,7 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
     	String refinedProxyName = this.getRefinedName(proxyName);
     	TaskHandler taskHandler = this.getTaskHandler(commandName, refinedCommandName, proxyName, refinedProxyName, requestWrapper);
     	int maxConcurrency = this.getMaxConcurrency(taskHandler, proxyName);
+        int minConcurrency = this.getMinConcurrency(taskHandler, proxyName);
     	int executionTimeout = this.getExecutionTimeout(taskHandler, commandName);
         if(taskHandler instanceof HystrixTaskHandler) {
 	        if(((HystrixTaskHandler)taskHandler).getIsolationStrategy()==ExecutionIsolationStrategy.SEMAPHORE) {
@@ -116,11 +118,11 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
 	        			taskHandler, maxConcurrency, decoder);
 	        } else {
 	        	executor = getTaskHandlerExecutorWithDecoder(requestWrapper, refinedCommandName,
-	                refinedProxyName, maxConcurrency,executionTimeout, taskHandler, decoder);
+	                refinedProxyName, minConcurrency, maxConcurrency,executionTimeout, taskHandler, decoder);
 	        }
         } else { 
         	executor = getTaskHandlerExecutorWithDecoder(requestWrapper, refinedCommandName, refinedProxyName,
-        			maxConcurrency, executionTimeout, taskHandler, decoder);
+                    minConcurrency, maxConcurrency, executionTimeout, taskHandler, decoder);
         }
         return this.wrapExecutorWithInterceptors(executor, taskHandler);
     }
@@ -255,13 +257,13 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         }
     }
     private Executor<TaskRequestWrapper,TaskResult> getTaskHandlerExecutor(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                        String refinedProxyName, int maxConcurrentSize, int executorTimeOut, TaskHandler taskHandler) {
+                                                        String refinedProxyName, int minConcurrencySize, int maxConcurrentSize, int executorTimeOut, TaskHandler taskHandler) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
-                    refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper);
+                    refinedCommandName, executorTimeOut, refinedProxyName, minConcurrencySize, maxConcurrentSize,requestWrapper);
         } else {
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, executorTimeOut,
-                    refinedProxyName,maxConcurrentSize,requestWrapper);
+                    refinedProxyName, minConcurrencySize, maxConcurrentSize,requestWrapper);
         }
     }
 
@@ -278,14 +280,14 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         }
     }
     private Executor<TaskRequestWrapper,TaskResult> getTaskHandlerExecutorWithDecoder(TaskRequestWrapper requestWrapper, String refinedCommandName,
-                                                                   String refinedProxyName, int maxConcurrentSize, int executorTimeOut,
+                                                                   String refinedProxyName, int minConcurrencySize, int maxConcurrentSize, int executorTimeOut,
                                                                    TaskHandler taskHandler, Decoder decoder) {
         if (taskHandler instanceof RequestCacheableHystrixTaskHandler) {
             return new RequestCacheableTaskHandlerExecutor((RequestCacheableHystrixTaskHandler)taskHandler,this.getTaskContext(),
-                    refinedCommandName, executorTimeOut, refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
+                    refinedCommandName, executorTimeOut, refinedProxyName, minConcurrencySize, maxConcurrentSize,requestWrapper, decoder);
         } else {
             return new TaskHandlerExecutor(taskHandler,this.getTaskContext(),refinedCommandName, executorTimeOut,
-                    refinedProxyName,maxConcurrentSize,requestWrapper, decoder);
+                    refinedProxyName, minConcurrencySize, maxConcurrentSize,requestWrapper, decoder);
         }
     }
     
@@ -317,12 +319,25 @@ public class TaskHandlerExecutorRepository extends AbstractExecutorRepository<Ta
         if(taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
             LOGGER.debug("Isolation strategy: "+hystrixTaskHandler.getIsolationStrategy()+" for "+hystrixTaskHandler);
-            if(((TaskHandlerRegistry)getRegistry()).getPoolSize(proxyName)!=null) {
-                LOGGER.debug("Found a predefined pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
-                maxConcurrentSize = ((TaskHandlerRegistry)getRegistry()).getPoolSize(proxyName);
+            if(((TaskHandlerRegistry)getRegistry()).getMaxPoolSize(proxyName)!=null) {
+                LOGGER.debug("Found a predefined max pool size for "+proxyName+". Not using default value of "+DEFAULT_THREAD_POOL_SIZE);
+                maxConcurrentSize = ((TaskHandlerRegistry)getRegistry()).getMaxPoolSize(proxyName);
             }
         }
         return maxConcurrentSize;
+    }
+
+    private int getMinConcurrency(TaskHandler taskHandler, String proxyName) {
+        int minConcurrentSize = -1;
+        if (taskHandler instanceof HystrixTaskHandler) {
+            HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) taskHandler;
+            LOGGER.debug("Isolation strategy: " + hystrixTaskHandler.getIsolationStrategy() + " for " + hystrixTaskHandler);
+            if (((TaskHandlerRegistry) getRegistry()).getCorePoolSize(proxyName) != null) {
+                LOGGER.debug("Found a predefined core pool size for " + proxyName);
+                minConcurrentSize = ((TaskHandlerRegistry) getRegistry()).getCorePoolSize(proxyName);
+            }
+        }
+        return minConcurrentSize;
     }
     
     /**

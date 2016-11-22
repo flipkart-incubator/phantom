@@ -50,6 +50,14 @@ public abstract class HystrixTaskHandler extends TaskHandler {
     private Map<String,Integer> concurrentPoolSizeParams = new HashMap<String,Integer>();
 
     /**
+     * Similar behaviour as {@link #concurrentPoolSizeParams} but defines the core pool size instead of maximum.
+     * See {@link java.util.concurrent.ThreadPoolExecutor#corePoolSize}.
+     *
+     * @see <a href="https://github.com/Netflix/Hystrix/issues/1242">Hystrix Issue</a>
+     */
+    private Map<String, Integer> coreConcurrentPoolSizeParams = new HashMap<>();
+
+    /**
      * These can be used to limit the maximum concurrent requests at a command level.
      * The key will be the HystrixCommand name. It should be a valid commandName. (Else an exception is thrown)
      * The value will be the thread pool size. 
@@ -59,6 +67,16 @@ public abstract class HystrixTaskHandler extends TaskHandler {
      * If this property is not set for a command, default Hystrix Value for thread pool size(10) will be used.
      */
     private Map<String,Integer> commandPoolSizeParams = new HashMap<String,Integer>();
+
+    /**
+     * Similar behaviour as {@link #commandPoolSizeParams} but defines the core pool size instead of maximum.
+     * See {@link java.util.concurrent.ThreadPoolExecutor#corePoolSize}.
+     *
+     * @see <a href="https://github.com/Netflix/Hystrix/issues/1242">Hystrix Issue</a>
+     */
+    private Map<String, Integer> coreCommandPoolSizeParams = new HashMap<>();
+
+    /**
 
     /**
      * Map of command names and their respective executor timeouts in milliseconds
@@ -126,6 +144,23 @@ public abstract class HystrixTaskHandler extends TaskHandler {
     public void setConcurrentPoolSizeParams(Map<String,Integer> concurrentPoolSizeParams) {
         this.concurrentPoolSizeParams = concurrentPoolSizeParams;
     }
+
+    public Map<String, Integer> getCoreConcurrentPoolSizeParams() {
+        return coreConcurrentPoolSizeParams;
+    }
+
+    public void setCoreConcurrentPoolSizeParams(Map<String, Integer> coreConcurrentPoolSizeParams) {
+        this.coreConcurrentPoolSizeParams = coreConcurrentPoolSizeParams;
+    }
+
+    public Map<String, Integer> getCoreCommandPoolSizeParams() {
+        return coreCommandPoolSizeParams;
+    }
+
+    public void setCoreCommandPoolSizeParams(Map<String, Integer> coreCommandPoolSizeParams) {
+        this.coreCommandPoolSizeParams = coreCommandPoolSizeParams;
+    }
+
     public Map<String, Integer> getExecutorTimeouts() {
         return this.executorTimeouts;
     }
