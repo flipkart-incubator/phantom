@@ -18,6 +18,16 @@
     <dependencies>
         <!-- Phantom dependencies -->
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.flipkart.kloud.authn</groupId>
+            <artifactId>client</artifactId>
+            <version>15.10.02.3</version>
+        </dependency>
+        <dependency>
             <groupId>com.flipkart.phantom</groupId>
             <artifactId>runtime</artifactId>
             <version>3.2.0-SNAPSHOT</version>
@@ -48,6 +58,21 @@
 		    <artifactId>log4j-1.2-api</artifactId>
 		    <version>${log4j2.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>com.flipkart.kloud.authn</groupId>
+            <artifactId>spring-relying-party</artifactId>
+            <version>15.10.02.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>3.2.4.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.4</version>
+        </dependency>
     </dependencies>
 
     <build>
