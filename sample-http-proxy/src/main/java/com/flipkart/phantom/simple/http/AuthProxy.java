@@ -18,9 +18,6 @@ public class AuthProxy extends SimpleHttpProxy {
 
   private final AuthNConfiguration authNConfiguration;
   private final AuthTokenService authTokenService;
-
-  public static final String URL_SCHEME_HOST_SEPARATOR = "://";
-  public static final String URL_HOST_PORT_SEPARATOR = ":";
   private static final String X_PROXY_USER = "X-Proxy-User";
   private static final String X_RESTBUS_USER = "X_RESTBUS_USER";
 
@@ -31,10 +28,9 @@ public class AuthProxy extends SimpleHttpProxy {
 
   public HttpResponse doRequest(HttpRequestWrapper httpRequestWrapper) throws Exception {
 
-    String token = authTokenService
-        .fetchToken(
-            generateURL(URI.create(httpRequestWrapper.getUri()))).toAuthorizationHeader();
-
+    String url = "http://" + getPool().getHost()+ ":" + getPool().getPort(); 
+        
+    String token = authTokenService.fetchToken(url).toAuthorizationHeader();
     List<Map.Entry<String, String>> headers = new ArrayList<>();
     headers.add(new AbstractMap.SimpleEntry<>("Authorization", token));
     headers.add(new AbstractMap.SimpleEntry<>(X_PROXY_USER, authNConfiguration.getProxyUser()));
@@ -42,15 +38,6 @@ public class AuthProxy extends SimpleHttpProxy {
     httpRequestWrapper.setHeaders(headers);
 
     return super.doRequest(httpRequestWrapper);
-  }
-
-  private String generateURL(URI uri) {
-    try {
-      return uri.getScheme() + URL_SCHEME_HOST_SEPARATOR + uri.getHost() + URL_HOST_PORT_SEPARATOR
-             + (uri.getPort() == -1 ? uri.toURL().getDefaultPort() : uri.getPort());
-    } catch (MalformedURLException e) {
-      throw new RuntimeException("Invalid url", e);
-    }
   }
 
 }

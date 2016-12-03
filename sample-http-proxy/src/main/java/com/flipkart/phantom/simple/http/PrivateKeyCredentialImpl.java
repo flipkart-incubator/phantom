@@ -11,15 +11,7 @@ import java.security.spec.InvalidKeySpecException;
  */
 public class PrivateKeyCredentialImpl {
 
-  private String clientId;
-  private String filePath;
-
-  public PrivateKeyCredentialImpl(String clientId, String filePath) {
-    this.clientId = clientId;
-    this.filePath = filePath;
-  }
-
-  public PrivateKeyCredential getPrivateKeyCredential()
+  public static PrivateKeyCredential getPrivateKeyCredential(String clientId, String filePath)
       throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
     return PrivateKeyCredential.fromPemFile(clientId, filePath);
   }

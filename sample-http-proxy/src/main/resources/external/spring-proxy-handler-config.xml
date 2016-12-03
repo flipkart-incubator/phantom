@@ -1,50 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="
-    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
-    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
-    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
 
-    <!-- http proxy -->
-    <bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
-        <property name="name" value="defaultProxy" />
-        <property name="pool" ref="sampleConnectionPool" />
-    </bean>
+    <!--&lt;!&ndash; http proxy &ndash;&gt;-->
+    <!--<bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">-->
+        <!--<property name="name" value="defaultProxy"/>-->
+        <!--<property name="pool" ref="sampleConnectionPool"/>-->
+    <!--</bean>-->
 
     <bean id="authNProxy" class="com.flipkart.phantom.simple.http.AuthProxy">
         <constructor-arg index="0" ref="authNConfiguration"/>
-        <constructor-arg index="1" ref="authTokenService"/>
-        <property name="threadPoolSize" value="20" />
-        <property name="name" value="defaultProxy" />
-        <property name="pool" ref="sampleConnectionPool" />
+        <constructor-arg index="1" value="#{authTokenServiceUtil.getAuthTokenService(authNConfiguration)}"/>
+        <property name="threadPoolSize" value="20"/>
+        <property name="name" value="defaultProxy"/>
+        <property name="pool" ref="warehouseConnectionPool"/>
     </bean>
 
-   <bean id="authNConfiguration" class="com.flipkart.phantom.simple.http.AuthNConfiguration">
-       <property name="authUrl" value="http://10.85.50.5"/>
-       <property name="clientId" value="/etc/fk-sp-fa-pegasus/authn.pem"/>
-       <property name="privateKeyPath" value="http://10.85.50.74:80"/>
-       <property name="proxyUser" value="fkmp_sms"/>
-   </bean>
-    
-    <bean id="authTokenService" class="com.flipkart.kloud.authn.AuthTokenService">
-        <constructor-arg index="0" value=""/>
-        <constructor-arg index="1" value="#{privateKeyCredentialImpl.getPrivateKeyCredential()},
-    authNConfiguration.getPrivateKeyPath())}"/>
+    <bean id="authNConfiguration" class="com.flipkart.phantom.simple.http.AuthNConfiguration">
+        <property name="authUrl" value="http://10.85.50.5"/>
+        <property name="clientId" value="http://10.85.50.74:80"/>
+        <property name="privateKeyPath" value="/etc/fk-sp-fa-pegasus/authn.pem"/>
+        <property name="proxyUser" value="fkmp_sms"/>
     </bean>
 
-    <bean id="privateKeyCredentialImpl" class="com.flipkart.phantom.simple.http.PrivateKeyCredentialImpl">
-        <constructor-arg index="0" value=""/>
-        <constructor-arg index="1" value=""/>
+    <bean id="authTokenServiceUtil"  class="com.flipkart.phantom.simple.http.AuthTokenServiceUtil">
     </bean>
-    
+
     <!-- http connection pool -->
-    <bean id="sampleConnectionPool" class="com.flipkart.phantom.http.impl.HttpConnectionPool">
-        <property name="host" value="http://10.85.50.238" />
-        <property name="port" value="80" />
-        <property name="connectionTimeout" value="10000" />
-        <property name="operationTimeout" value="200000" />
+    <bean id="warehouseConnectionPool" class="com.flipkart.phantom.http.impl.HttpConnectionPool">
+        <property name="host" value="10.85.50.238"/>
+        <property name="port" value="80"/>
+        <property name="connectionTimeout" value="10000"/>
+        <property name="operationTimeout" value="200000"/>
     </bean>
 
+    
 </beans>
