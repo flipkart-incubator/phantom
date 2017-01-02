@@ -1,3 +1,6 @@
+## 3.2.0  (Jan 2, 2017)
+- Included snapshot version fixes
+
 ## 3.2.0-SNAPSHOT (Nov 22, 2016)
 - Upgrade to Hystrix 1.5.8
 - Customizable core and max thread pool sizes for Task

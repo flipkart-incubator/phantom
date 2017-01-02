@@ -10,11 +10,11 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 3.2.0             | Jan 2017      |    Hystrix 1.5.8, Customizable core and max thread pool sizes for Task 
 | Version 3.1.0             | Nov 2016      |    Non blocking http and thrift proxy
 | Version 3.0.1             | Oct 2016      |    Using fasterxml jackson everywhere
 | Version 3.0.0             | Oct 2016      |    Generic params in TaskHandler's execute, zipkin fixes, Upgrade to Trooper 2.0.1
 | Version 2.0.1             | Jul 2016      |    Bug fix in shutdown sequence, zipkin span collector
-| Version 2.0.0             | May 2016      |    Upgrade to Trooper 2.0.0
 
 ## Changelog
 
