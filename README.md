@@ -10,7 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
-| Version 3.3.0             | Jan 2017      |    Upgrading to Jetty 9.4.1.v20170120
+| Version 3.3.0             | Feb 2017      |    Upgrading to Jetty 9.4.1.v20170120
 | Version 3.2.0             | Jan 2017      |    Hystrix 1.5.8, Customizable core and max thread pool sizes for Task 
 | Version 3.1.0             | Nov 2016      |    Non blocking http and thrift proxy
 | Version 3.0.1             | Oct 2016      |    Using fasterxml jackson everywhere
