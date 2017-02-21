@@ -1,3 +1,6 @@
+## 3.3.0  (Feb 21, 2017)
+- Upgrading to Jetty 9.4.1.v20170120
+
 ## 3.2.0  (Jan 2, 2017)
 - Included snapshot version fixes
 
