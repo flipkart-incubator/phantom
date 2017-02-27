@@ -16,6 +16,8 @@
 
 package com.flipkart.phantom.http.impl;
 
+import java.util.Map;
+
 import org.apache.http.HttpResponse;
 
 /**
@@ -32,7 +34,7 @@ public class SimpleHttpProxy extends HttpProxy {
      * @see com.flipkart.phantom.http.impl.HttpProxy#fallbackRequest(HttpRequestWrapper)
      */
     @Override
-    public HttpResponse fallbackRequest(HttpRequestWrapper requestWrapper) {
+    public HttpResponse fallbackRequest(HttpRequestWrapper requestWrapper, Map<String,Object> controlParams) {
 		throw new UnsupportedOperationException("No fallback implementation found!");
     }
 

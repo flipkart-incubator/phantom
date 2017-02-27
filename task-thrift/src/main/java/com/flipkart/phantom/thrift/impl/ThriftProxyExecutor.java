@@ -15,8 +15,10 @@
  */
 package com.flipkart.phantom.thrift.impl;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.thrift.transport.TTransport;
 
@@ -128,9 +130,14 @@ public class ThriftProxyExecutor extends HystrixCommand<TTransport> implements E
      */
     @Override
     protected TTransport getFallback() {
+    	Map<String, Object> controlparams = new HashMap<String,Object>();
+    	// check and populate execution error root cause, if any, for use in fallback
+    	if (this.isFailedExecution()) {
+    		controlparams.put(Executor.EXECUTION_ERROR_CAUSE, this.getFailedExecutionException());
+    	}
         if(this.thriftProxy instanceof HystrixThriftProxy) {
             HystrixThriftProxy hystrixThriftProxy = (HystrixThriftProxy) this.thriftProxy;
-            hystrixThriftProxy.fallbackThriftRequest(this.clientTransport,this.taskContext);
+            hystrixThriftProxy.fallbackThriftRequest(this.clientTransport,controlparams);
             return this.clientTransport;
         }
         return null;

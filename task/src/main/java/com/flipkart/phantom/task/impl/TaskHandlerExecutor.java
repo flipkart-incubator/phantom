@@ -263,7 +263,7 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
         				((HystrixTaskHandler)this.taskHandler).releaseResources(result);        			
         			}
         		}
-        	}      	
+        	}     
 	        for (ResponseInterceptor<TaskResult> responseInterceptor : this.responseInterceptors) {
 	        	responseInterceptor.process(result, transportException);
 	        }
@@ -280,6 +280,10 @@ public class TaskHandlerExecutor<S> extends HystrixCommand<TaskResult> implement
     @SuppressWarnings("unchecked")
 	@Override
     protected TaskResult getFallback() {
+    	// check and populate execution error root cause, if any, for use in fallback
+    	if (this.isFailedExecution()) {
+    		this.params.put(Executor.EXECUTION_ERROR_CAUSE, this.getFailedExecutionException());
+    	}
         if(this.taskHandler instanceof HystrixTaskHandler) {
             HystrixTaskHandler hystrixTaskHandler = (HystrixTaskHandler) this.taskHandler;
             if(decoder == null) {
