@@ -1,3 +1,6 @@
+## 3.4.0-SNAPSHOT (Feb 28, 2017)
+- Passing execution errors to fallback
+
 ## 3.3.0  (Feb 21, 2017)
 - Upgrading to Jetty 9.4.1.v20170120
 
