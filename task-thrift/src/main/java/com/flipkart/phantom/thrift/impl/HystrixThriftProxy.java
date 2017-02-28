@@ -51,7 +51,7 @@ public abstract class HystrixThriftProxy extends ThriftProxy {
 	 * @param clientTransport the Thrift {@link org.apache.thrift.transport.TTransport} of the invoking client
 	 * @throws RuntimeException in case of errors
 	 */
-	public abstract void fallbackThriftRequest(TTransport clientTransport,TaskContext taskContext);
+	public abstract void fallbackThriftRequest(TTransport clientTransport, Map<String,Object> controlParams);
 	
 	/**
 	 * Optional. Gets the GroupName this ThriftProxy should be assigned to. 

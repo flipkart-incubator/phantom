@@ -16,8 +16,10 @@
 
 package com.flipkart.phantom.http.impl;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.utils.HttpClientUtils;
@@ -54,7 +56,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
 
     /** the proxy client */
     private HttpProxy proxy;
-
+    
     /** Event which records various parameters of this request execution & published later */
     protected ServiceProxyEvent.Builder eventBuilder;
 
@@ -69,7 +71,7 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
                     .andCommandKey(HystrixCommandKey.Factory.asKey(proxy.getCommandKey()))
                     .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(proxy.getThreadPoolKey()))
                     .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(proxy.getThreadPoolSize()))
-                    .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionIsolationThreadTimeoutInMilliseconds
+                    .andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionTimeoutInMilliseconds
                             (proxy.getPool().getOperationTimeout())));
         this.proxy = proxy;
         this.httpRequestWrapper = httpRequestWrapper;
@@ -150,7 +152,12 @@ public class HttpProxyExecutor extends HystrixCommand<HttpResponse> implements E
      */
     @Override
     protected HttpResponse getFallback() {
-        return proxy.fallbackRequest(this.httpRequestWrapper);
+    	Map<String, Object> controlparams = new HashMap<String,Object>();
+    	// check and populate execution error root cause, if any, for use in fallback
+    	if (this.isFailedExecution()) {
+    		controlparams.put(Executor.EXECUTION_ERROR_CAUSE, this.getFailedExecutionException());
+    	}
+        return proxy.fallbackRequest(this.httpRequestWrapper,controlparams);
     }
 
     /**

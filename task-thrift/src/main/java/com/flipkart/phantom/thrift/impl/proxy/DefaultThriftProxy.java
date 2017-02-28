@@ -16,9 +16,11 @@
 
 package com.flipkart.phantom.thrift.impl.proxy;
 
-import com.flipkart.phantom.task.spi.TaskContext;
-import com.flipkart.phantom.thrift.impl.HystrixThriftProxy;
+import java.util.Map;
+
 import org.apache.thrift.transport.TTransport;
+
+import com.flipkart.phantom.thrift.impl.HystrixThriftProxy;
 
 /**
  * <code>DefaultThriftProxy</code> is an extension of HystrixThriftProxy. It's a default implementation.
@@ -30,7 +32,7 @@ public class DefaultThriftProxy extends HystrixThriftProxy {
 	
 	/** FallBack, to be executed when command fails */
 	@Override
-	public void fallbackThriftRequest(TTransport clientTransport, TaskContext taskContext) {
+	public void fallbackThriftRequest(TTransport clientTransport, Map<String,Object> controlParams) {
 		throw new UnsupportedOperationException("No fallback implementation found!");
 	}
 }

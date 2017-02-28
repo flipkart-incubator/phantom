@@ -38,6 +38,9 @@ public interface Executor<T extends RequestWrapper,S> {
 	/** Constant for default service name */
 	public static final String DEFAULT_SERVICE_NAME = "Null Service";
 	
+	/** Constant to identify execution error, passed as request params to fallback method */
+	public static final String EXECUTION_ERROR_CAUSE = "Executor.EXECUTION_ERROR_CAUSE";
+		
 	/**
 	 * Executes a given task and returns the result
 	 * @return task execution result
