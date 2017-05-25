@@ -1,4 +1,4 @@
-## 3.4.0-SNAPSHOT (Feb 28, 2017)
+## 3.4.0 (May 25, 2017)
 - Passing execution errors to fallback
 
 ## 3.3.0  (Feb 21, 2017)
