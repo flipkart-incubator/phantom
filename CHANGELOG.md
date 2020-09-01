@@ -1,3 +1,6 @@
+## 3.5.0 (Sep 1, 2020)
+- Spring 5 Upgrade & Corresponding XML updates
+
 ## 3.4.0 (May 25, 2017)
 - Passing execution errors to fallback
 

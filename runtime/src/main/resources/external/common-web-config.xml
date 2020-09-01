@@ -11,9 +11,9 @@ This file is not loaded in the "runtime" module as the module is shipped as a bi
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="
-    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd	
-    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
-    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context.xsd">
 
     <!-- The tracing servlet filter -->
     <bean id="ServletTraceFilter" class="com.flipkart.phantom.runtime.impl.jetty.filter.ServletTraceFilter">
