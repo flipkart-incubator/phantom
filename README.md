@@ -10,6 +10,7 @@ API calls in production deployments at Flipkart.
 
 | Release | Date | Description |
 |:------------|:----------------|:------------|
+| Version 3.5.0             | Sep 2020      |    Spring 5 Upgrade & Corresponding XML updates
 | Version 3.4.0             | May 2017      |    Passing execution errors to fallback
 | Version 3.3.0             | Feb 2017      |    Upgrading to Jetty 9.4.1.v20170120
 | Version 3.2.0             | Jan 2017      |    Hystrix 1.5.8, Customizable core and max thread pool sizes for Task 

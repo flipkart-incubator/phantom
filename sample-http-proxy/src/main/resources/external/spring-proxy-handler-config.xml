@@ -3,9 +3,9 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="
-    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans-2.5.xsd
-    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
-    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context-2.5.xsd">
+    http://www.springframework.org/schema/beans classpath:org/springframework/beans/factory/xml/spring-beans.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+    http://www.springframework.org/schema/context classpath:org/springframework/context/config/spring-context.xsd">
 
     <!-- http proxy -->
     <bean id="sampleHttpProxy" class="com.flipkart.phantom.http.impl.SimpleHttpProxy">
