@@ -9,8 +9,8 @@
 		hystrixTemplateCircuitContainer = data;
 	});
 
-	const urlParam = new URLSearchParams(document.referrer);
-    	const allowedThreadPools = urlParam.get("threadPools") === null ? [] : urlParam.get("threadPools").split(",")
+	const urlParam = new URLSearchParams(window.location.search);
+    	const allowedCommandKeys = urlParam.get("commandKeys") === null ? [] : urlParam.get("commandKeys").split(",")
 	
 	function getRelativePath(path) {
 		var p = location.pathname.slice(0, location.pathname.lastIndexOf("/")+1);
@@ -109,7 +109,7 @@
 		    if(allowedThreadPools.length === 0) {
 			return true;
 		    } else {
-			return allowedThreadPools.includes(data["threadPool"])
+			return allowedCommandKeys.includes(data["name"])
 		    }
 		}
 		
