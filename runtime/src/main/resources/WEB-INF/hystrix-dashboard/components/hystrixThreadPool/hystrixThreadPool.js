@@ -9,6 +9,9 @@
 		htmlTemplateContainer = data;
 	});
 
+	const urlParam = new URLSearchParams(window.location.search);
+	const allowedThreadPools = urlParam.get("threadPools") === null ? [] : urlParam.get("threadPools").split(",")
+	
 	function getRelativePath(path) {
 		var p = location.pathname.slice(0, location.pathname.lastIndexOf("/")+1);
 		return p + path;
@@ -61,6 +64,9 @@
 		/* public */ self.eventSourceMessageListener = function(e) {
 			var data = JSON.parse(e.data);
 			if(data) {
+				if(!shouldShowThisPool(data)) {
+        				return;
+				}
 				// check for reportingHosts (if not there, set it to 1 for singleHost vs cluster)
 				if(!data.reportingHosts) {
 					data.reportingHosts = 1;
@@ -74,6 +80,18 @@
 					}
 				}
 			}
+		}
+		
+		/**
+		* At times we are only interested in a subset of threadpools. 
+		* When lots of commands are there, rendering all the commands make ui extremely slow.
+		*/
+		function shouldShowThisPool(data) {
+		    if(allowedThreadPools.length === 0) {
+			return true;
+		    } else {
+			return allowedThreadPools.includes(data["name"])
+		    }
 		}
 		
 		/**
