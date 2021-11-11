@@ -76,7 +76,7 @@
 				if(!data.reportingHosts) {
 					data.reportingHosts = 1;
 				}
-							
+				
 				if(data && data.type == 'HystrixCommand') {
 					if (data.deleteData == 'true') {
 						deleteCircuit(data.name);
