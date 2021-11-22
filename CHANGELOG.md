@@ -1,3 +1,6 @@
+## 3.6.0 (Nov 22, 2021)
+- Filtering commands and threadpools in hystrix dashboard
+
 ## 3.5.0 (Sep 1, 2020)
 - Spring 5 Upgrade & Corresponding XML updates
 
