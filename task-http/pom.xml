@@ -8,7 +8,7 @@
     <parent>
         <artifactId>phantom</artifactId>
         <groupId>com.flipkart</groupId>
-        <version>3.5.0</version>
+        <version>3.6.0</version>
     </parent>
 
     <groupId>com.flipkart.phantom</groupId>
