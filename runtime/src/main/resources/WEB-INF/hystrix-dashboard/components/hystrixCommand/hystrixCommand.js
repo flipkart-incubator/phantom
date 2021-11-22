@@ -9,6 +9,9 @@
 		hystrixTemplateCircuitContainer = data;
 	});
 
+	const urlParam = new URLSearchParams(window.location.search);
+    	const allowedCommandKeys = urlParam.get("commandKeys") === null ? [] : urlParam.get("commandKeys").split(",")
+	
 	function getRelativePath(path) {
 		var p = location.pathname.slice(0, location.pathname.lastIndexOf("/")+1);
 		return p + path;
@@ -66,6 +69,9 @@
 		/* public */ self.eventSourceMessageListener = function(e) {
 			var data = JSON.parse(e.data);
 			if(data) {
+			     	if(!shouldShowThisCommand(data)) {
+                    			return;
+				}
 				// check for reportingHosts (if not there, set it to 1 for singleHost vs cluster)
 				if(!data.reportingHosts) {
 					data.reportingHosts = 1;
@@ -92,6 +98,18 @@
 			// do math
 			converAllAvg(data);
 			calcRatePerSecond(data);
+		}
+		
+		/**
+		* At times we are only interested in a subset of threadpools. 
+		* When lots of commands are there, rendering all the commands make ui extremely slow.
+		*/
+		function shouldShowThisCommand(data) {
+		    if(allowedCommandKeys.length === 0) {
+			return true;
+		    } else {
+			return allowedCommandKeys.includes(data["name"])
+		    }
 		}
 		
 		/**
