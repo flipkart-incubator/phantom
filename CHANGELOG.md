@@ -1,3 +1,6 @@
+## 3.7.0 (Dec 10, 2021)
+- Upgrade log4j to 2.15.0
+
 ## 3.6.0 (Nov 22, 2021)
 - Filtering commands and threadpools in hystrix dashboard
 
