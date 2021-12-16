@@ -1,3 +1,6 @@
+## 3.8.0 (Dec 16, 2021)
+- Upgrade log4j to 2.16.0
+
 ## 3.7.0 (Dec 10, 2021)
 - Upgrade log4j to 2.15.0
 
