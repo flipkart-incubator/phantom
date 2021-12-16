@@ -25,7 +25,7 @@ Changelog can be viewed in CHANGELOG.md file (https://github.com/Flipkart/phanto
 ## Why Phantom
 Phantom is the "ghost who walks" - an entity whose presence can be felt (in a good way) but its existence need not be acknowledged.
 The Service Proxies fit this analogy well and therefore earned the moniker "Phantom". Motivation for creating Phantom and design overview 
-is described in this [Proxies for resilience and fault tolerance in SOA](http://tech-blog.flipkart.net/2013/07/proxies-for-resilience-and-fault-tolerance-in-distributed-soa) blog post.
+is described in this [Proxies for resilience and fault tolerance in SOA](https://tech.flipkart.com/proxies-for-resilience-and-fault-tolerance-in-distributed-soa-8a849bcf4873) blog post.
 
 ## Phantom Consoles
 ![Monitor](https://github.com/Flipkart/phantom/raw/master/docs/Service%20Proxy.png)
